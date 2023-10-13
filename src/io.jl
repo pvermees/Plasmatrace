@@ -1,5 +1,5 @@
 # Currently only works for Agilent 8900 files
-function readFile(;fname::String)::sample
+function readFile(;fname::String)::SAMPLE
     
     f = open(fname,"r")
     strs = readlines(f)
@@ -21,23 +21,26 @@ function readFile(;fname::String)::sample
 
     close(f)
 
-    sample(sname,datetime,labels,dat)
+    SAMPLE(sname,datetime,labels,dat)
 
 end
 
-# Currently only works for Agilent 8900 files
-function readFiles(;dname::String,ext::String=".csv")::run
+function readFiles(;dname::String,ext::String=".csv")::RUN
 
     fnames = readdir(dname)
-    samps = Array{sample}(undef,0)
+    SAMPS = Array{SAMPLE}(undef,0)
 
     for fname in fnames
         if occursin(ext,fname)
-            samp = readFile(fname=dname*fname)
-            samps = push!(samps,samp)
+            SAMP = readFile(fname=dname*fname)
+            SAMPS = push!(SAMPS,SAMP)
         end
     end
 
-    samples2run(samples=samps)
+    SAMPLES2RUN(SAMPLES=SAMPS)
 
+end
+
+function load(;dname::String,ext::String=".csv")::run
+    RUN2run(readFiles(dname=dname,ext=ext))
 end

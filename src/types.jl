@@ -1,15 +1,15 @@
 abstract type plasmaData end
-abstract type hasBlank <: plasmaData end
-abstract type hasFract <: hasBlank end
 
-struct sample <: plasmaData
+# immutable raw data, is used inside type 'sample'
+struct SAMPLE <: plasmaData
     sname::String
     datetime::DateTime
     labels::Vector{String}
     dat::Matrix{Float64}
 end
 
-struct run <: plasmaData
+# immutable raw collection of data, is used inside type 'run'
+struct RUN <: plasmaData
     snames::Vector{String}
     datetimes::Vector{DateTime}
     labels::Vector{String}
@@ -17,58 +17,66 @@ struct run <: plasmaData
     index::Vector{Int}
 end
 
-mutable struct bsample <: hasBlank
-    sname::String
-    datetime::DateTime
-    labels::Vector{String}
-    dat::Matrix{Float64}
-    blanks::Matrix{Float64}
+# mutable extension of SAMPLE with blank and signal windows
+mutable struct sample
+    data::SAMPLE
+    blank::Vector{Float64}
+    signal::Vector{Float64}
 end
 
-mutable struct brun <: hasBlank
-    snames::Vector{String}
-    datetimes::Vector{DateTime}
-    labels::Vector{String}
-    dat::Matrix{Float64}
-    index::Vector{Int}
-    blanks::Vector{Matrix{Float64}}
+# mutable extension of RUN with blank and signal window collections
+mutable struct run
+    data::RUN
+    blanks::Vector{Vector{Float64}}
+    signals::Vector{Vector{Float64}}
 end
 
-function samples2run(;samples::Vector{sample})::run
+SAMPLE2sample(pd::SAMPLE) = sample(pd,[0,0],[0,0])
 
-    ns = size(samples,1)
+function RUN2run(pd::RUN)
+    snames = pd.snames
+    blanks = [zeros(2) for _ in eachindex(snames)]
+    signals = [zeros(2) for _ in eachindex(snames)]
+    run(pd,blanks,signals)
+end
+
+# convert an array of SAMPLEs to a RUN
+function SAMPLES2RUN(;SAMPLES::Vector{SAMPLE})::RUN
+
+    ns = size(SAMPLES,1)
 
     datetimes = Vector{DateTime}(undef,ns)
     for i in eachindex(datetimes)
-        datetimes[i] = samples[i].datetime
+        datetimes[i] = SAMPLES[i].datetime
     end
     order = sortperm(datetimes)
     dt = datetimes .- datetimes[order[1]]
     cumsec = Dates.value.(dt)./1000
 
     snames = Vector{String}(undef,ns)
-    labels = cat("cumtime",samples[1].labels,dims=1)
+    labels = cat("cumtime",SAMPLES[1].labels,dims=1)
     dats = Vector{Matrix{Float64}}(undef,ns)
     index = fill(1,ns)
     nr = 0
 
-    for i in eachindex(samples)
+    for i in eachindex(SAMPLES)
         o = order[i]
-        dats[i] = samples[o].dat
+        dats[i] = SAMPLES[o].dat
         if (i>1) index[i] = index[i-1] + nr end
-        snames[i] = samples[o].sname
+        snames[i] = SAMPLES[o].sname
         cumtime = dats[i][1:end,1] .+ cumsec[o]
-        dats[i] = hcat(cumtime,samples[o].dat)
+        dats[i] = hcat(cumtime,SAMPLES[o].dat)
         nr = size(dats[i],1)
     end
 
     bigdat = reduce(vcat,dats)
 
-    run(snames,datetimes,labels,bigdat,index)
+    RUN(snames,datetimes,labels,bigdat,index)
 
 end
 
-function run2sample(;pd::run,i::Int=1)::sample
+# extract a SAMPLE from a RUN
+function RUN2SAMPLE(;pd::RUN,i::Int=1)::SAMPLE
     
     ns = size(pd.snames,1)
     nr = size(pd.dat,1)
@@ -79,11 +87,13 @@ function run2sample(;pd::run,i::Int=1)::sample
     last = i==ns ? nr : pd.index[i+1]-1
     dat =  pd.dat[first:last,2:end]
 
-    sample(sname,datetime,labels,dat)
+    SAMPLE(sname,datetime,labels,dat)
     
 end
 
 function getCols(;pd::plasmaData,labels::Vector{String})::Matrix{Float64}
+    
     i = findall(in(labels).(pd.labels))
     pd.dat[:,i]
+    
 end
