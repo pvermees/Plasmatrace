@@ -54,21 +54,21 @@ function run(samples::Array{sample})::run
     snames = Array{String}(undef,ns)
     labels = cat("cumtime",samples[1].labels,dims=1)
     dats = Array{Matrix{Float64}}(undef,ns)
-    i = fill(0,ns)
+    index = fill(1,ns)
     nr = 0
 
-    for j in eachindex(samples)
-        o = order[j]
-        dats[j] = samples[o].dat
-        i[j] = j + nr
-        snames[j] = samples[o].sname
-        cumtime = dats[j][1:end,1] .+ cumsec[o]
-        dats[j] = hcat(cumtime,samples[o].dat)
-        nr = size(dats[j],1)
+    for i in eachindex(samples)
+        o = order[i]
+        dats[i] = samples[o].dat
+        if (i>1) index[i] = index[i-1] + nr end
+        snames[i] = samples[o].sname
+        cumtime = dats[i][1:end,1] .+ cumsec[o]
+        dats[i] = hcat(cumtime,samples[o].dat)
+        nr = size(dats[i],1)
     end
 
     bigdat = reduce(vcat,dats)
 
-    run(snames,datetimes,labels,bigdat)
+    run(snames,datetimes,labels,bigdat,index)
 
 end

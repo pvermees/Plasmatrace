@@ -4,15 +4,24 @@ function plot(;pd::sample,channels::Array{String},transformation::String="sqrt")
 
 end
 
-function plot(;pd::run,channels::Array{String},transformation::String="sqrt",steps::Int64=500)
+function plot(;pd::run,channels::Array{String},
+              transformation::String="sqrt",
+              steps::Int64=500,i::Int=nothing)
 
-    nr = size(pd.dat,1)
-    step = Int64(round(nr/steps))
-    plotRaw(pd=pd,channels=channels,transformation=transformation,step=step)
+    if (isnothing(i))
+        nr = size(pd.dat,1)
+        step = Int64(ceil(nr/steps))
+        plotobj = pd
+    else
+        step = 1
+        plotobj = run2sample(pd=pd,i=i)
+    end
+    plotRaw(pd=plotobj,channels=channels,transformation=transformation,step=step)
 
 end
 
-function plotRaw(;pd::plasmaData,channels::Array{String},transformation::String="sqrt",step::Int64=1)
+function plotRaw(;pd::plasmaData,channels::Array{String},
+                 transformation::String="sqrt",step::Int64=1)
 
     tlab = pd.labels[1]
     x = getCols(pd=pd,labels=[tlab])[1:step:end,:]
