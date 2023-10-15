@@ -41,5 +41,6 @@ function plotHelper(pd::plasmaData;channels::Vector{String},
     Plots.plot(x,ty,label=reshape(channels,1,:))
     xlabel!(tlab)
     ylabel!(transformation*" Y")
+    gui()
 
 end

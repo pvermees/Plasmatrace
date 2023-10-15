@@ -34,15 +34,21 @@ end
 # mutable extension of RUN with blank and signal window collections
 mutable struct run
     data::RUN
-    blanks::Union{Nothing,Vector{Vector{window}}}
-    signals::Union{Nothing,Vector{Vector{window}}}
+    blanks::Vector{Union{Nothing,Vector{window}}}
+    signals::Vector{Union{Nothing,Vector{window}}}
     par::Union{Nothing,Vector{Float64}}
     cov::Union{Nothing,Matrix{Float64}}
 end
 
+length(pd::RUN) = Base.length(pd.snames)
+length(pd::run) = Base.length(pd.data)
+
 sample(pd::SAMPLE) = sample(pd,nothing,nothing,nothing,nothing)
 
-run(pd::RUN) = run(pd,nothing,nothing,nothing,nothing)
+run(pd::RUN) = run(pd,
+                   fill(nothing,length(pd)),
+                   fill(nothing,length(pd)),
+                   nothing,nothing)
 
 # convert an array of SAMPLEs to a RUN
 function SAMPLES2RUN(;SAMPLES::Vector{SAMPLE})::RUN

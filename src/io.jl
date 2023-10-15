@@ -38,9 +38,9 @@ function readFiles(;dname::String,ext::String=".csv")::RUN
     end
 
     SAMPLES2RUN(SAMPLES=SAMPS)
-
+    
 end
 
-function load(;dname::String,ext::String=".csv")::run
+function load(dname::String;ext::String=".csv")::run
     run(readFiles(dname=dname,ext=ext))
 end
