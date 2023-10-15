@@ -8,15 +8,15 @@ end
 
 function plot(pd::RUN;channels::Vector{String},
               transformation::String="sqrt",
-              steps::Int64=500,i::Int=nothing)
+              steps::Int64=500,i::Int=0)
 
-    if (isnothing(i))
+    if (i>0)
+        step = 1
+        plotobj = RUN2SAMPLE(pd=pd,i=i)
+    else
         nr = size(pd.dat,1)
         step = Int64(ceil(nr/steps))
         plotobj = pd
-    else
-        step = 1
-        plotobj = RUN2SAMPLE(pd=pd,i=i)
     end
     plotHelper(plotobj,channels=channels,
                transformation=transformation,step=step)
@@ -25,7 +25,7 @@ end
 
 function plot(pd::run;channels::Vector{String},
               transformation::String="sqrt",
-              steps::Int64=500,i::Int=nothing)
+              steps::Int64=500,i::Int=0)
     plot(pd.data,channels=channels,
          transformation=transformation,
          steps=steps,i=i)

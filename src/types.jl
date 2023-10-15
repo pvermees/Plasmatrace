@@ -17,28 +17,32 @@ struct RUN <: plasmaData
     index::Vector{Int}
 end
 
+mutable struct window
+    first::Int
+    last::Int
+end
+
 # mutable extension of SAMPLE with blank and signal windows
 mutable struct sample
     data::SAMPLE
-    blank::Vector{Float64}
-    signal::Vector{Float64}
+    blank::Union{Nothing,Vector{window}}
+    signal::Union{Nothing,Vector{window}}
+    par::Union{Nothing,Vector{Float64}}
+    cov::Union{Nothing,Matrix{Float64}}
 end
 
 # mutable extension of RUN with blank and signal window collections
 mutable struct run
     data::RUN
-    blanks::Vector{Vector{Float64}}
-    signals::Vector{Vector{Float64}}
+    blanks::Union{Nothing,Vector{Vector{window}}}
+    signals::Union{Nothing,Vector{Vector{window}}}
+    par::Union{Nothing,Vector{Float64}}
+    cov::Union{Nothing,Matrix{Float64}}
 end
 
-SAMPLE2sample(pd::SAMPLE) = sample(pd,[0,0],[0,0])
+sample(pd::SAMPLE) = sample(pd,nothing,nothing,nothing,nothing)
 
-function RUN2run(pd::RUN)
-    snames = pd.snames
-    blanks = [zeros(2) for _ in eachindex(snames)]
-    signals = [zeros(2) for _ in eachindex(snames)]
-    run(pd,blanks,signals)
-end
+run(pd::RUN) = run(pd,nothing,nothing,nothing,nothing)
 
 # convert an array of SAMPLEs to a RUN
 function SAMPLES2RUN(;SAMPLES::Vector{SAMPLE})::RUN

@@ -42,5 +42,5 @@ function readFiles(;dname::String,ext::String=".csv")::RUN
 end
 
 function load(;dname::String,ext::String=".csv")::run
-    RUN2run(readFiles(dname=dname,ext=ext))
+    run(readFiles(dname=dname,ext=ext))
 end
