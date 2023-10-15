@@ -1,5 +1,5 @@
 # Currently only works for Agilent 8900 files
-function readFile(;fname::String)::SAMPLE
+function readFile(fname::String)::SAMPLE
     
     f = open(fname,"r")
     strs = readlines(f)
@@ -14,9 +14,9 @@ function readFile(;fname::String)::SAMPLE
     labels = split(strs[4],",")
 
     # read signals
-    nr = size(strs,1)-8
-    dat = mapreduce(vcat, strs[5:(nr+4)]) do s
-            (parse.(Float64, split(s, ",")))'
+    nr = size(strs,1)
+    dat = mapreduce(vcat, strs[5:(nr-3)]) do s
+        (parse.(Float64, split(s, ",")))'
     end
 
     close(f)
@@ -25,22 +25,22 @@ function readFile(;fname::String)::SAMPLE
 
 end
 
-function readFiles(;dname::String,ext::String=".csv")::RUN
+function readFiles(dname::String;ext::String=".csv")::RUN
 
     fnames = readdir(dname)
     SAMPS = Array{SAMPLE}(undef,0)
 
     for fname in fnames
         if occursin(ext,fname)
-            SAMP = readFile(fname=dname*fname)
+            SAMP = readFile(dname*fname)
             SAMPS = push!(SAMPS,SAMP)
         end
     end
 
-    SAMPLES2RUN(SAMPLES=SAMPS)
+    SAMPLES2RUN(SAMPS)
     
 end
 
 function load(dname::String;ext::String=".csv")::run
-    run(readFiles(dname=dname,ext=ext))
+    run(readFiles(dname,ext=ext))
 end

@@ -5,7 +5,7 @@ struct SAMPLE <: plasmaData
     sname::String
     datetime::DateTime
     labels::Vector{String}
-    dat::Matrix{Float64}
+    dat::Matrix
 end
 
 # immutable raw collection of data, is used inside type 'run'
@@ -13,13 +13,13 @@ struct RUN <: plasmaData
     snames::Vector{String}
     datetimes::Vector{DateTime}
     labels::Vector{String}
-    dat::Matrix{Float64}
-    index::Vector{Int}
+    dat::Matrix
+    index::Vector{Integer}
 end
 
 mutable struct window
-    first::Int
-    last::Int
+    first::Integer
+    last::Integer
 end
 
 # mutable extension of SAMPLE with blank and signal windows
@@ -27,8 +27,8 @@ mutable struct sample
     data::SAMPLE
     blank::Union{Nothing,Vector{window}}
     signal::Union{Nothing,Vector{window}}
-    par::Union{Nothing,Vector{Float64}}
-    cov::Union{Nothing,Matrix{Float64}}
+    par::Union{Nothing,Vector}
+    cov::Union{Nothing,Matrix}
 end
 
 # mutable extension of RUN with blank and signal window collections
@@ -36,12 +36,12 @@ mutable struct run
     data::RUN
     blanks::Vector{Union{Nothing,Vector{window}}}
     signals::Vector{Union{Nothing,Vector{window}}}
-    par::Union{Nothing,Vector{Float64}}
-    cov::Union{Nothing,Matrix{Float64}}
+    par::Union{Nothing,Vector}
+    cov::Union{Nothing,Matrix}
 end
 
 length(pd::RUN) = Base.length(pd.snames)
-length(pd::run) = Base.length(pd.data)
+length(pd::run) = length(pd.data)
 
 sample(pd::SAMPLE) = sample(pd,nothing,nothing,nothing,nothing)
 
@@ -51,7 +51,7 @@ run(pd::RUN) = run(pd,
                    nothing,nothing)
 
 # convert an array of SAMPLEs to a RUN
-function SAMPLES2RUN(;SAMPLES::Vector{SAMPLE})::RUN
+function SAMPLES2RUN(SAMPLES::Vector{SAMPLE})::RUN
 
     ns = size(SAMPLES,1)
 
@@ -65,7 +65,7 @@ function SAMPLES2RUN(;SAMPLES::Vector{SAMPLE})::RUN
 
     snames = Vector{String}(undef,ns)
     labels = cat("cumtime",SAMPLES[1].labels,dims=1)
-    dats = Vector{Matrix{Float64}}(undef,ns)
+    dats = Vector{Matrix}(undef,ns)
     index = fill(1,ns)
     nr = 0
 
@@ -86,7 +86,7 @@ function SAMPLES2RUN(;SAMPLES::Vector{SAMPLE})::RUN
 end
 
 # extract a SAMPLE from a RUN
-function RUN2SAMPLE(;pd::RUN,i::Int=1)::SAMPLE
+function RUN2SAMPLE(pd::RUN;i::Int=1)::SAMPLE
     
     ns = size(pd.snames,1)
     nr = size(pd.dat,1)
@@ -101,7 +101,7 @@ function RUN2SAMPLE(;pd::RUN,i::Int=1)::SAMPLE
     
 end
 
-function getCols(;pd::plasmaData,labels::Vector{String})::Matrix{Float64}
+function getCols(pd::plasmaData;labels::Vector{String})::Matrix
     
     i = findall(in(labels).(pd.labels))
     pd.dat[:,i]
