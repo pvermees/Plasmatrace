@@ -1,0 +1,25 @@
+/* Emacs: Alt-x maxima, Alt-x maxima-mode */
+
+kill(all) $
+
+k: x - b0x - b1x*tb - b2x*tb^2 $
+l: y - b0y - b1y*tb - b2y*tb^2 $
+m: z - b0z - b1z*tb - b2z*tb^2 $
+K: K0 - b0x - b1x*t - b2x*t^2 $
+L: Y - A*X - B*Z + A*K0 + B*M0 - b0y - b1y*t - b2y*t^2 - exp(c) $
+M: M0 - exp(a0) - exp(a1)*t - exp(a2)*T - b0z - b1z*t - b2z*t^2 $
+
+SSb: k^2 + l^2 + m^2 $
+SSs: K^2 + L^2 + M^2 $
+SS: SSb + SSs $
+
+dSSdK0: diff(SS,K0) $
+M01: solve(dSSdK0,M0) $
+dSSdM0: diff(SS,M0) $
+M02: solve(dSSdM0,M0) $
+K0sol: solve(M01 - M02,K0) $
+
+K01: solve(dSSdK0,K0) $
+K02: solve(dSSdM0,K0) $
+M0sol: solve(K01 - K02,M0) $
+

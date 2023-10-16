@@ -27,6 +27,6 @@ function getLabels(pd::plasmaData) getproperty(getRaw(pd),:labels) end
 
 function getNames(pd::plasmaData) getproperty(getRaw(pd),:snames) end
 
-function getBlank(pd::processed) getproperty(pd,:blank) end
+function getBlankWindows(pd::processed) getproperty(pd,:blank) end
 
-function getSignal(pd::processed) getproperty(pd,:signal) end
+function getSignalWindows(pd::processed) getproperty(pd,:signal) end

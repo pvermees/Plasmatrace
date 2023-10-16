@@ -45,7 +45,7 @@ function plotHelper(pd::plasmaData;channels::Vector{String},
     x = getCols(pd,labels=[tlab])[1:step:end,:]
     y = getCols(pd,labels=channels)[1:step:end,:]
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
-    p = Plots.plot(x,ty,label=reshape(channels,1,:))
+    p = Plots.plot(x,ty,label=reshape(channels,1,:),legend=:topleft)
     xlabel!(tlab)
     ylabel!(transformation*"(signal)")
     if show display(p) end
@@ -56,8 +56,8 @@ function plotWindows!(p;pd::sample,blank=false,dy=Plots.ylims(p),linecolor="blac
     windows = blank ? getBlank(pd) : getSignal(pd)
     if isnothing(windows) return end
     for w in windows
-        from = getVal(pd,r=w.from,c=1)
-        to = getVal(pd,r=w.to,c=1)
+        from = getVal(pd,r=w[1],c=1)
+        to = getVal(pd,r=w[2],c=1)
         Plots.plot!(p,[from,from,to,to,from],collect(dy[[1,2,2,1,1]]),
                     linecolor=linecolor,linestyle=:dot,label="")
     end

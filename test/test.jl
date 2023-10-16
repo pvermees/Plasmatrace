@@ -10,6 +10,9 @@ include(dir*"converters.jl")
 include(dir*"io.jl")
 include(dir*"plots.jl")
 include(dir*"windows.jl")
+include(dir*"DRS.jl")
+include(dir*"referencematerials.jl")
+include(dir*"crunch.jl")
 
 closeall();
 
@@ -50,12 +53,20 @@ function plotwindowtest(tt=nothing)
     timer!(tt,myrun)
 end
 
+function crunchtest(tt=nothing)
+    myrun = loadtest();
+    setBlank!(myrun);
+    setSignal!(myrun);
+    crunch(myrun);
+end
+
 tt = [time()]; # start clock
 
 loadtest(tt);
 plottest(tt);
 windowtest(tt);
 plotwindowtest(tt);
+out = crunchtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings
 

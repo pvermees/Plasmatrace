@@ -21,10 +21,7 @@ struct RUN <: raw
     index::Vector{Integer}
 end
 
-mutable struct window
-    from::Integer
-    to::Integer
-end
+const window = Tuple{Int,Int}
 
 # mutable extension of SAMPLE
 mutable struct sample <: processed

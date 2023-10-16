@@ -14,7 +14,7 @@ function setWindow!(pd::run;
                     windows::Union{Nothing,Vector{window}}=nothing,
                     i::Union{Nothing,Integer}=nothing,
                     blank=false)
-    w = blank ? getBlank(pd) : getSignal(pd)
+    w = blank ? getBlankWindows(pd) : getSignalWindows(pd)
     if isnothing(windows)
         dat = getDat(pd,withtime=false)
         total = vec(sum(dat,dims=2))
@@ -61,5 +61,32 @@ function autoWindow(pd::run;total=nothing,i::Integer,blank=false)::Vector{window
         from = ceil(Int,(9*min+max)/10)
         to = ceil(Int,max)
     end
-    return [window(from,to)]
+    return [(from,to)]
+end
+
+function blankData(pd::run;channels=nothing)
+    windowData(pd::run,blank=true,channels=channels)
+end
+function signalData(pd::run;channels=nothing)
+    windowData(pd::run,blank=false,channels=channels)
+end
+function windowData(pd::run;blank=false,channels=nothing)
+    windows = blank ? getBlankWindows(pd) : getSignalWindows(pd)
+    flattenonce = collect(Iterators.flatten(windows))
+    flattentwice = collect(Iterators.flatten(flattenonce))
+    numwin = size(flattentwice,1)//2
+    from = flattentwice[1:2:end-1]
+    to = flattentwice[2:2:end]
+    step = to.-from
+    nselected = Int(sum(step).+numwin)
+    selection = fill(0,nselected)
+    last = 0
+    for i in eachindex(step)
+        first = last + 1
+        last = first + step[i]
+        selection[first:last] = from[i]:to[i]
+    end
+    dat = getCols(pd,labels=channels)
+    dat[selection,:]
+
 end
