@@ -36,7 +36,7 @@ function RUN2SAMPLE(pd::RUN;i=1)::SAMPLE
     
     ns = length(pd)
     nr = nsweeps(pd)
-    sname = pd.snames[i]
+    sname = getNames(pd)[i]
     datetime = pd.datetimes[i]
     labels = pd.labels[2:end]
     first = pd.index[i]
