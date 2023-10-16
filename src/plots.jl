@@ -5,8 +5,8 @@ end
 function plot(pd::sample;channels::Vector{String},transformation="sqrt",show=true)
     p = plot(pd.data,channels=channels,transformation=transformation)
     dy = Plots.ylims(p)
-    plotWindows!(p,pd=pd,blank=true,dy=dy)
-    plotWindows!(p,pd=pd,blank=false,dy=dy)
+    plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
+    plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
     if show display(p) end
     return p
 end
@@ -47,20 +47,18 @@ function plotHelper(pd::plasmaData;channels::Vector{String},
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
     p = Plots.plot(x,ty,label=reshape(channels,1,:))
     xlabel!(tlab)
-    ylabel!(transformation*" Y")
+    ylabel!(transformation*"(signal)")
     if show display(p) end
     return p
 end
 
-function plotWindows!(p;pd::sample,blank=false,dy=Plots.ylims(p))
+function plotWindows!(p;pd::sample,blank=false,dy=Plots.ylims(p),linecolor="black")
     windows = blank ? getBlank(pd) : getSignal(pd)
     if isnothing(windows) return end
     for w in windows
         from = getVal(pd,r=w.from,c=1)
         to = getVal(pd,r=w.to,c=1)
-        Plots.plot!(p,[from,from],[dy[1],dy[2]],
-                    linecolor="black",linestyle=:dash,label="")
-        Plots.plot!(p,[to,to],[dy[1],dy[2]],
-                    linecolor="black",linestyle=:dash,label="")
+        Plots.plot!(p,[from,from,to,to,from],collect(dy[[1,2,2,1,1]]),
+                    linecolor=linecolor,linestyle=:dot,label="")
     end
 end

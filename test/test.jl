@@ -45,7 +45,8 @@ function plotwindowtest(tt=nothing)
     myrun = loadtest();
     setBlank!(myrun);
     setSignal!(myrun);
-    plot(myrun,channels=["Hf176 -> 258","Hf178 -> 260"],i=1);
+    setSignal!(myrun,windows=[window(70,90),window(100,140)],i=2);
+    plot(myrun,channels=["Hf176 -> 258","Hf178 -> 260"],i=2);
     timer!(tt,myrun)
 end
 
