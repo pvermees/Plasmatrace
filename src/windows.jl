@@ -8,16 +8,16 @@ function setBlank!(pd::run;
             end
         else
             ns = length(pd)
-            nr = size(pd.data.dat,1)
-            index = pd.data.index
+            nr = nsweeps(pd)
+            index = getIndex(pd)
             from = index[i]
             to = i < ns ? index[i+1]-1 : nr
-            total = vec(sum(pd.data.dat[from:to,3:end],dims=2))
+            total = vec(sum(getData(pd)[from:to,3:end],dims=2))
             q = quantile(total,[0.05,0.95])
             mid = (q[2]+q[1])/10
             low = findall(total.<mid)
             to = floor(maximum(low)*0.95)
-            pd.blanks[i] = [window(0,to)]
+            pd.blanks[i] = [window(1,to)]
         end
     else
         if isnothing(i)
@@ -26,5 +26,7 @@ function setBlank!(pd::run;
             pd.blanks[i] = blank
         end
     end
+
+    return pd
 
 end
