@@ -9,7 +9,7 @@ function readFile(fname::String)::SAMPLE
     dt = split(strs[3]," ")
     date = parse.(Int,split(dt[8],"/"))
     time = parse.(Int,split(dt[9],":"))
-    datetime = Dates.DateTime(2000+date[3],date[2],date[1],
+    datetime = Dates.DateTime(date[3],date[2],date[1],
                               time[1],time[2],time[3])
     labels = split(strs[4],",")
 

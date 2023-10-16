@@ -34,8 +34,8 @@ end
 
 function RUN2SAMPLE(pd::RUN;i=1)::SAMPLE
     
-    ns = size(pd.snames,1)
-    nr = size(pd.dat,1)
+    ns = length(pd)
+    nr = nsweeps(pd)
     sname = pd.snames[i]
     datetime = pd.datetimes[i]
     labels = pd.labels[2:end]

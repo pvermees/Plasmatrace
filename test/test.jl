@@ -32,6 +32,7 @@ end
 
 function blanktest(tt=nothing)
     myrun = loadtest();
+    setBlank!(myrun,blank=[window(10,20)]);
     setBlank!(myrun);
     setBlank!(myrun,blank=[window(0,10),window(12,15)],i=2);
     timer!(tt,myrun)

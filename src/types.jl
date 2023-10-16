@@ -1,9 +1,11 @@
 # DEFINITIONS
 
 abstract type plasmaData end
+abstract type rawData <: plasmaData end
+abstract type processedData <: plasmaData end
 
 # immutable raw data, is used inside type 'sample'
-struct SAMPLE <: plasmaData
+struct SAMPLE <: rawData
     sname::String
     datetime::DateTime
     labels::Vector{String}
@@ -11,7 +13,7 @@ struct SAMPLE <: plasmaData
 end
 
 # immutable raw collection of data, is used inside type 'run'
-struct RUN <: plasmaData
+struct RUN <: rawData
     snames::Vector{String}
     datetimes::Vector{DateTime}
     labels::Vector{String}
@@ -25,7 +27,7 @@ mutable struct window
 end
 
 # mutable extension of SAMPLE with blank and signal windows
-mutable struct sample
+mutable struct sample <: processedData
     data::SAMPLE
     blank::Union{Nothing,Vector{window}}
     signal::Union{Nothing,Vector{window}}
@@ -34,7 +36,7 @@ mutable struct sample
 end
 
 # mutable extension of RUN with blank and signal window collections
-mutable struct run
+mutable struct run <: processedData
     data::RUN
     blanks::Vector{Union{Nothing,Vector{window}}}
     signals::Vector{Union{Nothing,Vector{window}}}
