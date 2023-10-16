@@ -38,8 +38,8 @@ end
 # mutable extension of RUN
 mutable struct run <: processed
     data::RUN
-    blanks::Vector{Union{Nothing,Vector{window}}}
-    signals::Vector{Union{Nothing,Vector{window}}}
+    blank::Vector{Union{Nothing,Vector{window}}}
+    signal::Vector{Union{Nothing,Vector{window}}}
     par::Union{Nothing,Vector}
     cov::Union{Nothing,Matrix}
 end

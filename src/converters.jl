@@ -51,8 +51,8 @@ function run2sample(pd::run;i=1)::sample
 
     SAMP = RUN2SAMPLE(pd.data;i=i)
     out = sample(SAMP)
-    out.blank = pd.blanks[i]
-    out.signal = pd.signals[i]
+    out.blank = pd.blank[i]
+    out.signal = pd.signal[i]
     out.par = pd.par
     out.cov = pd.cov
     out

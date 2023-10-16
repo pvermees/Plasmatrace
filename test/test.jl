@@ -30,17 +30,21 @@ function plottest(tt=nothing)
     timer!(tt,p)
 end
 
-function blanktest(tt=nothing)
+function windowtest(tt=nothing)
     myrun = loadtest();
-    #setBlank!(myrun,blank=[window(10,20)]);
-    setBlank!(myrun);
-    #setBlank!(myrun,blank=[window(0,10),window(12,15)],i=2);
-    #setBlank!(myrun,i=1);
+    setBlank!(myrun,windows=[window(10,20)]);
+    setBlank!(myrun,windows=[window(0,10),window(12,15)],i=2);
+    setBlank!(myrun,i=1);
+    setSignal!(myrun,windows=[window(10,20)]);
+    setSignal!(myrun,windows=[window(60,70),window(80,100)],i=2);
+    setSignal!(myrun,i=1);
     timer!(tt,myrun)
 end
 
-function plotblanktest(tt=nothing)
-    myrun = blanktest();
+function plotwindowtest(tt=nothing)
+    myrun = loadtest();
+    setBlank!(myrun);
+    setSignal!(myrun);
     plot(myrun,channels=["Hf176 -> 258","Hf178 -> 260"],i=1);
     timer!(tt,myrun)
 end
@@ -49,8 +53,8 @@ tt = [time()]; # start clock
 
 loadtest(tt);
 plottest(tt);
-blanktest(tt);
-plotblanktest(tt);
+windowtest(tt);
+plotwindowtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings
 

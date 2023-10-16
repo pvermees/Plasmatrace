@@ -4,15 +4,9 @@ end
 
 function plot(pd::sample;channels::Vector{String},transformation="sqrt",show=true)
     p = plot(pd.data,channels=channels,transformation=transformation)
-    if !isnothing(pd.blank)
-        dy = ylims(p)
-        for w in pd.blank
-            from = getVal(pd,r=w.from,c=1)
-            to = getVal(pd,r=w.to,c=1)
-            Plots.plot!(p,[from,from],[dy[1],dy[2]],linecolor="black",linestyle=:dash,label="")
-            Plots.plot!(p,[to,to],[dy[1],dy[2]],linecolor="black",linestyle=:dash,label="")
-        end
-    end
+    dy = Plots.ylims(p)
+    plotWindows!(p,pd=pd,blank=true,dy=dy)
+    plotWindows!(p,pd=pd,blank=false,dy=dy)
     if show display(p) end
     return p
 end
@@ -56,4 +50,17 @@ function plotHelper(pd::plasmaData;channels::Vector{String},
     ylabel!(transformation*" Y")
     if show display(p) end
     return p
+end
+
+function plotWindows!(p;pd::sample,blank=false,dy=Plots.ylims(p))
+    windows = blank ? getBlank(pd) : getSignal(pd)
+    if isnothing(windows) return end
+    for w in windows
+        from = getVal(pd,r=w.from,c=1)
+        to = getVal(pd,r=w.to,c=1)
+        Plots.plot!(p,[from,from],[dy[1],dy[2]],
+                    linecolor="black",linestyle=:dash,label="")
+        Plots.plot!(p,[to,to],[dy[1],dy[2]],
+                    linecolor="black",linestyle=:dash,label="")
+    end
 end

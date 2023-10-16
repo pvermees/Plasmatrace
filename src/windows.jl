@@ -1,23 +1,37 @@
 function setBlank!(pd::run;
-                   blank::Union{Nothing,Vector{window}}=nothing,
+                   windows::Union{Nothing,Vector{window}}=nothing,
                    i::Union{Nothing,Integer}=nothing)
-    if isnothing(blank)
+    setWindow!(pd,windows=windows,i=i,blank=true)
+end
+
+function setSignal!(pd::run;
+                    windows::Union{Nothing,Vector{window}}=nothing,
+                    i::Union{Nothing,Integer}=nothing)
+    setWindow!(pd,windows=windows,i=i,blank=false)
+end
+
+function setWindow!(pd::run;
+                    windows::Union{Nothing,Vector{window}}=nothing,
+                    i::Union{Nothing,Integer}=nothing,
+                    blank=false)
+    w = blank ? getBlank(pd) : getSignal(pd)
+    if isnothing(windows)
         dat = getDat(pd,withtime=false)
         total = vec(sum(dat,dims=2))
         if isnothing(i)
             for j in eachindex(getIndex(pd))
-                pd.blanks[j] = autoWindow(pd,total=total,i=j,blank=true)
+                w[j] = autoWindow(pd,total=total,i=j,blank=blank)
             end
         else
-            pd.blanks[i] = autoWindow(pd,total=total,i=i,blank=true)
+            w[i] = autoWindow(pd,total=total,i=i,blank=blank)
         end
     else
         if isnothing(i)
             for j in eachindex(getIndex(pd))
-                setBlank!(pd,i=j,blank=blank)
+                setWindow!(pd,windows=windows,i=j,blank=blank)
             end
         else
-            pd.blanks[i] = blank
+            w[i] = windows
         end
     end
 
@@ -39,13 +53,13 @@ function autoWindow(pd::run;total=nothing,i::Integer,blank=false)::Vector{window
     if blank
         min = minimum(blk)
         max = maximum(blk)
-        from = floor(min)
-        to = floor((19*max+min)/20)
+        from = floor(Int,min)
+        to = floor(Int,(19*max+min)/20)
     else
         min = minimum(sig)
         max = maximum(sig)
-        from = ceil((19*min+max)/20)
-        to = ceil(max)
+        from = ceil(Int,(9*min+max)/10)
+        to = ceil(Int,max)
     end
     return [window(from,to)]
 end
