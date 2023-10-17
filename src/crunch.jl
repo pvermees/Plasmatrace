@@ -32,61 +32,81 @@ function polyVal(p,t)
     out
 end
 
-function crunch!(pd::run;method="LuHf",refmat="Hogsbo")
+function crunch!(pd::run;method="LuHf",refmat="Hogsbo",n::Int=2)
 
     data = DRSprep!(pd,method=method,refmat=refmat)
 
     tb = data.b[:,1]
-    x = data.b[:,3]
-    y = data.b[:,4]
-    z = data.b[:,5]
+    xm = data.b[:,3]
+    ym = data.b[:,4]
+    zm = data.b[:,5]
     t = data.s[:,1]
     T = data.s[:,2]
-    X = data.s[:,3]
-    Y = data.s[:,4]
-    Z = data.s[:,5]
+    Xm = data.s[:,3]
+    Ym = data.s[:,4]
+    Zm = data.s[:,5]
     A = data.A
     B = data.B
-    
-    bx = polyFit(tb,x,n=2)
-    by = polyFit(tb,y,n=2)
-    bz = polyFit(tb,z,n=2)
+
+    bx = polyFit(tb,xm,n=n)
+    by = polyFit(tb,ym,n=n)
+    bz = polyFit(tb,zm,n=n)
 
     bXt = polyVal(bx,t)
     bYt = polyVal(by,t)
     bZt = polyVal(bz,t)
     
     function misfit(par)
-        a0 = par[1]
-        a1 = par[2]
-        a2 = par[3]
-        c = par[4]
-        K0 = @. -(A*B*exp(a1)*t-A*exp(c)+A*B*bZt-A*bYt+((-B^2)-1)*bXt+A*B*T*exp(a2)+A*B*exp(a0)-A*B*Z+A*Y-A^2*X)/(B^2+A^2+1)
-        M0 = @. ((A^2+1)*exp(a1)*t+B*exp(c)+(A^2+1)*bZt+B*bYt-A*B*bXt+(A^2+1)*T*exp(a2)+(A^2+1)*exp(a0)+B^2*Z-B*Y+A*B*X)/(B^2+A^2+1)
-        S = @. ((-exp(a1)*t)-bZt-T*exp(a2)-exp(a0)+M0)^2+((-exp(c))-bYt-B*Z+Y-A*X+B*M0+A*K0)^2+(K0-bXt)^2
-        sum(S)
+        ft = polyVal(par[1:n],t)
+        FT = polyVal(par[n+1:2*n],T)
+        c = par[end]
+        X = getX(Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
+        Z = getZ(Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
+        sum(getS(X,Z,Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c))
     end
 
-    fit = optimize(misfit,[0.0,0.0,0.0,-10.0])
-    ac = Optim.minimizer(fit)
-    setPar!(pd,[bx;by;bz;ac])
+    init = [log(abs(mean(Zm)));fill(0.0,2*n-1);-10.0]
+    fit = optimize(misfit,init)
+    sol = Optim.minimizer(fit)
+    setPar!(pd,[bx;by;bz;sol])
     
 end
 
+function getX(Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
+    @. -(exp(c)*(A*bYt*exp(2*ft+2*FT)-A*Ym*exp(2*ft+2*FT))+bXt*exp(2*ft+2*FT)-Xm*exp(2*ft+2*FT)+exp(2*c)*(A*B*(exp(FT)*Zm-exp(FT)*bZt)*exp(ft)+B^2*bXt-B^2*Xm))/(exp(2*c)*(A^2*exp(2*ft+2*FT)+B^2)+exp(2*ft+2*FT))
+end
+
+function getZ(Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
+    @. (exp(2*c)*(A^2*(exp(FT)*Zm-exp(FT)*bZt)*exp(ft)+A*B*bXt-A*B*Xm)+(exp(FT)*Zm-exp(FT)*bZt)*exp(ft)+(B*Ym-B*bYt)*exp(c))/(exp(2*c)*(A^2*exp(2*ft+2*FT)+B^2)+exp(2*ft+2*FT))
+end
+
+function getS(X,Z,Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
+    @. ((-Z*exp(ft+FT))-bZt+Zm)^2+((-(B*Z+A*X)*exp(c))-bYt+Ym)^2+((-bXt)+Xm-X)^2
+end
+
 function predict(pd::processed)
-    if isnothing(getPar(pd)) return nothing end
     par = getPar(pd)
+    if isnothing(par) return nothing end
     np = size(par,1)
-    nb = Int((np-4)/3)
+    n = Int((np-1)/5)
     c = par[end]
-    a = par[end-3:1]
-    bx = par[1:nb]
-    by = par[nb+1:2*nb]
-    bz = par[2*nb+1:3*nb]
-    t = getDat(pd)[:,1]
-    T = getDat(pd)[:,2]
+    f = par[1:n]
+    F = par[n+1:2*n]
+    bx = par[2*n+1:3*n]
+    by = par[3*n+1:4*n]
+    bz = par[4*n+1:5*n]
+    dat = signalData(pd)
+    t = dat[:,1]
+    T = dat[:,2]
+    Xm = dat[:,1]
+    Ym = dat[:,2]
+    Zm = dat[:,3]
+    ft = polyVal(f,t)
+    FT = polyVal(F,T)
     bXt = polyVal(bx,t)
     bYt = polyVal(by,t)
     bZt = polyVal(bz,t)
-    
+    # X = getX(Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
+    # Z = getZ(Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
+    # TODO: Y = (A*X + B*Z)*exp(c)
 end

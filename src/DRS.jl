@@ -6,8 +6,8 @@ function DRSprep!(pd::run;method="LuHf",refmat="Hogsbo")
     end
 
     setChannels!(pd,channels)
-    b = blankData(pd)
-    s = signalData(pd)
+    b = blankData(pd)  # TODO: blank for all samples
+    s = signalData(pd) # TODO: signal just for standards
 
     (A=AB.A,B=AB.B,b=b,s=s)
     

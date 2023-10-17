@@ -66,10 +66,10 @@ end
 
 tt = [time()]; # start clock
 
-loadtest(tt);
-plottest(tt);
-windowtest(tt);
-plotwindowtest(tt);
+#loadtest(tt);
+#plottest(tt);
+#windowtest(tt);
+#plotwindowtest(tt);
 out = crunchtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings
