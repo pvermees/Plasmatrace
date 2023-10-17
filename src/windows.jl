@@ -72,19 +72,14 @@ function signalData(pd::run;channels=nothing)
 end
 function windowData(pd::run;blank=false,channels=nothing)
     windows = blank ? getBlankWindows(pd) : getSignalWindows(pd)
-    flattenonce = collect(Iterators.flatten(windows))
-    flattentwice = collect(Iterators.flatten(flattenonce))
-    numwin = size(flattentwice,1)//2
-    from = flattentwice[1:2:end-1]
-    to = flattentwice[2:2:end]
-    step = to.-from
-    nselected = Int(sum(step).+numwin)
-    selection = fill(0,nselected)
-    last = 0
-    for i in eachindex(step)
-        first = last + 1
-        last = first + step[i]
-        selection[first:last] = from[i]:to[i]
+    start = getIndex(pd) .- 1
+    selection = Vector{Int}()
+    for i in eachindex(windows)
+        for w in windows[i]
+            first = Int(start[i] + w[1])
+            last = Int(start[i] + w[2])
+            append!(selection, first:last)
+        end
     end
     dat = getCols(pd,labels=channels)
     dat[selection,:]

@@ -8,10 +8,11 @@ function SAMPLES2RUN(SAMPLES::Vector{SAMPLE})::RUN
     end
     order = sortperm(datetimes)
     dt = datetimes .- datetimes[order[1]]
-    cumsec = Dates.value.(dt)./1000
+    sph = 3.6e6 # number of seconds per hour
+    runtime = Dates.value.(dt)./sph
 
     snames = Vector{String}(undef,ns)
-    labels = cat("cumtime",SAMPLES[1].labels,dims=1)
+    labels = cat("Run Time [Hours]",SAMPLES[1].labels,dims=1)
     dats = Vector{Matrix}(undef,ns)
     index = fill(1,ns)
     nr = 0
@@ -21,7 +22,7 @@ function SAMPLES2RUN(SAMPLES::Vector{SAMPLE})::RUN
         dats[i] = SAMPLES[o].dat
         if (i>1) index[i] = index[i-1] + nr end
         snames[i] = SAMPLES[o].sname
-        cumtime = dats[i][1:end,1] .+ cumsec[o]
+        cumtime = dats[i][1:end,1]./sph .+ runtime[o]
         dats[i] = hcat(cumtime,SAMPLES[o].dat)
         nr = size(dats[i],1)
     end

@@ -1,4 +1,4 @@
-# Currently only works for Agilent 8900 files
+# Currently only works for Agilent files
 function readFile(fname::String)::SAMPLE
     
     f = open(fname,"r")

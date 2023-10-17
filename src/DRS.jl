@@ -1,7 +1,8 @@
 function DRSprep(pd::run;method="LuHf",refmat="Hogsbo")
 
     if (method=="LuHf")
-        channels = ["cumtime","Time [Sec]","Hf176 -> 258","Hf178 -> 260","Lu175 -> 175"]
+        channels = ["Run Time [Hours]","Time [Sec]",
+                    "Hf176 -> 258","Hf178 -> 260","Lu175 -> 175"]
         AB = getAB(refmat)
     end
 

@@ -1,13 +1,41 @@
-function init(pd::run)
-    b = fill(0.,9)
-    a = fill(0.,3)
-    c = -10.
-    [b;a;c]
+# polynomial fit with logarithmic coefficients
+function polyFit(t,y;n=2)
+    
+    b0 = log(abs(Statistics.mean(y)))
+    init = n>1 ? [b0;fill(-10,n-1)] : [b0]
+    nt = size(t,1)
+    
+    function misfit(par)
+        pred = fill(exp(par[1]),nt)
+        if n>1
+            for i in 2:n
+                @. pred += exp(par[i])*t^(i-1)
+            end
+        end
+        sum((y.-pred).^2)
+    end
+
+    fit = optimize(misfit,init)
+    Optim.minimizer(fit)
+    
+end
+
+function polyVal(p,t)
+    np = size(p,1)
+    nt = size(t,1)
+    out = fill(0.0,nt)
+    if np>1
+        for i in 2:np
+            out .+= exp(p[i]).*t.^(i-1)
+        end
+    end
+    out
 end
 
 function crunch(pd::run;method="LuHf",refmat="Hogsbo")
 
     data = DRSprep(pd,method=method,refmat=refmat)
+
     tb = data.b[:,1]
     x = data.b[:,3]
     y = data.b[:,4]
@@ -20,38 +48,28 @@ function crunch(pd::run;method="LuHf",refmat="Hogsbo")
     A = data.A
     B = data.B
     
+    bx = polyFit(tb,x,n=2)
+    by = polyFit(tb,y,n=2)
+    bz = polyFit(tb,z,n=2)
+
+    bXt = polyVal(bx,t)
+    bYt = polyVal(by,t)
+    bZt = polyVal(bz,t)
+    
     function misfit(par)
-        K0 = getK0(b0x=par[1],b1x=par[2],b2x=par[3],
-                   b0y=par[4],b1y=par[5],b2y=par[6],
-                   b0z=par[7],b1z=par[8],b2z=par[9],
-                   a0=par[10],a1=par[11],a2=par[12],c=par[13],
-                   tb=tb,x=x,y=y,z=z,t=t,T=T,X=X,Y=Y,Z=Z,A=A,B=B)
-        M0 = getM0(b0x=par[1],b1x=par[2],b2x=par[3],
-                   b0y=par[4],b1y=par[5],b2y=par[6],
-                   b0z=par[7],b1z=par[8],b2z=par[9],
-                   a0=par[10],a1=par[11],a2=par[12],c=par[13],
-                   tb=tb,x=x,y=y,z=z,t=t,T=T,X=X,Y=Y,Z=Z,A=A,B=B)
-        out = SS(K0=K0,M0=M0,b0x=par[1],b1x=par[2],b2x=par[3],
-                 b0y=par[4],b1y=par[5],b2y=par[6],
-                 b0z=par[7],b1z=par[8],b2z=par[9],
-                 a0=par[10],a1=par[11],a2=par[12],c=par[13],
-                 tb=tb,x=x,y=y,z=z,t=t,T=T,X=X,Y=Y,Z=Z,A=A,B=B)
-        println(out)
+        a0 = par[1]
+        a1 = par[2]
+        a2 = par[3]
+        c = par[4]
+        K0 = @. -(A*B*exp(a1)*t-A*exp(c)+A*B*bZt-A*bYt+((-B^2)-1)*bXt+A*B*T*exp(a2)+A*B*exp(a0)-A*B*Z+A*Y-A^2*X)/(B^2+A^2+1)
+        M0 = @. ((A^2+1)*exp(a1)*t+B*exp(c)+(A^2+1)*bZt+B*bYt-A*B*bXt+(A^2+1)*T*exp(a2)+(A^2+1)*exp(a0)+B^2*Z-B*Y+A*B*X)/(B^2+A^2+1)
+        S = @. ((-exp(a1)*t)-bZt-T*exp(a2)-exp(a0)+M0)^2+((-exp(c))-bYt-B*Z+Y-A*X+B*M0+A*K0)^2+(K0-bXt)^2
+        sum(S)
     end
 
-    optimize(misfit,init(pd))
+    fit = optimize(misfit,[0.0,0.0,0.0,-10.0])
+    out = Optim.minimizer(fit)
+    println(out)
+    out
     
-end
-
-function SS(;K0,M0,b0x,b1x,b2x,b0y,b1y,b2y,b0z,b1z,b2z,a0,a1,a2,c,tb,x,y,z,t,T,X,Y,Z,A,B)
-    s = @. (z-b2z*tb^2-b1z*tb-b0z)^2+(y-b2y*tb^2-b1y*tb-b0y)^2+(x-b2x*tb^2-b1x*tb-b0x)^2+((-b2z*t^2)-b1z*t-exp(a1)*t-b0z-T*exp(a2)-exp(a0)+M0)^2+((-b2y*t^2)-b1y*t-exp(c)-b0y-B*Z+Y-A*X+B*M0+A*K0)^2+((-b2x*t^2)-b1x*t-b0x+K0)^2
-    sum(s)
-end
-
-function getK0(;b0x,b1x,b2x,b0y,b1y,b2y,b0z,b1z,b2z,a0,a1,a2,c,tb,x,y,z,t,T,X,Y,Z,A,B)
-    @. -((A*B*b2z-A*b2y+((-B^2)-1)*b2x)*t^2+(A*B*b1z-A*b1y+((-B^2)-1)*b1x+A*B*exp(a1))*t-A*exp(c)+A*B*b0z-A*b0y+((-B^2)-1)*b0x+A*B*T*exp(a2)+A*B*exp(a0)-A*B*Z+A*Y-A^2*X)/(B^2+A^2+1)
-end
-
-function getM0(;b0x,b1x,b2x,b0y,b1y,b2y,b0z,b1z,b2z,a0,a1,a2,c,tb,x,y,z,t,T,X,Y,Z,A,B)
-    @. (((A^2+1)*b2z+B*b2y-A*B*b2x)*t^2+((A^2+1)*b1z+B*b1y-A*B*b1x+(A^2+1)*exp(a1))*t+B*exp(c)+(A^2+1)*b0z+B*b0y-A*B*b0x+(A^2+1)*T*exp(a2)+(A^2+1)*exp(a0)+B^2*Z-B*Y+A*B*X)/(B^2+A^2+1)
 end
