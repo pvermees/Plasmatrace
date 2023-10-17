@@ -19,6 +19,9 @@ function readFile(fname::String)::SAMPLE
         (parse.(Float64, split(s, ",")))'
     end
 
+    labels = ["Run Time [hours]";labels]
+    dat = hcat(dat[:,1]./sph,dat)
+
     close(f)
 
     SAMPLE(sname,datetime,labels,dat)

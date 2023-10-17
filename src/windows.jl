@@ -1,22 +1,10 @@
-function setBlank!(pd::run;
-                   windows::Union{Nothing,Vector{window}}=nothing,
-                   i::Union{Nothing,Integer}=nothing)
-    setWindow!(pd,windows=windows,i=i,blank=true)
-end
-
-function setSignal!(pd::run;
-                    windows::Union{Nothing,Vector{window}}=nothing,
-                    i::Union{Nothing,Integer}=nothing)
-    setWindow!(pd,windows=windows,i=i,blank=false)
-end
-
 function setWindow!(pd::run;
                     windows::Union{Nothing,Vector{window}}=nothing,
                     i::Union{Nothing,Integer}=nothing,
                     blank=false)
     w = blank ? getBlankWindows(pd) : getSignalWindows(pd)
     if isnothing(windows)
-        dat = getDat(pd,withtime=false)
+        dat = getDat(pd)[:,3:end]
         total = vec(sum(dat,dims=2))
         if isnothing(i)
             for j in eachindex(getIndex(pd))
@@ -81,7 +69,7 @@ function windowData(pd::run;blank=false,channels=nothing)
             append!(selection, first:last)
         end
     end
-    dat = getCols(pd,labels=channels)
+    labels = [getLabels(pd)[1:2];channels]
+    dat = getCols(pd,labels=labels)
     dat[selection,:]
-
 end

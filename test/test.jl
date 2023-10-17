@@ -24,7 +24,7 @@ end
 function loadtest(tt=nothing)
     dname = "/home/pvermees/Documents/Plasmatrace/GlorieGarnet/";
     out = load(dname);
-    timer!(tt,out)
+    timer!(tt,out);
 end
 
 function plottest(tt=nothing)
@@ -57,18 +57,18 @@ function crunchtest(tt=nothing)
     myrun = loadtest();
     setBlank!(myrun);
     setSignal!(myrun);
-    fit = crunch(myrun);
+    crunch!(myrun);
+    println(myrun.par)
     timer!(tt,myrun);
-    fit
 end
 
 tt = [time()]; # start clock
 
-#loadtest(tt);
-#plottest(tt);
-#windowtest(tt);
-#plotwindowtest(tt);
-out = crunchtest(tt);
+loadtest(tt);
+plottest(tt);
+windowtest(tt);
+plotwindowtest(tt);
+crunchtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings
 

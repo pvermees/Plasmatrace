@@ -8,11 +8,10 @@ function SAMPLES2RUN(SAMPLES::Vector{SAMPLE})::RUN
     end
     order = sortperm(datetimes)
     dt = datetimes .- datetimes[order[1]]
-    sph = 3.6e6 # number of seconds per hour
     runtime = Dates.value.(dt)./sph
 
     snames = Vector{String}(undef,ns)
-    labels = cat("Run Time [Hours]",SAMPLES[1].labels,dims=1)
+    labels = SAMPLES[1].labels
     dats = Vector{Matrix}(undef,ns)
     index = fill(1,ns)
     nr = 0
@@ -22,8 +21,7 @@ function SAMPLES2RUN(SAMPLES::Vector{SAMPLE})::RUN
         dats[i] = SAMPLES[o].dat
         if (i>1) index[i] = index[i-1] + nr end
         snames[i] = SAMPLES[o].sname
-        cumtime = dats[i][1:end,1]./sph .+ runtime[o]
-        dats[i] = hcat(cumtime,SAMPLES[o].dat)
+        dats[i][:,1] = dats[i][:,2]./sph .+ runtime[o]
         nr = size(dats[i],1)
     end
 
@@ -37,14 +35,13 @@ function RUN2SAMPLE(pd::RUN;i=1)::SAMPLE
     
     ns = length(pd)
     nr = nsweeps(pd)
-    sname = getNames(pd)[i]
-    datetime = pd.datetimes[i]
-    labels = pd.labels[2:end]
+    sname = pd.sname[i]
+    datetime = pd.datetime[i]
     first = pd.index[i]
     last = i==ns ? nr : pd.index[i+1]-1
-    dat =  pd.dat[first:last,2:end]
+    dat =  pd.dat[first:last,:]
 
-    SAMPLE(sname,datetime,labels,dat)
+    SAMPLE(sname,datetime,pd.labels,dat)
     
 end
 

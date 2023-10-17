@@ -1,5 +1,7 @@
 # DEFINITIONS
 
+const sph = 3.6e6 # seconds per hour
+
 abstract type plasmaData end
 abstract type raw <: plasmaData end
 abstract type processed <: plasmaData end
@@ -14,8 +16,8 @@ end
 
 # immutable raw collection of data, is used inside type 'run'
 struct RUN <: raw
-    snames::Vector{String}
-    datetimes::Vector{DateTime}
+    sname::Vector{String}
+    datetime::Vector{DateTime}
     labels::Vector{String}
     dat::Matrix
     index::Vector{Integer}

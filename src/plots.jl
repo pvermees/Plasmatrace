@@ -1,9 +1,10 @@
 function plot(pd::SAMPLE;channels::Vector{String},transformation="sqrt",show=true)
-    plotHelper(pd,channels=channels,transformation=transformation,show=show)
+    plotHelper(pd,channels=channels,
+               transformation=transformation,show=show)
 end
 
 function plot(pd::sample;channels::Vector{String},transformation="sqrt",show=true)
-    p = plot(pd.data,channels=channels,transformation=transformation)
+    p = plot(getRaw(pd),channels=channels,transformation=transformation)
     dy = Plots.ylims(p)
     plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
     plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
@@ -21,7 +22,7 @@ function plot(pd::RUN;channels::Vector{String},
         step = 1
         plotobj = RUN2SAMPLE(pd,i=i)
     end
-    plotHelper(plotobj,channels=channels,show=show,
+    plotHelper(plotobj,xi=1,channels=channels,show=show,
                transformation=transformation,step=step)
 end
 
@@ -29,7 +30,7 @@ function plot(pd::run;channels::Vector{String},transformation="sqrt",
               steps=500,i=nothing,show=true)
     if isnothing(i)
         println("plot run")
-        p = plot(pd.data,channels=channels,show=show,
+        p = plot(getRaw(pd),channels=channels,show=show,
                  transformation=transformation,steps=steps)
     else
         samp = run2sample(pd,i=i)
@@ -39,9 +40,9 @@ function plot(pd::run;channels::Vector{String},transformation="sqrt",
     return p    
 end
 
-function plotHelper(pd::plasmaData;channels::Vector{String},
+function plotHelper(pd::plasmaData;xi=2,channels::Vector{String},
                     transformation="sqrt",step=1,show=false)
-    tlab = getLabels(pd)[1]
+    tlab = getLabels(pd)[xi]
     x = getCols(pd,labels=[tlab])[1:step:end,:]
     y = getCols(pd,labels=channels)[1:step:end,:]
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
@@ -52,13 +53,20 @@ function plotHelper(pd::plasmaData;channels::Vector{String},
     return p
 end
 
-function plotWindows!(p;pd::sample,blank=false,dy=Plots.ylims(p),linecolor="black")
-    windows = blank ? getBlank(pd) : getSignal(pd)
+function plotWindows!(p;xi=2,pd::sample,blank=false,
+                      dy=Plots.ylims(p),linecolor="black")
+    windows = blank ? getBlankWindows(pd) : getSignalWindows(pd)
     if isnothing(windows) return end
     for w in windows
-        from = getVal(pd,r=w[1],c=1)
-        to = getVal(pd,r=w[2],c=1)
+        from = getVal(pd,r=w[1],c=xi)
+        to = getVal(pd,r=w[2],c=xi)
         Plots.plot!(p,[from,from,to,to,from],collect(dy[[1,2,2,1,1]]),
                     linecolor=linecolor,linestyle=:dot,label="")
     end
+end
+
+function plotFitted!(p;pd::processed,xi=2)
+    par = getPar(pd)
+    if isnothing(windows) return end
+
 end

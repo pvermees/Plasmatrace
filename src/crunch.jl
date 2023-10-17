@@ -32,7 +32,7 @@ function polyVal(p,t)
     out
 end
 
-function crunch(pd::run;method="LuHf",refmat="Hogsbo")
+function crunch!(pd::run;method="LuHf",refmat="Hogsbo")
 
     data = DRSprep(pd,method=method,refmat=refmat)
 
@@ -68,8 +68,6 @@ function crunch(pd::run;method="LuHf",refmat="Hogsbo")
     end
 
     fit = optimize(misfit,[0.0,0.0,0.0,-10.0])
-    out = Optim.minimizer(fit)
-    println(out)
-    out
+    setPar!(pd,Optim.minimizer(fit))
     
 end
