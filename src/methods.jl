@@ -24,7 +24,9 @@ function getBlankWindows(pd::processed) getproperty(pd,:blank) end
 
 function getSignalWindows(pd::processed) getproperty(pd,:signal) end
 
-function getPar(pd::processed) getproperty(getRaw(pd),:par) end
+function getPar(pd::processed) getproperty(pd,:par) end
+
+function getChannels(pd::processed) getproperty(pd,:channels) end
 
 function setBlank!(pd::processed;
                    windows::Union{Nothing,Vector{window}}=nothing,
@@ -39,5 +41,7 @@ function setSignal!(pd::processed;
 end
 
 function setPar!(pd::processed,par::Vector) pd.par = par end
+
+function setChannels!(pd::processed,channels::Vector) pd.channels = channels end
 
 length(pd::Union{RUN,run}) = Base.length(getName(pd))

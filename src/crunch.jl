@@ -1,5 +1,5 @@
 # polynomial fit with logarithmic coefficients
-function polyFit(t,y;n=2)
+function polyFit(t,y;n=1)
     
     b0 = log(abs(Statistics.mean(y)))
     init = n>1 ? [b0;fill(-10,n-1)] : [b0]
@@ -34,7 +34,7 @@ end
 
 function crunch!(pd::run;method="LuHf",refmat="Hogsbo")
 
-    data = DRSprep(pd,method=method,refmat=refmat)
+    data = DRSprep!(pd,method=method,refmat=refmat)
 
     tb = data.b[:,1]
     x = data.b[:,3]
@@ -68,6 +68,25 @@ function crunch!(pd::run;method="LuHf",refmat="Hogsbo")
     end
 
     fit = optimize(misfit,[0.0,0.0,0.0,-10.0])
-    setPar!(pd,Optim.minimizer(fit))
+    ac = Optim.minimizer(fit)
+    setPar!(pd,[bx;by;bz;ac])
+    
+end
+
+function predict(pd::processed)
+    if isnothing(getPar(pd)) return nothing end
+    par = getPar(pd)
+    np = size(par,1)
+    nb = Int((np-4)/3)
+    c = par[end]
+    a = par[end-3:1]
+    bx = par[1:nb]
+    by = par[nb+1:2*nb]
+    bz = par[2*nb+1:3*nb]
+    t = getDat(pd)[:,1]
+    T = getDat(pd)[:,2]
+    bXt = polyVal(bx,t)
+    bYt = polyVal(by,t)
+    bZt = polyVal(bz,t)
     
 end

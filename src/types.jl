@@ -30,6 +30,7 @@ mutable struct sample <: processed
     data::SAMPLE
     blank::Union{Nothing,Vector{window}}
     signal::Union{Nothing,Vector{window}}
+    channels::Union{Nothing,Vector{String}}
     par::Union{Nothing,Vector}
     cov::Union{Nothing,Matrix}
 end
@@ -39,6 +40,7 @@ mutable struct run <: processed
     data::RUN
     blank::Vector{Union{Nothing,Vector{window}}}
     signal::Vector{Union{Nothing,Vector{window}}}
+    channels::Union{Nothing,Vector{String}}
     par::Union{Nothing,Vector}
     cov::Union{Nothing,Matrix}
 end

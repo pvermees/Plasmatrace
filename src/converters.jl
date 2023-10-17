@@ -53,6 +53,7 @@ function run2sample(pd::run;i=1)::sample
     out.signal = pd.signal[i]
     out.par = pd.par
     out.cov = pd.cov
+    out.channels = pd.channels
     out
 
 end

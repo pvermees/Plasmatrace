@@ -58,8 +58,10 @@ function crunchtest(tt=nothing)
     setBlank!(myrun);
     setSignal!(myrun);
     crunch!(myrun);
-    println(myrun.par)
+    plot(myrun,channels=["Hf176 -> 258","Hf178 -> 260",
+                         "Lu175 -> 175","Lu175 -> 257"],i=1);
     timer!(tt,myrun);
+    return myrun
 end
 
 tt = [time()]; # start clock
@@ -68,7 +70,7 @@ loadtest(tt);
 plottest(tt);
 windowtest(tt);
 plotwindowtest(tt);
-crunchtest(tt);
+out = crunchtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings
 

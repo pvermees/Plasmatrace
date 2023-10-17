@@ -52,24 +52,36 @@ function autoWindow(pd::run;total=nothing,i::Integer,blank=false)::Vector{window
     return [(from,to)]
 end
 
-function blankData(pd::run;channels=nothing)
-    windowData(pd::run,blank=true,channels=channels)
+function blankData(pd::processed;channels=nothing)
+    windowData(pd,blank=true,channels=channels)
 end
-function signalData(pd::run;channels=nothing)
-    windowData(pd::run,blank=false,channels=channels)
+function signalData(pd::processed;channels=nothing)
+    windowData(pd,blank=false,channels=channels)
 end
-function windowData(pd::run;blank=false,channels=nothing)
-    windows = blank ? getBlankWindows(pd) : getSignalWindows(pd)
-    start = getIndex(pd) .- 1
-    selection = Vector{Int}()
-    for i in eachindex(windows)
-        for w in windows[i]
-            first = Int(start[i] + w[1])
-            last = Int(start[i] + w[2])
-            append!(selection, first:last)
+function windowData(pd::processed;blank=false,channels=nothing)
+    if isnothing(channels)
+        if isnothing(getChannels(pd))
+            channels = getLabels(pd)
+        else
+            channels = getChannels(pd)
         end
     end
-    labels = [getLabels(pd)[1:2];channels]
+    windows = blank ? getBlankWindows(pd) : getSignalWindows(pd)
+    if isa(pd,run)
+        start = getIndex(pd) .- 1
+        selection = Vector{Int}()
+        for i in eachindex(windows)
+            for w in windows[i]
+                first = Int(start[i] + w[1])
+                last = Int(start[i] + w[2])
+                append!(selection, first:last)
+            end
+        end
+    else
+        start = 1
+        selection = 1:nsweeps(pd)
+    end
+    labels = [getLabels(pd)[1:2];channels] # add time columns
     dat = getCols(pd,labels=labels)
     dat[selection,:]
 end

@@ -2,6 +2,7 @@
 
 kill(all) $
 
+/*
 K: K0 - bXt $
 L: Y - A*X - B*Z + A*K0 + B*M0 - exp(c) - bYt $
 M: M0 - exp(a0) - exp(a1)*t - exp(a2)*T - bZt $
@@ -9,11 +10,31 @@ M: M0 - exp(a0) - exp(a1)*t - exp(a2)*T - bZt $
 SS: K^2 + L^2 + M^2 $
 
 dSSdK0: diff(SS,K0) $
-M01: solve(dSSdK0,M0) $
 dSSdM0: diff(SS,M0) $
-M02: solve(dSSdM0,M0) $
-K0sol: solve(M01 - M02,K0) $
 
-K01: solve(dSSdK0,K0) $
-K02: solve(dSSdM0,K0) $
-M0sol: solve(K01 - K02,M0) $
+sol: solve([dSSdK0,dSSdM0],[K0,M0]) $
+*/
+
+K: Xm - Xt - bXt $
+L: Ym - A*Xt - B*Zt - exp(c) - bYt $
+M: Zm - Zt - exp(a0) - exp(a1)*t - exp(a2)*T - bZt $
+
+SS: K^2 + L^2 + M^2 $
+
+dSSdXt: diff(SS,Xt) $
+dSSdZt: diff(SS,Zt) $
+
+sol: solve([dSSdXt,dSSdZt],[Xt,Zt]) $
+
+/*
+K: Xm - exp(lXt) - bXt $
+L: Ym - A*exp(lXt) - B*exp(lZt) - exp(c) - bYt $
+M: Zm - exp(lZt) - exp(a0) - exp(a1)*t - exp(a2)*T - bZt $
+
+SS: K^2 + L^2 + M^2 $
+
+dSSdlXt: diff(SS,lXt) $
+dSSdlZt: diff(SS,lZt) $
+
+sol: solve([dSSdlXt,dSSdlZt],[lXt,lZt]) $
+*/

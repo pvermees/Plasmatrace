@@ -3,15 +3,6 @@ function plot(pd::SAMPLE;channels::Vector{String},transformation="sqrt",show=tru
                transformation=transformation,show=show)
 end
 
-function plot(pd::sample;channels::Vector{String},transformation="sqrt",show=true)
-    p = plot(getRaw(pd),channels=channels,transformation=transformation)
-    dy = Plots.ylims(p)
-    plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
-    plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
-    if show display(p) end
-    return p
-end
-
 function plot(pd::RUN;channels::Vector{String},
               transformation="sqrt",steps=500,i=nothing,show=true)
     if isnothing(i)
@@ -26,10 +17,19 @@ function plot(pd::RUN;channels::Vector{String},
                transformation=transformation,step=step)
 end
 
+function plot(pd::sample;channels::Vector{String},transformation="sqrt",show=true)
+    p = plot(getRaw(pd),channels=channels,transformation=transformation)
+    dy = Plots.ylims(p)
+    plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
+    plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
+    plotFitted!(p,pd=pd,channels=channels,dy=dy)
+    if show display(p) end
+    return p
+end
+
 function plot(pd::run;channels::Vector{String},transformation="sqrt",
               steps=500,i=nothing,show=true)
     if isnothing(i)
-        println("plot run")
         p = plot(getRaw(pd),channels=channels,show=show,
                  transformation=transformation,steps=steps)
     else
@@ -65,8 +65,10 @@ function plotWindows!(p;xi=2,pd::sample,blank=false,
     end
 end
 
-function plotFitted!(p;pd::processed,xi=2)
-    par = getPar(pd)
-    if isnothing(windows) return end
-
+function plotFitted!(p;pd::processed,channels,dy=Plots.ylims(p),xi=2)
+    fittedchannels = getChannels(pd)
+    if isnothing(fittedchannels) return end
+    available = findall(in(channels),fittedchannels)
+    if (size(available,1)<1) return end
+    pred = predict(pd)
 end
