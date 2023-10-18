@@ -22,10 +22,13 @@ function getBCov(pd::processed) getproperty(pd,:bcov) end
 function getSCov(pd::processed) getproperty(pd,:scov) end
 
 function getControl(pd::processed) getproperty(pd,:control) end
-function getChannels(pd::processed)
+function getControlPar(pd::processed,par)
     ctrl = getControl(pd)
-    isnothing(ctrl) ? nothing : getproperty(ctrl,:channels)
+    isnothing(ctrl) ? nothing : getproperty(ctrl,par)
 end
+function getA(pd::processed) getControlPar(pd,:A) end
+function getB(pd::processed) getControlPar(pd,:B) end
+function getChannels(pd::processed) getControlPar(pd,:channels) end
 
 function setBlanks!(pd::processed;
                     windows::Union{Nothing,Vector{window}}=nothing,

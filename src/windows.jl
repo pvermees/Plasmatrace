@@ -22,9 +22,7 @@ function setWindow!(pd::run;
             w[i] = windows
         end
     end
-
     return pd
-
 end
 
 function autoWindow(pd::run;total=nothing,i::Integer,blank=false)::Vector{window}
@@ -52,6 +50,14 @@ function autoWindow(pd::run;total=nothing,i::Integer,blank=false)::Vector{window
     return [(from,to)]
 end
 
+function signalData(pd::processed;channels=nothing,i=nothing)
+    windowData(pd,blank=false,channels=channels,i=i)
+end
+
+function blankData(pd::run;channels=nothing,i=nothing)
+    windowData(pd,blank=true,channels=channels,i=i)
+end
+
 function windowData(pd::processed;blank=false,channels=nothing,i=nothing)
     if isnothing(channels)
         if isnothing(getChannels(pd))
@@ -76,8 +82,7 @@ function windowData(pd::processed;blank=false,channels=nothing,i=nothing)
     end
     for j in eachindex(iterator)
         if isnothing(windows[j])
-            throw(error("Missing selection windows. " *
-                        "Run setBlank!(...) or setSignal!(...) first."))
+            PTerror("missingWindows")
         end
         for w in windows[j]
             first = Int(start[j] + w[1])

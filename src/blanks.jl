@@ -5,7 +5,3 @@ function fitBlanks!(pd::run;n=2)
     bz = polyFit(b[:,1],b[:,5],n=n)
     setBPar!(pd,[bx;by;bz])
 end
-
-function blankData(pd::run;channels=nothing,i=nothing)
-    windowData(pd,blank=true,channels=channels,i=i)
-end
