@@ -1,5 +1,4 @@
 function SAMPLES2RUN(SAMPLES::Vector{SAMPLE})::RUN
-
     ns = size(SAMPLES,1)
 
     datetimes = Vector{DateTime}(undef,ns)
@@ -28,11 +27,9 @@ function SAMPLES2RUN(SAMPLES::Vector{SAMPLE})::RUN
     bigdat = reduce(vcat,dats)
 
     RUN(snames,datetimes,labels,bigdat,index)
-
 end
 
-function RUN2SAMPLE(pd::RUN;i=1)::SAMPLE
-    
+function getSAMPLE(pd::RUN;i=1)::SAMPLE
     ns = length(pd)
     nr = nsweeps(pd)
     sname = pd.sname[i]
@@ -42,18 +39,17 @@ function RUN2SAMPLE(pd::RUN;i=1)::SAMPLE
     dat =  pd.dat[first:last,:]
 
     SAMPLE(sname,datetime,pd.labels,dat)
-    
 end
 
-function run2sample(pd::run;i=1)::sample
-
-    SAMP = RUN2SAMPLE(pd.data;i=i)
+function getsample(pd::run;i=1)::sample
+    SAMP = getSAMPLE(pd.data;i=i)
     out = sample(SAMP)
-    out.blank = pd.blank[i]
-    out.signal = pd.signal[i]
-    out.par = pd.par
-    out.cov = pd.cov
-    out.channels = pd.channels
+    out.bwin = pd.bwin[i]
+    out.swin = pd.swin[i]
+    out.control = pd.control
+    out.bpar = pd.bpar
+    out.bcov = pd.bcov
+    out.spar = pd.spar
+    out.scov = pd.scov
     out
-
 end

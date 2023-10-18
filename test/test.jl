@@ -10,8 +10,10 @@ include(dir*"converters.jl")
 include(dir*"io.jl")
 include(dir*"plots.jl")
 include(dir*"windows.jl")
+include(dir*"toolbox.jl")
 include(dir*"DRS.jl")
 include(dir*"referencematerials.jl")
+include(dir*"blanks.jl")
 include(dir*"crunch.jl")
 
 closeall();
@@ -25,6 +27,7 @@ function loadtest(tt=nothing)
     dname = "/home/pvermees/Documents/Plasmatrace/GlorieGarnet/";
     out = load(dname);
     timer!(tt,out);
+    return out
 end
 
 function plottest(tt=nothing)
@@ -42,6 +45,7 @@ function windowtest(tt=nothing)
     setSignal!(myrun,windows=[(60,70),(80,100)],i=2);
     setSignal!(myrun,i=1);
     timer!(tt,myrun);
+    return myrun
 end
 
 function plotwindowtest(tt=nothing)
@@ -53,24 +57,26 @@ function plotwindowtest(tt=nothing)
     timer!(tt,myrun);
 end
 
-function crunchtest(tt=nothing)
+function blanktest(tt=nothing)
     myrun = loadtest();
     setBlank!(myrun);
-    setSignal!(myrun);
-    crunch!(myrun);
-    plot(myrun,channels=["Hf176 -> 258","Hf178 -> 260",
-                         "Lu175 -> 175","Lu175 -> 257"],i=1);
+    fitBlanks!(myrun);
     timer!(tt,myrun);
     return myrun
 end
 
+function standardtest(tt=nothing)
+    myrun = loadtest();
+    setDRS!(myrun;method="LuHf",refmat="Hogsbo")
+end
+
 tt = [time()]; # start clock
 
-#loadtest(tt);
-#plottest(tt);
-#windowtest(tt);
-#plotwindowtest(tt);
-out = crunchtest(tt);
+out = loadtest(tt);
+plottest(tt);
+out = windowtest(tt);
+plotwindowtest(tt);
+out = blanktest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings
 

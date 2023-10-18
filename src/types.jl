@@ -25,22 +25,32 @@ end
 
 const window = Tuple{Int,Int}
 
+mutable struct control
+    channels::Union{Nothing,Vector{String}}
+    A::Union{Float64}
+    B::Union{Float64}
+end
+
 # mutable extension of SAMPLE
 mutable struct sample <: processed
     data::SAMPLE
-    blank::Union{Nothing,Vector{window}}
-    signal::Union{Nothing,Vector{window}}
-    channels::Union{Nothing,Vector{String}}
-    par::Union{Nothing,Vector}
-    cov::Union{Nothing,Matrix}
+    bwin::Union{Nothing,Vector{window}}
+    swin::Union{Nothing,Vector{window}}
+    control::Union{Nothing,control}
+    bpar::Union{Nothing,Vector}
+    spar::Union{Nothing,Vector}
+    bcov::Union{Nothing,Matrix}
+    scov::Union{Nothing,Matrix}
 end
 
 # mutable extension of RUN
 mutable struct run <: processed
     data::RUN
-    blank::Vector{Union{Nothing,Vector{window}}}
-    signal::Vector{Union{Nothing,Vector{window}}}
-    channels::Union{Nothing,Vector{String}}
-    par::Union{Nothing,Vector}
-    cov::Union{Nothing,Matrix}
+    bwin::Vector{Union{Nothing,Vector{window}}}
+    swin::Vector{Union{Nothing,Vector{window}}}
+    control::Union{Nothing,control}
+    bpar::Union{Nothing,Vector}
+    spar::Union{Nothing,Vector}
+    bcov::Union{Nothing,Matrix}
+    scov::Union{Nothing,Matrix}
 end

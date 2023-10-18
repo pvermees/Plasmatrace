@@ -11,7 +11,7 @@ function plot(pd::RUN;channels::Vector{String},
         plotobj = pd
     else
         step = 1
-        plotobj = RUN2SAMPLE(pd,i=i)
+        plotobj = getSAMPLE(pd,i=i)
     end
     plotHelper(plotobj,xi=1,channels=channels,show=show,
                transformation=transformation,step=step)
@@ -33,7 +33,7 @@ function plot(pd::run;channels::Vector{String},transformation="sqrt",
         p = plot(getRaw(pd),channels=channels,show=show,
                  transformation=transformation,steps=steps)
     else
-        samp = run2sample(pd,i=i)
+        samp = getsample(pd,i=i)
         p = plot(samp,channels=channels,show=show,
                  transformation=transformation)
     end
@@ -55,7 +55,7 @@ end
 
 function plotWindows!(p;xi=2,pd::sample,blank=false,
                       dy=Plots.ylims(p),linecolor="black")
-    windows = blank ? getBlankWindows(pd) : getSignalWindows(pd)
+    windows = blank ? getBWin(pd) : getSWin(pd)
     if isnothing(windows) return end
     for w in windows
         from = getVal(pd,r=w[1],c=xi)

@@ -2,7 +2,7 @@ function setWindow!(pd::run;
                     windows::Union{Nothing,Vector{window}}=nothing,
                     i::Union{Nothing,Integer}=nothing,
                     blank=false)
-    w = blank ? getBlankWindows(pd) : getSignalWindows(pd)
+    w = blank ? getBWin(pd) : getSWin(pd)
     if isnothing(windows)
         dat = getDat(pd)[:,3:end]
         total = vec(sum(dat,dims=2))
@@ -52,9 +52,6 @@ function autoWindow(pd::run;total=nothing,i::Integer,blank=false)::Vector{window
     return [(from,to)]
 end
 
-function blankData(pd::processed;channels=nothing)
-    windowData(pd,blank=true,channels=channels)
-end
 function signalData(pd::processed;channels=nothing)
     windowData(pd,blank=false,channels=channels)
 end
@@ -66,7 +63,7 @@ function windowData(pd::processed;blank=false,channels=nothing)
             channels = getChannels(pd)
         end
     end
-    windows = blank ? getBlankWindows(pd) : getSignalWindows(pd)
+    windows = blank ? getBWin(pd) : getSWin(pd)
     if isa(pd,run)
         start = getIndex(pd) .- 1
         selection = Vector{Int}()

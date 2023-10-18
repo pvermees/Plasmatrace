@@ -1,45 +1,9 @@
-# polynomial fit with logarithmic coefficients
-function polyFit(t,y;n=1)
-    
-    b0 = log(abs(Statistics.mean(y)))
-    init = n>1 ? [b0;fill(-10,n-1)] : [b0]
-    nt = size(t,1)
-    
-    function misfit(par)
-        pred = fill(exp(par[1]),nt)
-        if n>1
-            for i in 2:n
-                @. pred += exp(par[i])*t^(i-1)
-            end
-        end
-        sum((y.-pred).^2)
-    end
-
-    fit = optimize(misfit,init)
-    Optim.minimizer(fit)
-    
-end
-
-function polyVal(p,t)
-    np = size(p,1)
-    nt = size(t,1)
-    out = fill(0.0,nt)
-    if np>1
-        for i in 2:np
-            out .+= exp(p[i]).*t.^(i-1)
-        end
-    end
-    out
-end
-
 function crunch!(pd::run;method="LuHf",refmat="Hogsbo",n::Int=2)
 
-    data = DRSprep!(pd,method=method,refmat=refmat)
+    data = setDRS!(pd,method=method,refmat=refmat)
 
-    tb = data.b[:,1]
-    xm = data.b[:,3]
-    ym = data.b[:,4]
-    zm = data.b[:,5]
+    s = signalData(pd) # signal just for standards
+
     t = data.s[:,1]
     T = data.s[:,2]
     Xm = data.s[:,3]
@@ -47,10 +11,6 @@ function crunch!(pd::run;method="LuHf",refmat="Hogsbo",n::Int=2)
     Zm = data.s[:,5]
     A = data.A
     B = data.B
-
-    bx = polyFit(tb,xm,n=n)
-    by = polyFit(tb,ym,n=n)
-    bz = polyFit(tb,zm,n=n)
 
     bXt = polyVal(bx,t)
     bYt = polyVal(by,t)
