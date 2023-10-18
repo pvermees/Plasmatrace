@@ -1,5 +1,5 @@
 # Currently only works for Agilent files
-function readFile(fname::String)::SAMPLE
+function readFile(fname::String)::sample
     
     f = open(fname,"r")
     strs = readlines(f)
@@ -24,26 +24,38 @@ function readFile(fname::String)::SAMPLE
 
     close(f)
 
-    SAMPLE(sname,datetime,labels,dat)
+    sample(sname,datetime,labels,dat)
 
-end
-
-function readFiles(dname::String;ext::String=".csv")::RUN
-
-    fnames = readdir(dname)
-    SAMPS = Array{SAMPLE}(undef,0)
-
-    for fname in fnames
-        if occursin(ext,fname)
-            SAMP = readFile(dname*fname)
-            SAMPS = push!(SAMPS,SAMP)
-        end
-    end
-
-    SAMPLES2RUN(SAMPS)
-    
 end
 
 function load(dname::String;ext::String=".csv")::run
-    run(readFiles(dname,ext=ext))
+
+    fnames = readdir(dname)
+    samples = Vector{sample}(undef,0)
+    datetimes = Vector{DateTime}(undef,0)
+
+    for fname in fnames
+        if occursin(ext,fname)
+            samp = readFile(dname*fname)
+            push!(samples,samp)
+            push!(datetimes,getDateTime(samp))
+        end
+    end
+
+    order = sortperm(datetimes)
+    sortedsamples = samples[order]
+    sorteddatetimes = datetimes[order]
+    
+    dt = sorteddatetimes .- sorteddatetimes[1]
+    runtime = Dates.value.(dt)./sph
+
+    for i in eachindex(sortedsamples)
+        samp = sortedsamples[i]
+        dat = getDat(samp)
+        dat[:,1] = dat[:,2]./sph .+ runtime[i]
+        setDat!(samp,dat)
+    end
+
+    run(sortedsamples)
+    
 end

@@ -1,39 +1,40 @@
-function setWindow!(pd::run;
-                    windows::Union{Nothing,Vector{window}}=nothing,
-                    i::Union{Nothing,Integer}=nothing,
-                    blank=false)
-    w = blank ? getBWin(pd) : getSWin(pd)
-    if isnothing(windows)
-        dat = getDat(pd)[:,3:end]
-        total = vec(sum(dat,dims=2))
-        if isnothing(i)
-            for j in eachindex(getIndex(pd))
-                w[j] = autoWindow(pd,total=total,i=j,blank=blank)
-            end
-        else
-            w[i] = autoWindow(pd,total=total,i=i,blank=blank)
-        end
-    else
-        if isnothing(i)
-            for j in eachindex(getIndex(pd))
-                setWindow!(pd,windows=windows,i=j,blank=blank)
-            end
-        else
-            w[i] = windows
-        end
-    end
-    return pd
+function setBlanks!(pd::sample;windows=nothing)
+    setWindows!(pd,blank=true,windows=windows)
 end
 
-function autoWindow(pd::run;total=nothing,i::Integer,blank=false)::Vector{window}
-    ns = length(pd)
-    nr = nsweeps(pd)
-    index = getIndex(pd)
-    from = index[i]
-    to = i < ns ? index[i+1]-1 : nr
-    q = quantile(total[from:to,:],[0.05,0.95])
+function setBlanks!(pd::run;windows=nothing,i=nothing)
+    setWindows!(pd,blank=true,windows=windows,i=i)
+end
+
+function setSignals!(pd::sample;windows=nothing)
+    setWindows!(pd,blank=false,windows=windows)
+end
+
+function setSignals!(pd::run;windows=nothing,i=nothing)
+    setWindows!(pd,blank=false,windows=windows,i=i)
+end
+
+function setWindows!(pd::sample;blank=false,windows=nothing)
+    if isnothing(windows) windows = autoWindow(pd,blank=blank) end
+    fun = blank ? setBWin! : setSWin!
+    fun(pd,windows)
+end
+
+function setWindows!(pd::run;blank=false,windows=nothing,i=nothing)
+    if isnothing(i) i = 1:length(pd) end
+    samples = getSamples(pd)
+    for j in i
+        setWindows!(samples[j],blank=blank,windows=windows)
+    end
+    setSamples!(pd,samples)
+end
+
+function autoWindow(pd::sample;blank=false)::Vector{window}
+    dat = getDat(pd)[:,3:end]
+    total = vec(sum(dat,dims=2))
+    q = quantile(total,[0.05,0.95])
     mid = (q[2]+q[1])/10
-    low = total[from:to].<mid
+    low = total.<mid
     blk = findall(low)
     sig = findall(.!low)
     if blank
@@ -50,47 +51,43 @@ function autoWindow(pd::run;total=nothing,i::Integer,blank=false)::Vector{window
     return [(from,to)]
 end
 
-function signalData(pd::processed;channels=nothing,i=nothing)
-    windowData(pd,blank=false,channels=channels,i=i)
+function blankData(pd::sample;channels::Vector{String})
+    windowData(pd,blank=true,channels=channels)
 end
-
 function blankData(pd::run;channels=nothing,i=nothing)
     windowData(pd,blank=true,channels=channels,i=i)
 end
 
-function windowData(pd::processed;blank=false,channels=nothing,i=nothing)
-    if isnothing(channels)
-        if isnothing(getChannels(pd))
-            channels = getLabels(pd)
-        else
-            channels = getChannels(pd)
-        end
-    end
+function signalData(pd::sample;channels::Vector{String})
+    windowData(pd,blank=false,channels=channels)
+end
+function signalData(pd::run;channels=nothing,i=nothing)
+    windowData(pd,blank=false,channels=channels,i=i)
+end
+
+function windowData(pd::sample;blank=false,channels::Vector{String})
     windows = blank ? getBWin(pd) : getSWin(pd)
-    if isa(pd,run)
-        start = getIndex(pd) .- 1
-    else
-        start = 0
-        windows = [windows]
-    end
     selection = Vector{Int}()
-    if isnothing(i)
-        iterator = windows
-    else
-        if isa(i,Int) i = [i] end
-        iterator = i
-    end
-    for j in eachindex(iterator)
-        if isnothing(windows[j])
-            PTerror("missingWindows")
-        end
-        for w in windows[j]
-            first = Int(start[j] + w[1])
-            last = Int(start[j] + w[2])
-            append!(selection, first:last)
-        end
+    if isnothing(windows) PTerror("missingWindows") end
+    for w in windows
+        append!(selection, w[1]:w[2])
     end
     labels = [getLabels(pd)[1:2];channels] # add time columns
     dat = getCols(pd,labels=labels)
     dat[selection,:]
+end
+
+function windowData(pd::run;blank=false,channels=nothing,i=nothing)
+    if isnothing(channels)
+        channels = getChannels(pd)
+        if isnothing(channels) channels = getLabels(pd)[1] end
+    end
+    if isnothing(i) i = Vector{Int}(1:length(pd)) end
+    ni = size(i,1)
+    dats = Vector{Matrix}(undef,ni)
+    samples = getSamples(pd)[i]
+    for j in 1:ni
+        dats[j] = windowData(samples[j];blank=blank,channels=channels)
+    end
+    reduce(vcat,dats)
 end

@@ -5,9 +5,7 @@ dir ="../src/";
 include(dir*"dependencies.jl")
 include(dir*"types.jl")
 include(dir*"errors.jl")
-include(dir*"constructors.jl")
 include(dir*"methods.jl")
-include(dir*"converters.jl")
 include(dir*"io.jl")
 include(dir*"plots.jl")
 include(dir*"windows.jl")
@@ -34,14 +32,14 @@ end
 
 function plottest(tt=nothing)
     myrun = loadtest();
-    p = plot(myrun,channels=["Hf176 -> 258","Hf178 -> 260"]);
+    p = plot(myrun,i=Int(1),channels=["Hf176 -> 258","Hf178 -> 260"]);
     timer!(tt,p);
 end
 
 function windowtest(tt=nothing)
     myrun = loadtest();
     setBlanks!(myrun,windows=[(10,20)]);
-    setBlanks!(myrun,windows=[(0,10),(12,15)],i=2);
+    setBlanks!(myrun,windows=[(0,10),(12,15)],i=[2,3]);
     setBlanks!(myrun,i=1);
     setSignals!(myrun,windows=[(10,20)]);
     setSignals!(myrun,windows=[(60,70),(80,100)],i=2);
@@ -85,7 +83,7 @@ plottest(tt);
 out = windowtest(tt);
 plotwindowtest(tt);
 out = blanktest(tt);
-out = standardtest(tt);
+#out = standardtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings
 

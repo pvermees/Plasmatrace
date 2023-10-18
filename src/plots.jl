@@ -1,71 +1,59 @@
-function plot(pd::SAMPLE;channels::Vector{String},transformation="sqrt",show=true)
-    plotHelper(pd,channels=channels,
-               transformation=transformation,show=show)
-end
-
-function plot(pd::RUN;channels::Vector{String},
-              transformation="sqrt",steps=500,i=nothing,show=true)
-    if isnothing(i)
-        nr = nsweeps(pd)
-        step = Int(ceil(nr/steps))
-        plotobj = pd
-    else
-        step = 1
-        plotobj = getSAMPLE(pd,i=i)
-    end
-    plotHelper(plotobj,xi=1,channels=channels,show=show,
-               transformation=transformation,step=step)
-end
-
 function plot(pd::sample;channels::Vector{String},transformation="sqrt",show=true)
-    p = plot(getRaw(pd),channels=channels,transformation=transformation)
+    selected = [2;label2index(pd,channels)]
+    plotdat = getDat(pd)[:,selected]
+    p = plotHelper(plotdat,labels=getLabels(pd)[selected],
+                   transformation=transformation,show=show)
     dy = Plots.ylims(p)
     plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
     plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
-    plotFitted!(p,pd=pd,channels=channels,dy=dy)
+    #plotFitted!(p,pd=pd,channels=channels)
     if show display(p) end
     return p
 end
 
-function plot(pd::run;channels::Vector{String},transformation="sqrt",
-              steps=500,i=nothing,show=true)
+function plot(pd::run;channels::Vector{String},
+              transformation="sqrt",steps=500,
+              i::Union{Nothing,Int}=nothing,show=true)
     if isnothing(i)
-        p = plot(getRaw(pd),channels=channels,show=show,
-                 transformation=transformation,steps=steps)
+        dat = poolRunDat(pd)
+        labels = getLabels(pd)[1]
+        selected = [1;findall(in(channels).(labels))]
+        step = Int(ceil(size(dat,1)/steps))
+        plotdat = dat[1:step:end,selected]
+        plotHelper(plotdat,labels=labels[selected],
+                   transformation=transformation,show=show)
     else
-        samp = getsample(pd,i=i)
-        p = plot(samp,channels=channels,show=show,
-                 transformation=transformation)
+        plot(getSamples(pd)[i],channels=channels,
+             transformation=transformation,show=show)
     end
-    return p    
 end
 
-function plotHelper(pd::plasmaData;xi=2,channels::Vector{String},
-                    transformation="sqrt",step=1,show=false)
-    tlab = getLabels(pd)[xi]
-    x = getCols(pd,labels=[tlab])[1:step:end,:]
-    y = getCols(pd,labels=channels)[1:step:end,:]
+function plotHelper(dat::Matrix;labels::Vector{String},
+                    transformation="sqrt",show=false)
+    x = dat[:,1]
+    y = dat[:,2:end]
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
-    p = Plots.plot(x,ty,label=reshape(channels,1,:),legend=:topleft)
-    xlabel!(tlab)
+    p = Plots.plot(x,ty,label=reshape(labels[2:end],1,:),legend=:topleft)
+    xlabel!(labels[1])
     ylabel!(transformation*"(signal)")
     if show display(p) end
     return p
 end
 
-function plotWindows!(p;xi=2,pd::sample,blank=false,
+function plotWindows!(p;pd::sample,blank=false,
                       dy=Plots.ylims(p),linecolor="black")
     windows = blank ? getBWin(pd) : getSWin(pd)
     if isnothing(windows) return end
+    dat = getDat(pd)
     for w in windows
-        from = getVal(pd,r=w[1],c=xi)
-        to = getVal(pd,r=w[2],c=xi)
+        from = dat[w[1],2]
+        to = dat[w[2],2]
         Plots.plot!(p,[from,from,to,to,from],collect(dy[[1,2,2,1,1]]),
                     linecolor=linecolor,linestyle=:dot,label="")
     end
 end
 
-function plotFitted!(p;pd::processed,channels,dy=Plots.ylims(p),xi=2)
+function plotFitted!(p;pd::sample,channels,dy=Plots.ylims(p))
     fittedchannels = getChannels(pd)
     if isnothing(fittedchannels) return end
     available = findall(in(channels),fittedchannels)

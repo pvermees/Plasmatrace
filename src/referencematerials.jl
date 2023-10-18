@@ -1,4 +1,4 @@
-function getAB(pd::processed,refmat::String="Hogsbo")
+function getAB(refmat::String="Hogsbo")
     if refmat=="Hogsbo"
         t = (1029,1.7)
         y0 = (3.55,0.05)
