@@ -14,6 +14,7 @@ include(dir*"toolbox.jl")
 include(dir*"DRS.jl")
 include(dir*"referencematerials.jl")
 include(dir*"blanks.jl")
+include(dir*"standards.jl")
 include(dir*"crunch.jl")
 
 closeall();
@@ -38,28 +39,28 @@ end
 
 function windowtest(tt=nothing)
     myrun = loadtest();
-    setBlank!(myrun,windows=[(10,20)]);
-    setBlank!(myrun,windows=[(0,10),(12,15)],i=2);
-    setBlank!(myrun,i=1);
-    setSignal!(myrun,windows=[(10,20)]);
-    setSignal!(myrun,windows=[(60,70),(80,100)],i=2);
-    setSignal!(myrun,i=1);
+    setBlanks!(myrun,windows=[(10,20)]);
+    setBlanks!(myrun,windows=[(0,10),(12,15)],i=2);
+    setBlanks!(myrun,i=1);
+    setSignals!(myrun,windows=[(10,20)]);
+    setSignals!(myrun,windows=[(60,70),(80,100)],i=2);
+    setSignals!(myrun,i=1);
     timer!(tt,myrun);
     return myrun
 end
 
 function plotwindowtest(tt=nothing)
     myrun = loadtest();
-    setBlank!(myrun);
-    setSignal!(myrun);
-    setSignal!(myrun,windows=[(70,90),(100,140)],i=2);
+    setBlanks!(myrun);
+    setSignals!(myrun);
+    setSignals!(myrun,windows=[(70,90),(100,140)],i=2);
     plot(myrun,channels=["Hf176 -> 258","Hf178 -> 260"],i=2);
     timer!(tt,myrun);
 end
 
 function blanktest(tt=nothing)
     myrun = loadtest();
-    setBlank!(myrun);
+    setBlanks!(myrun);
     fitBlanks!(myrun);
     timer!(tt,myrun);
     return myrun
@@ -67,16 +68,23 @@ end
 
 function standardtest(tt=nothing)
     myrun = loadtest();
-    setDRS!(myrun;method="LuHf",refmat="Hogsbo")
+    setBlanks!(myrun);
+    setSignals!(myrun);
+    fitBlanks!(myrun);
+    out = fitStandards!(myrun,method="LuHf",
+                        refmat="Hogsbo",prefix="hogsbo_");
+    timer!(tt,myrun);
+    return out
 end
 
 tt = [time()]; # start clock
 
-out = loadtest(tt);
-plottest(tt);
-out = windowtest(tt);
-plotwindowtest(tt);
-out = blanktest(tt);
+#out = loadtest(tt);
+#plottest(tt);
+#out = windowtest(tt);
+#plotwindowtest(tt);
+#out = blanktest(tt);
+out = standardtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings
 

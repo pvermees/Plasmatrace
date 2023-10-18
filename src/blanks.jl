@@ -1,4 +1,4 @@
-function fitBlanks!(pd::processed;n=2)
+function fitBlanks!(pd::run;n=2)
     b = blankData(pd)
     bx = polyFit(b[:,1],b[:,3],n=n)
     by = polyFit(b[:,1],b[:,4],n=n)
@@ -6,6 +6,6 @@ function fitBlanks!(pd::processed;n=2)
     setBPar!(pd,[bx;by;bz])
 end
 
-function blankData(pd::processed;channels=nothing)
-    windowData(pd,blank=true,channels=channels)
+function blankData(pd::run;channels=nothing,i=nothing)
+    windowData(pd,blank=true,channels=channels,i=i)
 end

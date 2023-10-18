@@ -26,9 +26,9 @@ end
 const window = Tuple{Int,Int}
 
 mutable struct control
-    channels::Union{Nothing,Vector{String}}
     A::Union{Float64}
     B::Union{Float64}
+    channels::Union{Nothing,Vector{String}}
 end
 
 # mutable extension of SAMPLE

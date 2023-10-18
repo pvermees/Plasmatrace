@@ -1,9 +1,5 @@
 function crunch!(pd::run;method="LuHf",refmat="Hogsbo",n::Int=2)
 
-    data = setDRS!(pd,method=method,refmat=refmat)
-
-    s = signalData(pd) # signal just for standards
-
     t = data.s[:,1]
     T = data.s[:,2]
     Xm = data.s[:,3]
