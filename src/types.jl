@@ -1,8 +1,6 @@
 const sph = 3.6e6 # seconds per hour
-
-abstract type plasmaData end
-
 const window = Tuple{Int,Int}
+abstract type plasmaData end
 
 mutable struct control
     A::Union{Float64}

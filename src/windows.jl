@@ -1,7 +1,6 @@
 function setBlanks!(pd::sample;windows=nothing)
     setWindows!(pd,blank=true,windows=windows)
 end
-
 function setBlanks!(pd::run;windows=nothing,i=nothing)
     setWindows!(pd,blank=true,windows=windows,i=i)
 end
@@ -9,7 +8,6 @@ end
 function setSignals!(pd::sample;windows=nothing)
     setWindows!(pd,blank=false,windows=windows)
 end
-
 function setSignals!(pd::run;windows=nothing,i=nothing)
     setWindows!(pd,blank=false,windows=windows,i=i)
 end
@@ -19,7 +17,6 @@ function setWindows!(pd::sample;blank=false,windows=nothing)
     fun = blank ? setBWin! : setSWin!
     fun(pd,windows)
 end
-
 function setWindows!(pd::run;blank=false,windows=nothing,i=nothing)
     if isnothing(i) i = 1:length(pd) end
     samples = getSamples(pd)

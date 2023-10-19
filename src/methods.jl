@@ -3,7 +3,8 @@ function label2index(pd::sample,labels::Vector{String})
     findall(in(labels).(getLabels(pd)))
 end
 # get lists of sample attributes from a run:
-function accesSample(pd::run,i::Vector{Int},T::Type,fun::Function)
+function accesSample(pd::run,i::Union{Nothing,Vector{Int}},T::Type,fun::Function)
+    if isnothing(i) i = 1:length(pd) end
     samples = getSamples(pd)[i]
     out = Vector{T}(undef,size(i,1))
     for j in eachindex(samples)
@@ -17,7 +18,7 @@ function accessSample!(pd::run,i::Vector{Int},fun::Function,val::Any)
     setSamples!(pd,samples)
 end
 # set the control parameters inside a run:
-function AccessControl!(pd::run,attribute::Symbol,fun::Function,val::Any)
+function accessControl!(pd::run,attribute::Symbol,fun::Function,val::Any)
     ctrl = getControl(pd)
     (ctrl,A)
     setControl(pd,ctrl)
@@ -41,13 +42,13 @@ function getBCov(pd::run) getproperty(pd,:bcov) end
 function getSCov(pd::run) getproperty(pd,:scov) end
 
 # get lists of sample attributes from a run
-function getSnames(pd::run;i::Vector{Int}) accesSample(pd,i,Int,getSname) end
-function getDateTimes(pd::run;i::Vector{Int}) accesSample(pd,i,DateTime,getDateTime) end
-function getLabels(pd::run;i::Vector{Int}=[1]) accesSample(pd,i,Vector{String},getLabels) end
-function getDat(pd::run;i::Vector{Int}) accesSample(pd,i,Matrix,getDat) end
-function getBWin(pd::run;i::Vector{Int}) accesSample(pd,i,Vector{window},getBWin) end
-function getSWin(pd::run;i::Vector{Int}) accesSample(pd,i,Vector{window},getSWin) end
-function getCols(pd::run;labels::Vector{String}) accesSample(pd,label2index(labels),Vector{String},getCols) end
+function getSnames(pd::run;i=nothing) accesSample(pd,i,String,getSname) end
+function getDateTimes(pd::run;i=nothing) accesSample(pd,i,DateTime,getDateTime) end
+function getLabels(pd::run;i=[1]) accesSample(pd,i,Vector{String},getLabels) end
+function getDat(pd::run;i=nothing) accesSample(pd,i,Matrix,getDat) end
+function getBWin(pd::run;i=nothing) accesSample(pd,i,Vector{window},getBWin) end
+function getSWin(pd::run;i=nothing) accesSample(pd,i,Vector{window},getSWin) end
+function getCols(pd::run;labels) accesSample(pd,label2index(labels),Vector{String},getCols) end
 
 # get control attributes
 function getA(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:A) end
@@ -85,9 +86,9 @@ function setB!(ctrl::control,B::AbstractFloat) setproperty!(pd,:B,B) end
 function setChannels!(ctrl::control,channels::Vector{String}) setproperty!(pd,:channels,channels) end
 
 # set control attributes in a run
-function setA!(pd::run,A::AbstractFloat) AccessControl!(pd,:A,setA!,A) end
-function setB!(pd::run,B::AbstractFloat) AccessControl!(pd,:B,setB!,b) end
-function setChannels!(pd::run,channels::Vector{String}) AccessControl!(pd,:channels,setChannels!,channels) end
+function setA!(pd::run,A::AbstractFloat) accessControl!(pd,:A,setA!,A) end
+function setB!(pd::run,B::AbstractFloat) accessControl!(pd,:B,setB!,b) end
+function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,:channels,setChannels!,channels) end
 
 length(pd::run) = Base.length(getSamples(pd))
 
