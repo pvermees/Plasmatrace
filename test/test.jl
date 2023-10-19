@@ -32,7 +32,9 @@ end
 
 function plottest(tt=nothing)
     myrun = loadtest();
-    p = plot(myrun,i=Int(1),channels=["Hf176 -> 258","Hf178 -> 260"]);
+    p = plot(myrun,i=1,channels=["Hf176 -> 258","Hf178 -> 260"]);
+    p = plot(myrun,i=1);
+    p = plot(myrun);
     timer!(tt,p);
 end
 

@@ -1,5 +1,5 @@
 # helper functions
-function label2index(pd::sample,labels::Vector{String})
+function label2index(pd::plasmaData,labels::Vector{String})
     findall(in(labels).(getLabels(pd)))
 end
 # get lists of sample attributes from a run:
@@ -91,6 +91,8 @@ function setB!(pd::run,B::AbstractFloat) accessControl!(pd,:B,setB!,b) end
 function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,:channels,setChannels!,channels) end
 
 length(pd::run) = Base.length(getSamples(pd))
+ncol(pd::sample) = size(getLabels(pd),1)
+ncol(pd::run) = size(getLabels(pd)[1],1)
 
 function poolRunDat(pd::run;i::Union{Nothing,Vector{Int}}=nothing)
     if isnothing(i) i = Vector{Int}(1:length(pd)) end

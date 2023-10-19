@@ -1,5 +1,6 @@
-function plot(pd::sample;channels::Vector{String},transformation="sqrt",show=true)
-    selected = [2;label2index(pd,channels)]
+function plot(pd::sample;channels::Union{Nothing,Vector{String}},transformation="sqrt",show=true)
+    if isnothing(channels) selected = [2;3:ncol(pd)]
+    else selected = [2;label2index(pd,channels)] end
     plotdat = getDat(pd)[:,selected]
     p = plotHelper(plotdat,labels=getLabels(pd)[selected],
                    transformation=transformation,show=show)
@@ -11,13 +12,14 @@ function plot(pd::sample;channels::Vector{String},transformation="sqrt",show=tru
     return p
 end
 
-function plot(pd::run;channels::Vector{String},
+function plot(pd::run;channels::Union{Nothing,Vector{String}}=nothing,
               transformation="sqrt",steps=500,
               i::Union{Nothing,Int}=nothing,show=true)
     if isnothing(i)
         dat = poolRunDat(pd)
         labels = getLabels(pd)[1]
-        selected = [1;findall(in(channels).(labels))]
+        if isnothing(channels) selected = [1;3:ncol(pd)]
+        else selected = [1;label2index(pd,channels)] end
         step = Int(ceil(size(dat,1)/steps))
         plotdat = dat[1:step:end,selected]
         plotHelper(plotdat,labels=labels[selected],
