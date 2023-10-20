@@ -82,9 +82,9 @@ function windowData(pd::run;blank=false,channels=nothing,i=nothing)
     if isnothing(i) i = Vector{Int}(1:length(pd)) end
     ni = size(i,1)
     dats = Vector{Matrix}(undef,ni)
-    samples = getSamples(pd)[i]
-    for j in 1:ni
-        dats[j] = windowData(samples[j];blank=blank,channels=channels)
+    samples = getSamples(pd)
+    for j in eachindex(i)
+        dats[j] = windowData(samples[i[j]];blank=blank,channels=channels)
     end
     reduce(vcat,dats)
 end

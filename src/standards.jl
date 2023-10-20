@@ -1,68 +1,62 @@
-function fitStandards!(pd::run;method="LuHf",refmat="Hogsbo",
-                       snames=nothing,prefix=nothing,
-                       i=nothing,n=2)
+function fitStandards!(pd::run;method="LuHf",
+                       refmat::Union{String,Vector{String}}="Hogsbo",
+                       snames::Union{Nothing,String,Vector{String}}=nothing,
+                       prefix::Union{Nothing,String,Vector{String}}=nothing,
+                       i::Union{Nothing,Vector{Int},Vector{Vector{Int}}}=nothing,
+                       n=2)
     if isnothing(getBPar(pd)) PTerror("missingBlank") end
-    setDRS!(pd,method=method,refmat=refmat)
-    i = findSamples(pd,i=i,prefix=prefix,snames=snames)
-    s = signalData(pd,channels=getChannels(pd),i=i)
     
-    t = s[:,1]
-    T = s[:,2]
-    Xm = s[:,3]
-    Ym = s[:,4]
-    Zm = s[:,5]
+    if !isa(refmat,Vector{String}) refmat = [refmat] end
+    if !isa(snames,Vector{String}) snames = [snames] end
+    if !isa(prefix,Vector{String}) prefix = [prefix] end
+    if !isa(i,Vector{Vector{Int}}) i = [i] end
 
+    setDRS!(pd,method=method,refmat=refmat)
     A = getA(pd)
     B = getB(pd)
-
     bpar = getBPar(pd)
     nbp = Int(size(bpar,1)/3)
     bx = bpar[1:nbp]
     by = bpar[nbp+1:2*nbp]
     bz = bpar[2*nbp+1:3*nbp]
-
-    bXt = polyVal(bx,t)
-    bYt = polyVal(by,t)
-    bZt = polyVal(bz,t)
+    groups = Vector{NamedTuple}(undef,0)
+    
+    for j in eachindex(refmat)
+        k = markStandards!(pd,i=i[j],standard=j,prefix=prefix[j],snames=snames[j])
+        s = signalData(pd,channels=getChannels(pd),i=k)
+        t = s[:,1]
+        T = s[:,2]
+        Xm = s[:,3]
+        Ym = s[:,4]
+        Zm = s[:,5]
+        bXt = polyVal(bx,t)
+        bYt = polyVal(by,t)
+        bZt = polyVal(bz,t)
+        dat = (A=A[j],B=B[j],t=t,T=T,Xm=Xm,Ym=Ym,Zm=Zm,bXt=bXt,bYt=bYt,bZt=bZt)
+        push!(groups,dat)
+    end
     
     function misfit(par)
-        ft = polyVal(par[1:n],t)
-        FT = polyVal(par[n+1:2*n],T)
+        out = 0
         c = par[end]
-        X = getX(Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
-        Z = getZ(Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
-        sum(getS(X,Z,Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c))
+        for g in groups
+            ft = polyVal(par[1:n],g.t)
+            FT = polyVal(par[n+1:2*n],g.T)
+            X = getX(g.Xm,g.Ym,g.Zm,g.A,g.B,g.t,g.T,ft,FT,g.bXt,g.bYt,g.bZt,c)
+            Z = getZ(g.Xm,g.Ym,g.Zm,g.A,g.B,g.t,g.T,ft,FT,g.bXt,g.bYt,g.bZt,c)
+            out += sum(getS(X,Z,g.Xm,g.Ym,g.Zm,g.A,g.B,g.t,g.T,ft,FT,g.bXt,g.bYt,g.bZt,c))
+        end
+        out
     end
 
-    init = [log(abs(mean(Zm)));fill(0.0,2*n-1);-10.0]
+    init = [fill(0.0,2*n);-10.0]
     fit = optimize(misfit,init)
     sol = Optim.minimizer(fit)
     setSPar!(pd,sol)
 end
 
-function findSamples(pd::run;snames=nothing,prefix=nothing,i=nothing)
-    if isnothing(i)
-        allsnames = getSnames(pd)
-        if isnothing(prefix)
-            if isnothing(snames) # return all samples
-                out = 1:length(pd)
-            else # snames-based
-                if isa(snames,String) snames = [snames] end
-                out = findall(in(snames),allsnames)
-            end
-        else # prefix-based
-            if isa(prefix,String) prefix = [prefix] end
-            out = Vector{Int}()
-            for j in eachindex(allsnames)
-                for p in prefix
-                    if occursin(p,allsnames[j])
-                        push!(out,j)
-                    end
-                end
-            end
-        end
-    else # i=based
-        out = i
-    end
-    out
+function markStandards!(pd;i=nothing,prefix=nothing,snames=nothing,standard=0)
+    j = findSamples(pd,snames=snames,prefix=prefix,i=i)
+    setStandard!(pd,i=j,standard=standard)
+    return j
 end

@@ -14,6 +14,7 @@ include(dir*"DRS.jl")
 include(dir*"referencematerials.jl")
 include(dir*"blanks.jl")
 include(dir*"standards.jl")
+include(dir*"samples.jl")
 include(dir*"crunch.jl")
 
 closeall();
@@ -80,11 +81,11 @@ end
 
 tt = [time()]; # start clock
 
-out = loadtest(tt);
-plottest(tt);
-out = windowtest(tt);
-plotwindowtest(tt);
-out = blanktest(tt);
+#out = loadtest(tt);
+#plottest(tt);
+#out = windowtest(tt);
+#plotwindowtest(tt);
+#out = blanktest(tt);
 out = standardtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings

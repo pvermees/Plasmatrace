@@ -1,4 +1,5 @@
-function plot(pd::sample;channels::Union{Nothing,Vector{String}},transformation="sqrt",show=true)
+function plot(pd::sample;channels::Union{Nothing,Vector{String}},
+              transformation="sqrt",show=true)
     if isnothing(channels) selected = [2;3:ncol(pd)]
     else selected = [2;label2index(pd,channels)] end
     plotdat = getDat(pd)[:,selected]

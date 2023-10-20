@@ -3,8 +3,8 @@ const window = Tuple{Int,Int}
 abstract type plasmaData end
 
 mutable struct control
-    A::Union{Float64}
-    B::Union{Float64}
+    A::Union{Nothing,Vector{Float64}}
+    B::Union{Nothing,Vector{Float64}}
     channels::Union{Nothing,Vector{String}}
 end
 
@@ -15,6 +15,7 @@ mutable struct sample <: plasmaData
     dat::Matrix
     bwin::Union{Nothing,Vector{window}}
     swin::Union{Nothing,Vector{window}}
+    standard::Int
 end
 
 mutable struct run <: plasmaData
@@ -26,6 +27,6 @@ mutable struct run <: plasmaData
     scov::Union{Nothing,Matrix}
 end
 
-sample(sname,datetime,labels,dat) = sample(sname,datetime,labels,dat,nothing,nothing)
+sample(sname,datetime,labels,dat) = sample(sname,datetime,labels,dat,nothing,nothing,0)
 
 run(samples) = run(samples,nothing,nothing,nothing,nothing,nothing)
