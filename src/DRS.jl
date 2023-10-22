@@ -1,6 +1,6 @@
 function setDRS!(pd::run;method="LuHf",refmat="Hogsbo")
     setMethod!(pd,method=method)
-    setAB!(pd,refmat)
+    setAB!(pd,refmat=refmat)
 end
 
 function setMethod!(pd::run;method::String)
@@ -15,5 +15,5 @@ function setMethod!(pd::run;method::String)
     else
         ctrl.channels = channels
     end
-    setControl!(pd,ctrl)
+    setControl!(pd;ctrl=ctrl)
 end

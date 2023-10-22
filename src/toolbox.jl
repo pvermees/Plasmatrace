@@ -1,8 +1,8 @@
 # polynomial fit with logarithmic coefficients
-function polyFit(t,y;n=1)
+function polyFit(;t,y,n=1)
     
     function misfit(par)
-        pred = polyVal(par,t)
+        pred = polyVal(p=par,t=t)
         sum((y.-pred).^2)
     end
 
@@ -10,10 +10,10 @@ function polyFit(t,y;n=1)
     init = [b0;fill(-10,n-1)]
     fit = optimize(misfit,init)
     Optim.minimizer(fit)
-    
+
 end
 
-function polyVal(p,t)
+function polyVal(;p,t)
     np = size(p,1)
     nt = size(t,1)
     out = fill(exp(p[1]),nt)

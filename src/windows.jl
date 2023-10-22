@@ -51,15 +51,15 @@ end
 function blankData(pd::sample;channels::Vector{String})
     windowData(pd,blank=true,channels=channels)
 end
-function blankData(pd::run;channels=nothing,i=nothing,debug=false)
-    windowData(pd,blank=true,channels=channels,i=i,debug=debug)
+function blankData(pd::run;channels=nothing,i=nothing)
+    windowData(pd,blank=true,channels=channels,i=i)
 end
 
 function signalData(pd::sample;channels::Vector{String})
     windowData(pd,blank=false,channels=channels)
 end
-function signalData(pd::run;channels=nothing,i=nothing,debug=false)
-    windowData(pd,blank=false,channels=channels,i=i,debug=debug)
+function signalData(pd::run;channels=nothing,i=nothing)
+    windowData(pd,blank=false,channels=channels,i=i)
 end
 
 function windowData(pd::sample;blank=false,channels=nothing)
@@ -76,13 +76,11 @@ end
 
 function windowData(pd::run;blank::Bool=false,
                     channels::Union{Nothing,Vector{String}}=nothing,
-                    i::Union{Nothing,Int,Vector{Int}}=nothing,
-                    debug=false)
+                    i::Union{Nothing,Int,Vector{Int}}=nothing)
     if isnothing(channels)
         channels = getChannels(pd)
         if isnothing(channels) channels = getLabels(pd) end
     end
-    if debug println(channels) end
     if isnothing(i) i = Vector{Int}(1:length(pd)) 
     elseif isa(i,Int) i = [i]
     end

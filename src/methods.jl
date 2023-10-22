@@ -78,21 +78,21 @@ function getB(pd::run) getB(getControl(pd)) end
 function getChannels(pd::run) getChannels(getControl(pd)) end
 
 # set sample attributes
-function setSname!(pd::sample,sname::String) setproperty!(pd,:sname,sname) end
-function setDateTime!(pd::sample,datetime::DateTime) setproperty!(pd,:datetime,datetime) end
-function setLabels!(pd::sample,labels::Vector{String}) setproperty!(pd,:labels,labels) end
-function setDat!(pd::sample,dat::Matrix) setproperty!(pd,:dat,dat) end
-function setBWin!(pd::sample,bwin::Vector{window}) setproperty!(pd,:bwin,bwin) end
-function setSWin!(pd::sample,swin::Vector{window}) setproperty!(pd,:swin,swin) end
-function setStandard!(pd::sample,standard::Int) setproperty!(pd,:standard,standard) end
+function setSname!(pd::sample;sname::String) setproperty!(pd,:sname,sname) end
+function setDateTime!(pd::sample;datetime::DateTime) setproperty!(pd,:datetime,datetime) end
+function setLabels!(pd::sample;labels::Vector{String}) setproperty!(pd,:labels,labels) end
+function setDat!(pd::sample;dat::Matrix) setproperty!(pd,:dat,dat) end
+function setBWin!(pd::sample;bwin::Vector{window}) setproperty!(pd,:bwin,bwin) end
+function setSWin!(pd::sample;swin::Vector{window}) setproperty!(pd,:swin,swin) end
+function setStandard!(pd::sample;standard::Int) setproperty!(pd,:standard,standard) end
 
 # set run attributes
-function setSamples!(pd::run,samples::Vector{sample}) setproperty!(pd,:samples,samples) end
-function setControl!(pd::run,ctrl::control) setproperty!(pd,:control,ctrl) end
-function setBPar!(pd::run,bpar::Vector) setproperty!(pd,:bpar,bpar) end
-function setSPar!(pd::run,spar::Vector) setproperty!(pd,:spar,spar) end
-function setBCov!(pd::run,bcov::Matrix) setproperty!(pd,:bcov,bcov) end
-function setSCov!(pd::run,scov::Matrix) setproperty!(pd,:scov,scov) end
+function setSamples!(pd::run;samples::Vector{sample}) setproperty!(pd,:samples,samples) end
+function setControl!(pd::run;ctrl::control) setproperty!(pd,:control,ctrl) end
+function setBPar!(pd::run;bpar::Vector) setproperty!(pd,:bpar,bpar) end
+function setSPar!(pd::run;spar::Vector) setproperty!(pd,:spar,spar) end
+function setBCov!(pd::run;bcov::Matrix) setproperty!(pd,:bcov,bcov) end
+function setSCov!(pd::run;scov::Matrix) setproperty!(pd,:scov,scov) end
 
 # set key sample attributes in a run
 function setBWin!(pd::run;i,bwin::Vector{window}) accessSample!(pd,i,setBWin!,bwin) end
@@ -100,14 +100,14 @@ function setSWin!(pd::run;i,swin::Vector{window}) accessSample!(pd,i,setSWin!,bw
 function setStandard!(pd::run;i,standard::Int) accessSample!(pd,i,setStandard!,standard) end
 
 # set control attributes
-function setA!(ctrl::control,A::Vector{AbstractFloat}) setproperty!(pd,:A,A) end
-function setB!(ctrl::control,B::Vector{AbstractFloat}) setproperty!(pd,:B,B) end
-function setChannels!(ctrl::control,channels::Vector{String}) setproperty!(pd,:channels,channels) end
+function setA!(ctrl::control;A::Vector{AbstractFloat}) setproperty!(pd,:A,A) end
+function setB!(ctrl::control;B::Vector{AbstractFloat}) setproperty!(pd,:B,B) end
+function setChannels!(ctrl::control;channels::Vector{String}) setproperty!(pd,:channels,channels) end
 
 # set control attributes in a run
-function setA!(pd::run,A::AbstractFloat) accessControl!(pd,:A,setA!,A) end
-function setB!(pd::run,B::AbstractFloat) accessControl!(pd,:B,setB!,b) end
-function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,:channels,setChannels!,channels) end
+function setA!(pd::run;A::AbstractFloat) accessControl!(pd,:A,setA!,A) end
+function setB!(pd::run;B::AbstractFloat) accessControl!(pd,:B,setB!,b) end
+function setChannels!(pd::run;channels::Vector{String}) accessControl!(pd,:channels,setChannels!,channels) end
 
 length(pd::run) = size(getSamples(pd),1)
 ncol(pd::plasmaData) = size(getLabels(pd),1)

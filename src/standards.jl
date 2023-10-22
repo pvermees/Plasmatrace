@@ -6,11 +6,11 @@ function fitStandards!(pd::run;snames=nothing,prefix=nothing,i=nothing,n=1)
     function misfit(par)
         out = 0
         c = par[end]
-        aft = parseSPar(par,"f")
-        aFT = parseSPar(par,"F")
+        aft = parseSPar(par,par="f")
+        aFT = parseSPar(par,par="F")
         for g in groups
-            ft = polyVal(aft,g.t)
-            FT = polyVal(aFT,g.T)
+            ft = polyVal(p=aft,t=g.t)
+            FT = polyVal(p=aFT,t=g.T)
             X = getX(g.Xm,g.Ym,g.Zm,g.A,g.B,ft,FT,g.bXt,g.bYt,g.bZt,c)
             Z = getZ(g.Xm,g.Ym,g.Zm,g.A,g.B,ft,FT,g.bXt,g.bYt,g.bZt,c)
             out += sum(getS(X,Z,g.Xm,g.Ym,g.Zm,g.A,g.B,ft,FT,g.bXt,g.bYt,g.bZt,c))
@@ -21,7 +21,7 @@ function fitStandards!(pd::run;snames=nothing,prefix=nothing,i=nothing,n=1)
     init = fill(0.0,2*n)
     fit = optimize(misfit,init)
     sol = Optim.minimizer(fit)
-    setSPar!(pd,sol)
+    setSPar!(pd,spar=sol)
 end
 
 function standardGroups(pd::run;
@@ -35,9 +35,9 @@ function standardGroups(pd::run;
     if !isa(i,Vector{Vector{Int}}) i = [i] end
     A = getA(pd)
     B = getB(pd)
-    bx = parseBPar(bpar,"bx")
-    by = parseBPar(bpar,"by")
-    bz = parseBPar(bpar,"bz")
+    bx = parseBPar(bpar,par="bx")
+    by = parseBPar(bpar,par="by")
+    bz = parseBPar(bpar,par="bz")
     groups = Vector{NamedTuple}(undef,0)
     for j in eachindex(A)
         k = markStandards!(pd,i=i[j],standard=j,prefix=prefix[j],snames=snames[j])
@@ -47,9 +47,9 @@ function standardGroups(pd::run;
         Xm = s[:,3]
         Ym = s[:,4]
         Zm = s[:,5]
-        bXt = polyVal(bx,t)
-        bYt = polyVal(by,t)
-        bZt = polyVal(bz,t)
+        bXt = polyVal(p=bx,t=t)
+        bYt = polyVal(p=by,t=t)
+        bZt = polyVal(p=bz,t=t)
         dat = (A=A[j],B=B[j],t=t,T=T,Xm=Xm,Ym=Ym,Zm=Zm,bXt=bXt,bYt=bYt,bZt=bZt)
         push!(groups,dat)
     end
@@ -80,13 +80,13 @@ function predictStandard(pd::run;
     Xm = s[:,3]
     Ym = s[:,4]
     Zm = s[:,5]
-    c = parseSPar(spar,"c")
-    ft = polyVal(parseSPar(spar,"f"),t)
-    FT = polyVal(parseSPar(spar,"F"),T)
+    c = parseSPar(spar,par="c")
+    ft = polyVal(p=parseSPar(spar,par="f"),t=t)
+    FT = polyVal(p=parseSPar(spar,par="F"),t=T)
 
-    bXt = polyVal(parseBPar(bpar,"bx"),t)
-    bYt = polyVal(parseBPar(bpar,"by"),t)
-    bZt = polyVal(parseBPar(bpar,"bz"),t)
+    bXt = polyVal(p=parseBPar(bpar,par="bx"),t=t)
+    bYt = polyVal(p=parseBPar(bpar,par="by"),t=t)
+    bZt = polyVal(p=parseBPar(bpar,par="bz"),t=t)
 
     A = getA(pd)[standard]
     B = getB(pd)[standard]
@@ -100,7 +100,7 @@ function predictStandard(pd::run;
     hcat(t,T,Xp,Yp,Zp)
 end
 
-function parseSPar(spar,par="c")
+function parseSPar(spar;par="c")
     if isnothing(spar) PTerror("missingStandard") end
     np = size(spar,1)
     n = Int(np/2)

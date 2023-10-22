@@ -13,7 +13,7 @@ function getAB(refmat::String)
     return A, B
 end
 
-function setAB!(pd::run,refmat::Union{String,Vector{String}})
+function setAB!(pd::run;refmat::Union{String,Vector{String}})
     if isa(refmat,String) refmat = [refmat] end
     nref = size(refmat,1)
     A = fill(0.0,nref)
@@ -28,5 +28,5 @@ function setAB!(pd::run,refmat::Union{String,Vector{String}})
         ctrl.A = A
         ctrl.B = B
     end
-    setControl!(pd,ctrl)
+    setControl!(pd,ctrl=ctrl)
 end

@@ -53,7 +53,7 @@ function load(dname::String;ext::String=".csv")::run
         samp = sortedsamples[i]
         dat = getDat(samp)
         dat[:,1] = dat[:,2]./sph .+ runtime[i]
-        setDat!(samp,dat)
+        setDat!(samp;dat=dat)
     end
 
     run(sortedsamples)

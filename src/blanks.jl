@@ -6,12 +6,12 @@ function fitBlanks!(pd::run;n=2)
     nc = size(channels,1)
     bpar = fill(0.0,n*nc)
     for i in eachindex(channels)
-        bpar[(i-1)*n+1:i*n] = polyFit(b[:,1],b[:,i+2],n=n)
+        bpar[(i-1)*n+1:i*n] = polyFit(t=b[:,1],y=b[:,i+2],n=n)
     end
-    setBPar!(pd,bpar)
+    setBPar!(pd,bpar=bpar)
 end
 
-function parseBPar(bpar,par="bx")
+function parseBPar(bpar;par="bx")
     if isnothing(bpar) PTerror("missingBlank") end
     nbp = Int(size(bpar,1)/3)
     if (par=="bx") return bpar[1:nbp]

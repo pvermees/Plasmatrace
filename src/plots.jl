@@ -71,7 +71,7 @@ function plotFitted!(p;pd::run,i::Int,channels=nothing,
     if isnothing(fittedchannels) return end
     available = findall(in(channels),fittedchannels)
     if (size(available,1)<1) return end
-    pred = predictStandard(pd;i=i)
+    pred = predictStandard(pd,i=i)
     x = pred[:,2]
     y = pred[:,3:end]
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
