@@ -1,10 +1,7 @@
-function fitBlanks!(pd::run;
-                    channels::Union{Nothing,Vector{String}}=nothing,
-                    n=2)
-    if isnothing(channels)
-        channels = getChannels(pd)
-        if isnothing(channels) PTerror("missingControl") end
-    end
+function fitBlanks!(pd::run;n=2)
+    ctrl = getControl(pd)
+    if isnothing(ctrl) PTerror("missingControl") end
+    channels = getChannels(ctrl)
     b = blankData(pd,channels=channels)
     nc = size(channels,1)
     bpar = fill(0.0,n*nc)

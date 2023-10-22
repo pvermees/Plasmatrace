@@ -1,14 +1,19 @@
-function setDRS!(pd::run;method="LuHf",
-                 refmat::Union{String,Vector{String}}="Hogsbo")
+function setDRS!(pd::run;method="LuHf",refmat="Hogsbo")
+    setMethod!(pd,method=method)
+    setAB!(pd,refmat)
+end
+
+function setMethod!(pd::run;method::String)
     if (method=="LuHf")
         channels = ["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"]
+    else
+        PTerror("UnknownMethod")
     end
-    if isa(refmat,String) refmat = [refmat] end
-    nref = size(refmat,1)
-    A = fill(0.0,nref)
-    B = fill(0.0,nref)
-    for i in eachindex(refmat)
-        A[i], B[i] = getAB(A[i],B[i],refmat[i])
+    ctrl = getControl(pd)
+    if isnothing(ctrl)
+        ctrl = control(nothing,nothing,channels)
+    else
+        ctrl.channels = channels
     end
-    setControl!(pd,control(A,B,channels))
+    setControl!(pd,ctrl)
 end

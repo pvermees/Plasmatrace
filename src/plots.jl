@@ -13,7 +13,7 @@ function plot(pd::sample;channels::Union{Nothing,Vector{String}},
 end
 
 function plot(pd::run;channels::Union{Nothing,Vector{String}}=nothing,
-              transformation="sqrt",steps=500,
+              transformation="sqrt",steps=1000,
               i::Union{Nothing,Int}=nothing,show=true)
     if isnothing(i)
         dat = poolRunDat(pd)
@@ -23,7 +23,8 @@ function plot(pd::run;channels::Union{Nothing,Vector{String}}=nothing,
         step = Int(ceil(size(dat,1)/steps))
         plotdat = dat[1:step:end,selected]
         p = plotHelper(plotdat,labels=labels[selected],
-                       transformation=transformation,show=show)
+                       transformation=transformation,show=show,
+                       seriestype=:path)
     else
         if isnothing(channels) channels = getChannels(pd) end
         p = plot(getSamples(pd)[i],channels=channels,
@@ -71,11 +72,6 @@ function plotFitted!(p;pd::run,i::Int,channels=nothing,
     available = findall(in(channels),fittedchannels)
     if (size(available,1)<1) return end
     pred = predictStandard(pd;i=i)
-    # for testing ...
-    #obs = signalData(pd;channels=channels,i=i)
-    #println(obs[1,:])
-    #println(pred[1,:])
-    ###
     x = pred[:,2]
     y = pred[:,3:end]
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)

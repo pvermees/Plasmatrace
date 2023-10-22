@@ -110,8 +110,7 @@ function setB!(pd::run,B::AbstractFloat) accessControl!(pd,:B,setB!,b) end
 function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,:channels,setChannels!,channels) end
 
 length(pd::run) = size(getSamples(pd),1)
-ncol(pd::sample) = size(getLabels(pd),1)
-ncol(pd::run) = size(getLabels(pd)[1],1)
+ncol(pd::plasmaData) = size(getLabels(pd),1)
 
 function poolRunDat(pd::run;i=nothing)
     dats = getDat(pd,i=i)

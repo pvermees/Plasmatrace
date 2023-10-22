@@ -63,9 +63,9 @@ end
 function blanktest(tt=nothing)
     myrun = loadtest();
     setBlanks!(myrun);
-    channels = ["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"];
-    fitBlanks!(myrun,channels=channels,n=2);
-    b = blankData(myrun;channels=channels);
+    setMethod!(myrun,method="LuHf")
+    fitBlanks!(myrun,n=2);
+    b = blankData(myrun);
     t = b[:,1]
     bpar = getBPar(myrun);
     bx = parseBPar(bpar,"bx")
@@ -109,10 +109,9 @@ function standardtest(tt=nothing)
     myrun = loadtest();
     setBlanks!(myrun);
     setSignals!(myrun);
-    setDRS!(myrun,method="LuHf") # TODO: remove need for setDRS! before fitBlanks!
-    fitBlanks!(myrun,n=1);
-    fitStandards!(myrun,method="LuHf",
-                  refmat="Hogsbo",prefix="hogsbo_",n=1);
+    setDRS!(myrun,method="LuHf",refmat="Hogsbo")
+    fitBlanks!(myrun,n=2);
+    fitStandards!(myrun,prefix="hogsbo_",n=1);
     i = findSamples(myrun,prefix="hogsbo_")
     plot(myrun,i=i[1]);
     timer!(tt,myrun);
@@ -121,13 +120,13 @@ end
 
 tt = [time()]; # start clock
 
-#out = loadtest(tt);
-#plottest(tt);
-#out = windowtest(tt);
-#plotwindowtest(tt);
-#out = blanktest(tt);
-#out = methodtest(tt);
-#out = forwardtest(tt);
+out = loadtest(tt);
+plottest(tt);
+out = windowtest(tt);
+plotwindowtest(tt);
+out = blanktest(tt);
+out = methodtest(tt);
+out = forwardtest(tt);
 out = standardtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings

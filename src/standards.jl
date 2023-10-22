@@ -1,9 +1,8 @@
-function fitStandards!(pd::run;method="LuHf",refmat="Hogsbo",snames=nothing,
-                       prefix=nothing,i=nothing,n=2)
+function fitStandards!(pd::run;snames=nothing,prefix=nothing,i=nothing,n=1)
     
-    setDRS!(pd,method=method)
-    groups = standardGroups(pd,refmat=refmat,snames=snames,prefix=prefix,i=i)
-    
+    if isnothing(getControl(pd)) PTerror("missingControl") end
+    groups = standardGroups(pd,snames=snames,prefix=prefix,i=i)
+
     function misfit(par)
         out = 0
         c = par[end]
@@ -21,18 +20,16 @@ function fitStandards!(pd::run;method="LuHf",refmat="Hogsbo",snames=nothing,
 
     init = fill(0.0,2*n)
     fit = optimize(misfit,init)
-    println(fit)
     sol = Optim.minimizer(fit)
     setSPar!(pd,sol)
 end
 
-function standardGroups(pd::run;refmat::Union{String,Vector{String}}="Hogsbo",
-                       snames::Union{Nothing,String,Vector{String}}=nothing,
-                       prefix::Union{Nothing,String,Vector{String}}=nothing,
-                       i::Union{Nothing,Vector{Int},Vector{Vector{Int}}}=nothing)
+function standardGroups(pd::run;
+                        snames::Union{Nothing,String,Vector{String}}=nothing,
+                        prefix::Union{Nothing,String,Vector{String}}=nothing,
+                        i::Union{Nothing,Vector{Int},Vector{Vector{Int}}}=nothing)
     bpar = getBPar(pd)
     if isnothing(bpar) PTerror("missingBlank") end
-    if !isa(refmat,Vector{String}) refmat = [refmat] end
     if !isa(snames,Vector{String}) snames = [snames] end
     if !isa(prefix,Vector{String}) prefix = [prefix] end
     if !isa(i,Vector{Vector{Int}}) i = [i] end
@@ -42,7 +39,7 @@ function standardGroups(pd::run;refmat::Union{String,Vector{String}}="Hogsbo",
     by = parseBPar(bpar,"by")
     bz = parseBPar(bpar,"bz")
     groups = Vector{NamedTuple}(undef,0)
-    for j in eachindex(refmat)
+    for j in eachindex(A)
         k = markStandards!(pd,i=i[j],standard=j,prefix=prefix[j],snames=snames[j])
         s = signalData(pd,channels=getChannels(pd),i=k)
         t = s[:,1]
