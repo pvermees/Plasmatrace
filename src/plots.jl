@@ -1,14 +1,13 @@
 function plot(pd::sample;channels::Union{Nothing,Vector{String}},
               transformation="sqrt",show=true)
-    if isnothing(channels) selected = [2;3:ncol(pd)]
-    else selected = [2;label2index(pd,channels)] end
+    if isnothing(channels) channels = getLabels(pd) end
+    selected = [2;label2index(pd,channels)]
     plotdat = getDat(pd)[:,selected]
     p = plotHelper(plotdat,labels=getLabels(pd)[selected],
                    transformation=transformation,show=show)
     dy = Plots.ylims(p)
     plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
     plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
-    #plotFitted!(p,pd=pd,channels=channels)
     if show display(p) end
     return p
 end
@@ -23,22 +22,30 @@ function plot(pd::run;channels::Union{Nothing,Vector{String}}=nothing,
         else selected = [1;label2index(pd,channels)] end
         step = Int(ceil(size(dat,1)/steps))
         plotdat = dat[1:step:end,selected]
-        plotHelper(plotdat,labels=labels[selected],
-                   transformation=transformation,show=show)
+        p = plotHelper(plotdat,labels=labels[selected],
+                       transformation=transformation,show=show)
     else
-        plot(getSamples(pd)[i],channels=channels,
-             transformation=transformation,show=show)
+        if isnothing(channels) channels = getChannels(pd) end
+        p = plot(getSamples(pd)[i],channels=channels,
+                 transformation=transformation,show=show)
+        plotFitted!(p,pd=pd,i=i,channels=channels,transformation=transformation)
     end
+    if show display(p) end
+    return p
 end
 
 function plotHelper(dat::Matrix;labels::Vector{String},
+                    seriestype=:scatter,ms=2,ma=0.5,
                     transformation="sqrt",show=false)
     x = dat[:,1]
     y = dat[:,2:end]
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
-    p = Plots.plot(x,ty,label=reshape(labels[2:end],1,:),legend=:topleft)
-    xlabel!(labels[1])
-    ylabel!(transformation*"(signal)")
+    p = Plots.plot(x,ty,seriestype=seriestype,ms=ms,ma=ma,
+                   label=reshape(labels[2:end],1,:),legend=:topleft)
+    xlab = labels[1]
+    ylab = transformation=="" ? "signal" : transformation*"(signal)"
+    xlabel!(xlab)
+    ylabel!(ylab)
     if show display(p) end
     return p
 end
@@ -56,10 +63,21 @@ function plotWindows!(p;pd::sample,blank=false,
     end
 end
 
-function plotFitted!(p;pd::sample,channels,dy=Plots.ylims(p))
+function plotFitted!(p;pd::run,i::Int,channels=nothing,
+                     dy=Plots.ylims(p),transformation="sqrt",
+                     linecolor="black",linestyle=:solid,label="")
     fittedchannels = getChannels(pd)
     if isnothing(fittedchannels) return end
     available = findall(in(channels),fittedchannels)
     if (size(available,1)<1) return end
-    pred = predict(pd)
+    pred = predictStandard(pd;i=i)
+    # for testing ...
+    #obs = signalData(pd;channels=channels,i=i)
+    #println(obs[1,:])
+    #println(pred[1,:])
+    ###
+    x = pred[:,2]
+    y = pred[:,3:end]
+    ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
+    Plots.plot!(p,x,ty,linecolor=linecolor,linestyle=linestyle,label=label)
 end

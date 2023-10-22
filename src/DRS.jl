@@ -1,6 +1,7 @@
-function setDRS!(pd::run;method="LuHf",refmat::Union{String,Vector{String}}="Hogsbo")
+function setDRS!(pd::run;method="LuHf",
+                 refmat::Union{String,Vector{String}}="Hogsbo")
     if (method=="LuHf")
-        channels = ["Hf176 -> 258","Hf178 -> 260","Lu175 -> 175"]
+        channels = ["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"]
     end
     if isa(refmat,String) refmat = [refmat] end
     nref = size(refmat,1)

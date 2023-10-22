@@ -2,14 +2,9 @@
 
 kill(all) $
 
-dSSdlX: diff(SS,lX) $
-dSSdlZ: diff(SS,lZ) $
-
-sol: solve([dSSdlX,dSSdlZ],[lX,lZ]) $
-
-K: Xm - X - bXt $
-L: Ym - (A*X + B*Z)*exp(c) - bYt $
-M: Zm - Z*exp(ft + FT) - bZt $
+K: Xm - X*ft*FT - bXt $
+L: Ym - (A*Z + B*X)*exp(c) - bYt $
+M: Zm - Z - bZt $
 
 SS: K^2 + L^2 + M^2 $
 
@@ -19,9 +14,9 @@ dSSdZ: diff(SS,Z) $
 sol: solve([dSSdX,dSSdZ],[X,Z]) $
 
 /*
-K: Xm - exp(lX) - bXt $
-L: Ym - (A*exp(lX) + B*exp(lZ))*exp(c) - bYt $
-M: Zm - exp(lZ + ft + fT) - bZt $
+K: Xm - exp(lX)*ft*fT - bXt $
+L: Ym - (A*exp(lZ) + B*exp(lX))*exp(c) - bYt $
+M: Zm - exp(lZ) - bZt $
 
 SS: K^2 + L^2 + M^2 $
 

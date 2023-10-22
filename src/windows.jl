@@ -62,7 +62,7 @@ function signalData(pd::run;channels=nothing,i=nothing)
     windowData(pd,blank=false,channels=channels,i=i)
 end
 
-function windowData(pd::sample;blank=false,channels::Vector{String})
+function windowData(pd::sample;blank=false,channels=nothing)
     windows = blank ? getBWin(pd) : getSWin(pd)
     selection = Vector{Int}()
     if isnothing(windows) PTerror("missingWindows") end

@@ -68,6 +68,20 @@ function blanktest(tt=nothing)
     return myrun
 end
 
+function forwardtest(tt=nothing)
+    myrun = loadtest();
+    setBlanks!(myrun);
+    setSignals!(myrun);
+    fitBlanks!(myrun);
+    setDRS!(myrun,method="LuHf")
+    groups = standardGroups(myrun,refmat="Hogsbo",prefix="hogsbo_")
+    setSPar!(myrun,[-3.0,9.0])
+    i = findSamples(myrun,prefix="hogsbo_")
+    plot(myrun,i=i[1],transformation="sqrt");
+    timer!(tt,myrun);
+    return myrun
+end
+
 function standardtest(tt=nothing)
     myrun = loadtest();
     setBlanks!(myrun);
@@ -75,6 +89,8 @@ function standardtest(tt=nothing)
     fitBlanks!(myrun);
     fitStandards!(myrun,method="LuHf",
                   refmat="Hogsbo",prefix="hogsbo_");
+    i = findSamples(myrun,prefix="hogsbo_")
+    plot(myrun,i=i[1]);
     timer!(tt,myrun);
     return myrun
 end
@@ -86,7 +102,8 @@ tt = [time()]; # start clock
 #out = windowtest(tt);
 #plotwindowtest(tt);
 #out = blanktest(tt);
-out = standardtest(tt);
+out = forwardtest(tt);
+#out = standardtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings
 

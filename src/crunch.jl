@@ -1,11 +1,11 @@
-function getX(Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
-    @. -(exp(c)*(A*bYt*exp(2*ft+2*FT)-A*Ym*exp(2*ft+2*FT))+bXt*exp(2*ft+2*FT)-Xm*exp(2*ft+2*FT)+exp(2*c)*(A*B*(exp(FT)*Zm-exp(FT)*bZt)*exp(ft)+B^2*bXt-B^2*Xm))/(exp(2*c)*(A^2*exp(2*ft+2*FT)+B^2)+exp(2*ft+2*FT))
+function getX(Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
+    @. -(((A^2*FT*bXt-A^2*FT*Xm)*exp(2*c)+FT*bXt-FT*Xm)*ft+A*B*(Zm-bZt)*exp(2*c)+(B*bYt-B*Ym)*exp(c))/((A^2*FT^2*exp(2*c)+FT^2)*ft^2+B^2*exp(2*c))
 end
 
-function getZ(Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
-    @. (exp(2*c)*(A^2*(exp(FT)*Zm-exp(FT)*bZt)*exp(ft)+A*B*bXt-A*B*Xm)+(exp(FT)*Zm-exp(FT)*bZt)*exp(ft)+(B*Ym-B*bYt)*exp(c))/(exp(2*c)*(A^2*exp(2*ft+2*FT)+B^2)+exp(2*ft+2*FT))
+function getZ(Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
+    @. -(((A*FT^2*bYt-A*FT^2*Ym)*exp(c)+FT^2*(bZt-Zm))*ft^2+(A*B*FT*Xm-A*B*FT*bXt)*exp(2*c)*ft+B^2*(bZt-Zm)*exp(2*c))/((A^2*FT^2*exp(2*c)+FT^2)*ft^2+B^2*exp(2*c))
 end
 
-function getS(X,Z,Xm,Ym,Zm,A,B,t,T,ft,FT,bXt,bYt,bZt,c)
-    @. ((-Z*exp(ft+FT))-bZt+Zm)^2+((-(B*Z+A*X)*exp(c))-bYt+Ym)^2+((-bXt)+Xm-X)^2
+function getS(Z,X,Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
+    @. ((-FT*X*ft)-bXt+Xm)^2+((-(A*Z+B*X)*exp(c))-bYt+Ym)^2+((-bZt)+Zm-Z)^2
 end
