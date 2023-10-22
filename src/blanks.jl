@@ -1,9 +1,17 @@
-function fitBlanks!(pd::run;n=2)
-    b = blankData(pd)
-    bx = polyFit(b[:,1],b[:,3],n=n)
-    by = polyFit(b[:,1],b[:,4],n=n)
-    bz = polyFit(b[:,1],b[:,5],n=n)
-    setBPar!(pd,[bx;by;bz])
+function fitBlanks!(pd::run;
+                    channels::Union{Nothing,Vector{String}}=nothing,
+                    n=2)
+    if isnothing(channels)
+        channels = getChannels(pd)
+        if isnothing(channels) PTerror("missingControl") end
+    end
+    b = blankData(pd,channels=channels)
+    nc = size(channels,1)
+    bpar = fill(0.0,n*nc)
+    for i in eachindex(channels)
+        bpar[(i-1)*n+1:i*n] = polyFit(b[:,1],b[:,i+2],n=n)
+    end
+    setBPar!(pd,bpar)
 end
 
 function parseBPar(bpar,par="bx")

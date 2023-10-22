@@ -69,30 +69,37 @@ function predictStandard(pd::run;
                          sname::Union{Nothing,String}=nothing,
                          prefix::Union{Nothing,String}=nothing,
                          i::Union{Nothing,Integer}=nothing)
-    i = findSamples(pd,i=i,prefix=prefix,snames=sname)
-    standard = getStandard(pd,i=[i])[1]
-    if standard<1 return nothing end
-    s = signalData(pd,i=i)
-    t = s[:,1]
-    T = s[:,2]
-    Xm = s[:,1]
-    Ym = s[:,2]
-    Zm = s[:,3]
     bpar = getBPar(pd)
     spar = getSPar(pd)
+    if isnothing(bpar) PTerror("missingBlank") end
+    if isnothing(spar) PTerror("missingStandard") end
+    i = findSamples(pd,i=i,prefix=prefix,snames=sname)[1]
+    standard = getStandard(pd,i=i)
+    if standard<1 return nothing end
+    s = signalData(pd,i=i)
+
+    t = s[:,1]
+    T = s[:,2]
+    Xm = s[:,3]
+    Ym = s[:,4]
+    Zm = s[:,5]
     c = parseSPar(spar,"c")
     ft = polyVal(parseSPar(spar,"f"),t)
     FT = polyVal(parseSPar(spar,"F"),T)
+
     bXt = polyVal(parseBPar(bpar,"bx"),t)
     bYt = polyVal(parseBPar(bpar,"by"),t)
     bZt = polyVal(parseBPar(bpar,"bz"),t)
+
     A = getA(pd)[standard]
     B = getB(pd)[standard]
     X = getX(Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
     Z = getZ(Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
+
     Xp = @. X*ft*FT + bXt
     Yp = @. (A*Z+B*X)*exp(c) + bYt
     Zp = @. Z + bZt
+
     hcat(t,T,Xp,Yp,Zp)
 end
 

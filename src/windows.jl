@@ -51,15 +51,15 @@ end
 function blankData(pd::sample;channels::Vector{String})
     windowData(pd,blank=true,channels=channels)
 end
-function blankData(pd::run;channels=nothing,i=nothing)
-    windowData(pd,blank=true,channels=channels,i=i)
+function blankData(pd::run;channels=nothing,i=nothing,debug=false)
+    windowData(pd,blank=true,channels=channels,i=i,debug=debug)
 end
 
 function signalData(pd::sample;channels::Vector{String})
     windowData(pd,blank=false,channels=channels)
 end
-function signalData(pd::run;channels=nothing,i=nothing)
-    windowData(pd,blank=false,channels=channels,i=i)
+function signalData(pd::run;channels=nothing,i=nothing,debug=false)
+    windowData(pd,blank=false,channels=channels,i=i,debug=debug)
 end
 
 function windowData(pd::sample;blank=false,channels=nothing)
@@ -74,12 +74,18 @@ function windowData(pd::sample;blank=false,channels=nothing)
     dat[selection,:]
 end
 
-function windowData(pd::run;blank=false,channels=nothing,i=nothing)
+function windowData(pd::run;blank::Bool=false,
+                    channels::Union{Nothing,Vector{String}}=nothing,
+                    i::Union{Nothing,Int,Vector{Int}}=nothing,
+                    debug=false)
     if isnothing(channels)
         channels = getChannels(pd)
-        if isnothing(channels) channels = getLabels(pd)[1] end
+        if isnothing(channels) channels = getLabels(pd) end
     end
-    if isnothing(i) i = Vector{Int}(1:length(pd)) end
+    if debug println(channels) end
+    if isnothing(i) i = Vector{Int}(1:length(pd)) 
+    elseif isa(i,Int) i = [i]
+    end
     ni = size(i,1)
     dats = Vector{Matrix}(undef,ni)
     samples = getSamples(pd)

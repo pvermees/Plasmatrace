@@ -63,20 +63,43 @@ end
 function blanktest(tt=nothing)
     myrun = loadtest();
     setBlanks!(myrun);
-    fitBlanks!(myrun);
+    channels = ["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"];
+    fitBlanks!(myrun,channels=channels,n=2);
+    b = blankData(myrun;channels=channels);
+    t = b[:,1]
+    bpar = getBPar(myrun);
+    bx = parseBPar(bpar,"bx")
+    by = parseBPar(bpar,"by")
+    bz = parseBPar(bpar,"bz")
+    bXt = polyVal(bx,t)
+    bYt = polyVal(by,t)
+    bZt = polyVal(bz,t)
+    p = Plots.plot(t,b[:,3:5]);
+    p = Plots.plot!(p,t,hcat(bXt,bYt,bZt),linecolor="black");
+    display(p);
     timer!(tt,myrun);
-    return myrun
+end
+
+function methodtest(tt=nothing)
+    myrun = loadtest();
+    labels = ["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"]
+    println(label2index(myrun,labels))
+    println(getLabels(myrun,i=15))
+    timer!(tt,myrun);
 end
 
 function forwardtest(tt=nothing)
     myrun = loadtest();
     setBlanks!(myrun);
     setSignals!(myrun);
-    fitBlanks!(myrun);
     setDRS!(myrun,method="LuHf")
-    groups = standardGroups(myrun,refmat="Hogsbo",prefix="hogsbo_")
-    setSPar!(myrun,[-3.0,9.0])
+    fitBlanks!(myrun,n=1);
     i = findSamples(myrun,prefix="hogsbo_")
+    setStandard!(myrun,i=i[1],standard=1)
+    setSPar!(myrun,[5.0,-5.0])
+    channels = getChannels(myrun)
+    obs = signalData(myrun;channels=channels,i=i[1])
+    pred = predictStandard(myrun;i=i[1])
     plot(myrun,i=i[1],transformation="sqrt");
     timer!(tt,myrun);
     return myrun
@@ -86,9 +109,10 @@ function standardtest(tt=nothing)
     myrun = loadtest();
     setBlanks!(myrun);
     setSignals!(myrun);
-    fitBlanks!(myrun);
+    setDRS!(myrun,method="LuHf") # TODO: remove need for setDRS! before fitBlanks!
+    fitBlanks!(myrun,n=1);
     fitStandards!(myrun,method="LuHf",
-                  refmat="Hogsbo",prefix="hogsbo_");
+                  refmat="Hogsbo",prefix="hogsbo_",n=1);
     i = findSamples(myrun,prefix="hogsbo_")
     plot(myrun,i=i[1]);
     timer!(tt,myrun);
@@ -102,8 +126,9 @@ tt = [time()]; # start clock
 #out = windowtest(tt);
 #plotwindowtest(tt);
 #out = blanktest(tt);
-out = forwardtest(tt);
-#out = standardtest(tt);
+#out = methodtest(tt);
+#out = forwardtest(tt);
+out = standardtest(tt);
 
 println(round.(tt[2:end]-tt[1:end-1],digits=4)) # print timings
 

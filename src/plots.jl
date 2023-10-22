@@ -17,7 +17,7 @@ function plot(pd::run;channels::Union{Nothing,Vector{String}}=nothing,
               i::Union{Nothing,Int}=nothing,show=true)
     if isnothing(i)
         dat = poolRunDat(pd)
-        labels = getLabels(pd)[1]
+        labels = getLabels(pd)
         if isnothing(channels) selected = [1;3:ncol(pd)]
         else selected = [1;label2index(pd,channels)] end
         step = Int(ceil(size(dat,1)/steps))

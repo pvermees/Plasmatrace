@@ -2,19 +2,33 @@
 function label2index(pd::plasmaData,labels::Union{Nothing,Vector{String}})
     allabels = getLabels(pd)
     if isnothing(labels) return 1:size(allabels,1) end
-    findall(in(labels).(allabels))
-end
-# get lists of sample attributes from a run:
-function accesSample(pd::run,i::Union{Nothing,Vector{Int}},T::Type,fun::Function)
-    if isnothing(i) i = 1:length(pd) end
-    samples = getSamples(pd)[i]
-    out = Vector{T}(undef,size(i,1))
-    for j in eachindex(samples)
-        out[j] = fun(samples[j])
+    out = Vector{Int}(undef,0)
+    for label in labels
+        i = findfirst(in([label]),allabels)
+        if !isnothing(i) push!(out,i) end
     end
     out
 end
-function accessSample!(pd::run,i::Vector{Int},fun::Function,val::Any)
+# get sample attributes from a run:
+function accesSample(pd::run,
+                     i::Union{Nothing,Int,Vector{Int}},
+                     T::Type,
+                     fun::Function)
+    if isnothing(i) i = 1:length(pd) end
+    samples = getSamples(pd)[i]
+    if isa(i,Int)
+        out = fun(samples)
+    else
+        out = Vector{T}(undef,size(i,1))
+        for j in eachindex(samples)
+            out[j] = fun(samples[j])
+        end
+    end
+    out
+end
+function accessSample!(pd::run,
+                       i::Union{Int,Vector{Int}},
+                       fun::Function,val::Any)
     samples = getSamples(pd)
     for j in i fun(samples[j],val) end
     setSamples!(pd,samples)
@@ -44,15 +58,14 @@ function getSPar(pd::run) getproperty(pd,:spar) end
 function getBCov(pd::run) getproperty(pd,:bcov) end
 function getSCov(pd::run) getproperty(pd,:scov) end
 
-# get lists of sample attributes from a run
+# get sample attributes from a run
 function getSnames(pd::run;i=nothing) accesSample(pd,i,String,getSname) end
 function getDateTimes(pd::run;i=nothing) accesSample(pd,i,DateTime,getDateTime) end
-function getLabels(pd::run;i=[1]) accesSample(pd,i,Vector{String},getLabels) end
+function getLabels(pd::run;i=1) out = accesSample(pd,i,Vector{String},getLabels) end
 function getDat(pd::run;i=nothing) accesSample(pd,i,Matrix,getDat) end
 function getBWin(pd::run;i=nothing) accesSample(pd,i,Vector{window},getBWin) end
 function getSWin(pd::run;i=nothing) accesSample(pd,i,Vector{window},getSWin) end
 function getStandard(pd::run;i=nothing) accesSample(pd,i,Int,getStandard) end
-function getCols(pd::run;labels) accesSample(pd,label2index(labels),Vector{String},getCols) end
 
 # get control attributes
 function getA(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:A) end
@@ -82,9 +95,9 @@ function setBCov!(pd::run,bcov::Matrix) setproperty!(pd,:bcov,bcov) end
 function setSCov!(pd::run,scov::Matrix) setproperty!(pd,:scov,scov) end
 
 # set key sample attributes in a run
-function setBWin!(pd::run;i::Vector{Int},bwin::Vector{window}) accessSample!(pd,i,setBWin!,bwin) end
-function setSWin!(pd::run;i::Vector{Int},swin::Vector{window}) accessSample!(pd,i,setSWin!,bwin) end
-function setStandard!(pd::run;i::Vector{Int},standard::Int) accessSample!(pd,i,setStandard!,standard) end
+function setBWin!(pd::run;i,bwin::Vector{window}) accessSample!(pd,i,setBWin!,bwin) end
+function setSWin!(pd::run;i,swin::Vector{window}) accessSample!(pd,i,setSWin!,bwin) end
+function setStandard!(pd::run;i,standard::Int) accessSample!(pd,i,setStandard!,standard) end
 
 # set control attributes
 function setA!(ctrl::control,A::Vector{AbstractFloat}) setproperty!(pd,:A,A) end

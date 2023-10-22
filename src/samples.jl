@@ -1,4 +1,4 @@
-function findSamples(pd::run;snames=nothing,prefix=nothing,i=nothing)
+function findSamples(pd::run;snames=nothing,prefix=nothing,i=nothing)::Vector{Int}
     if isnothing(i)
         allsnames = getSnames(pd)
         if isnothing(prefix)
@@ -20,7 +20,7 @@ function findSamples(pd::run;snames=nothing,prefix=nothing,i=nothing)
             end
         end
     else # i=based
-        out = size(i,1)>1 ? [i] : i
+        out = size(i,1)>1 ? i : [i]
     end
     out
 end
