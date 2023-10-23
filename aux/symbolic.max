@@ -2,8 +2,8 @@
 
 kill(all) $
 
-K: Xm - X*ft*FT - bXt $
-L: Ym - (A*Z + B*X)*exp(c) - bYt $
+K: Xm - X - bXt $
+L: Ym - A*Z*exp(c) - B*X*ft*FT - bYt $
 M: Zm - Z - bZt $
 
 SS: K^2 + L^2 + M^2 $
@@ -14,8 +14,8 @@ dSSdZ: diff(SS,Z) $
 sol: solve([dSSdX,dSSdZ],[X,Z]) $
 
 /*
-K: Xm - exp(lX)*ft*fT - bXt $
-L: Ym - (A*exp(lZ) + B*exp(lX))*exp(c) - bYt $
+K: Xm - exp(lX) - bXt $
+L: Ym - A*exp(lZ)*exp(c) - B*exp(lX)*ft*fT - bYt $
 M: Zm - exp(lZ) - bZt $
 
 SS: K^2 + L^2 + M^2 $

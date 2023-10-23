@@ -63,17 +63,16 @@ end
 function blanktest(tt=nothing)
     myrun = loadtest();
     setBlanks!(myrun);
-    setMethod!(myrun,method="LuHf")
-    fitBlanks!(myrun,n=2);
+    fitBlanks!(myrun,method="LuHf",n=2);
     b = blankData(myrun);
     t = b[:,1]
     bpar = getBPar(myrun);
-    bx = parseBPar(bpar,"bx")
-    by = parseBPar(bpar,"by")
-    bz = parseBPar(bpar,"bz")
-    bXt = polyVal(bx,t)
-    bYt = polyVal(by,t)
-    bZt = polyVal(bz,t)
+    bx = parseBPar(bpar,par="bx")
+    by = parseBPar(bpar,par="by")
+    bz = parseBPar(bpar,par="bz")
+    bXt = polyVal(p=bx,t=t)
+    bYt = polyVal(p=by,t=t)
+    bZt = polyVal(p=bz,t=t)
     p = Plots.plot(t,b[:,3:5]);
     p = Plots.plot!(p,t,hcat(bXt,bYt,bZt),linecolor="black");
     display(p);
@@ -92,15 +91,14 @@ function forwardtest(tt=nothing)
     myrun = loadtest();
     setBlanks!(myrun);
     setSignals!(myrun);
-    setDRS!(myrun,method="LuHf")
-    fitBlanks!(myrun,n=1);
-    i = findSamples(myrun,prefix="hogsbo_")
+    setDRS!(myrun;method="LuHf",refmat="BP")
+    fitBlanks!(myrun,method="LuHf",n=1);
+    i = findSamples(myrun,prefix="BP -")
     setStandard!(myrun,i=i[1],standard=1)
-    setSPar!(myrun,[5.0,-5.0])
+    setSPar!(myrun;spar=[0.0,4.0])
     channels = getChannels(myrun)
-    obs = signalData(myrun;channels=channels,i=i[1])
-    pred = predictStandard(myrun;i=i[1])
-    plot(myrun,i=i[1],transformation="sqrt");
+    plot(myrun,i=i[1],channels=channels,transformation="sqrt");
+    
     timer!(tt,myrun);
     return myrun
 end
@@ -109,10 +107,14 @@ function standardtest(tt=nothing)
     myrun = loadtest();
     setBlanks!(myrun);
     setSignals!(myrun);
-    setDRS!(myrun,method="LuHf",refmat="Hogsbo")
-    fitBlanks!(myrun,n=2);
-    fitStandards!(myrun,prefix="hogsbo_",n=1);
-    i = findSamples(myrun,prefix="hogsbo_")
+    fitBlanks!(myrun,method="LuHf",n=2);
+    markStandards!(myrun,prefix="hogsbo_",standard=1);
+    markStandards!(myrun,prefix="BP -",standard=2);
+    fitStandards!(myrun,
+                  method="LuHf",
+                  refmat=["Hogsbo","BP"],
+                  n=1)
+    i = findSamples(myrun,prefix="BP -")
     plot(myrun,i=i[1]);
     timer!(tt,myrun);
     return myrun

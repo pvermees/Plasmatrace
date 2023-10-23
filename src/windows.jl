@@ -23,7 +23,7 @@ function setWindows!(pd::run;blank=false,windows=nothing,i=nothing)
     for j in i
         setWindows!(samples[j],blank=blank,windows=windows)
     end
-    setSamples!(pd,samples)
+    setSamples!(pd,samples=samples)
 end
 
 function autoWindow(pd::sample;blank=false)::Vector{window}

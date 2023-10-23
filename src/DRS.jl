@@ -1,6 +1,6 @@
 function setDRS!(pd::run;method="LuHf",refmat="Hogsbo")
     setMethod!(pd,method=method)
-    setAB!(pd,refmat=refmat)
+    setAB!(pd,method=method,refmat=refmat)
 end
 
 function setMethod!(pd::run;method::String)

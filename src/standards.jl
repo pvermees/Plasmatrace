@@ -1,7 +1,15 @@
-function fitStandards!(pd::run;snames=nothing,prefix=nothing,i=nothing,n=1)
-    
-    if isnothing(getControl(pd)) PTerror("missingControl") end
-    groups = standardGroups(pd,snames=snames,prefix=prefix,i=i)
+function markStandards!(pd;i=nothing,prefix=nothing,snames=nothing,standard=0)
+    j = findSamples(pd,snames=snames,prefix=prefix,i=i)
+    setStandard!(pd,i=j,standard=standard)
+end
+
+function fitStandards!(pd::run;
+                       method::String,
+                       refmat::Union{String,Vector{String}},
+                       n=1)
+    if isa(refmat,String) refmat = [refmat] end
+    setDRS!(pd,method=method,refmat=refmat)
+    groups = groupStandards!(pd)
 
     function misfit(par)
         out = 0
@@ -24,24 +32,19 @@ function fitStandards!(pd::run;snames=nothing,prefix=nothing,i=nothing,n=1)
     setSPar!(pd,spar=sol)
 end
 
-function standardGroups(pd::run;
-                        snames::Union{Nothing,String,Vector{String}}=nothing,
-                        prefix::Union{Nothing,String,Vector{String}}=nothing,
-                        i::Union{Nothing,Vector{Int},Vector{Vector{Int}}}=nothing)
+function groupStandards!(pd::run)
     bpar = getBPar(pd)
     if isnothing(bpar) PTerror("missingBlank") end
-    if !isa(snames,Vector{String}) snames = [snames] end
-    if !isa(prefix,Vector{String}) prefix = [prefix] end
-    if !isa(i,Vector{Vector{Int}}) i = [i] end
     A = getA(pd)
     B = getB(pd)
     bx = parseBPar(bpar,par="bx")
     by = parseBPar(bpar,par="by")
     bz = parseBPar(bpar,par="bz")
+    std = getStandard(pd)
     groups = Vector{NamedTuple}(undef,0)
-    for j in eachindex(A)
-        k = markStandards!(pd,i=i[j],standard=j,prefix=prefix[j],snames=snames[j])
-        s = signalData(pd,channels=getChannels(pd),i=k)
+    for i in eachindex(A)
+        j = findall(in(i),std)
+        s = signalData(pd,channels=getChannels(pd),i=j)
         t = s[:,1]
         T = s[:,2]
         Xm = s[:,3]
@@ -50,16 +53,10 @@ function standardGroups(pd::run;
         bXt = polyVal(p=bx,t=t)
         bYt = polyVal(p=by,t=t)
         bZt = polyVal(p=bz,t=t)
-        dat = (A=A[j],B=B[j],t=t,T=T,Xm=Xm,Ym=Ym,Zm=Zm,bXt=bXt,bYt=bYt,bZt=bZt)
+        dat = (A=A[i],B=B[i],t=t,T=T,Xm=Xm,Ym=Ym,Zm=Zm,bXt=bXt,bYt=bYt,bZt=bZt)
         push!(groups,dat)
     end
     return groups
-end
-
-function markStandards!(pd;i=nothing,prefix=nothing,snames=nothing,standard=0)
-    j = findSamples(pd,snames=snames,prefix=prefix,i=i)
-    setStandard!(pd,i=j,standard=standard)
-    return j
 end
 
 function predictStandard(pd::run;
@@ -87,14 +84,14 @@ function predictStandard(pd::run;
     bXt = polyVal(p=parseBPar(bpar,par="bx"),t=t)
     bYt = polyVal(p=parseBPar(bpar,par="by"),t=t)
     bZt = polyVal(p=parseBPar(bpar,par="bz"),t=t)
-
+    
     A = getA(pd)[standard]
     B = getB(pd)[standard]
     X = getX(Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
     Z = getZ(Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
 
-    Xp = @. X*ft*FT + bXt
-    Yp = @. (A*Z+B*X)*exp(c) + bYt
+    Xp = @. X + bXt
+    Yp = @. A*Z*exp(c) + B*X*ft*FT + bYt
     Zp = @. Z + bZt
 
     hcat(t,T,Xp,Yp,Zp)

@@ -73,7 +73,7 @@ function plotFitted!(p;pd::run,i::Int,channels=nothing,
     if (size(available,1)<1) return end
     pred = predictStandard(pd,i=i)
     x = pred[:,2]
-    y = pred[:,3:end]
+    y = pred[:,available .+ 2]
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
     Plots.plot!(p,x,ty,linecolor=linecolor,linestyle=linestyle,label=label)
 end
