@@ -28,6 +28,7 @@ function fitStandards!(pd::run;
 
     init = fill(0.0,2*n)
     fit = optimize(misfit,init)
+    println(fit)
     sol = Optim.minimizer(fit)
     setSPar!(pd,spar=sol)
 end

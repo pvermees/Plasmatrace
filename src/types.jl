@@ -3,8 +3,8 @@ const window = Tuple{Int,Int}
 abstract type plasmaData end
 
 mutable struct control
-    A::Union{Nothing,Vector{Float64}}
-    B::Union{Nothing,Vector{Float64}}
+    A::Union{Nothing,Vector{AbstractFloat}}
+    B::Union{Nothing,Vector{AbstractFloat}}
     channels::Union{Nothing,Vector{String}}
 end
 
@@ -15,7 +15,7 @@ mutable struct sample <: plasmaData
     dat::Matrix
     bwin::Union{Nothing,Vector{window}}
     swin::Union{Nothing,Vector{window}}
-    standard::Int
+    standard::Integer
 end
 
 mutable struct run <: plasmaData

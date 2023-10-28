@@ -64,7 +64,7 @@ end
 
 function windowData(pd::sample;blank=false,channels=nothing)
     windows = blank ? getBWin(pd) : getSWin(pd)
-    selection = Vector{Int}()
+    selection = Vector{Integer}()
     if isnothing(windows) PTerror("missingWindows") end
     for w in windows
         append!(selection, w[1]:w[2])
@@ -81,8 +81,8 @@ function windowData(pd::run;blank::Bool=false,
         channels = getChannels(pd)
         if isnothing(channels) channels = getLabels(pd) end
     end
-    if isnothing(i) i = Vector{Int}(1:length(pd)) 
-    elseif isa(i,Int) i = [i]
+    if isnothing(i) i = Vector{Integer}(1:length(pd)) 
+    elseif isa(i,Integer) i = [i]
     end
     ni = size(i,1)
     dats = Vector{Matrix}(undef,ni)

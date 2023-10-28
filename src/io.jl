@@ -1,6 +1,6 @@
 # Currently only works for Agilent files
 function readFile(fname::String)::sample
-    
+
     f = open(fname,"r")
     strs = readlines(f)
 
@@ -15,8 +15,9 @@ function readFile(fname::String)::sample
 
     # read signals
     nr = size(strs,1)
+    Float = Sys.WORD_SIZE==64 ? Float64 : Float32
     dat = mapreduce(vcat, strs[5:(nr-3)]) do s
-        (parse.(Float64, split(s, ",")))'
+        (parse.(Float, split(s, ",")))'
     end
 
     labels = ["Run Time [hours]";labels]

@@ -1,4 +1,5 @@
-function findSamples(pd::run;snames=nothing,prefix=nothing,i=nothing)::Vector{Int}
+function findSamples(pd::run;snames=nothing,
+                     prefix=nothing,i=nothing)::Vector{Integer}
     if isnothing(i)
         allsnames = getSnames(pd)
         if isnothing(prefix)
@@ -10,7 +11,7 @@ function findSamples(pd::run;snames=nothing,prefix=nothing,i=nothing)::Vector{In
             end
         else # prefix-based
             if isa(prefix,String) prefix = [prefix] end
-            out = Vector{Int}()
+            out = Vector{Integer}()
             for j in eachindex(allsnames)
                 for p in prefix
                     if occursin(p,allsnames[j])

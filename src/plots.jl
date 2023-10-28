@@ -14,7 +14,7 @@ end
 
 function plot(pd::run;channels::Union{Nothing,Vector{String}}=nothing,
               transformation="sqrt",steps=1000,
-              i::Union{Nothing,Int}=nothing,show=true)
+              i::Union{Nothing,Integer}=nothing,show=true)
     if isnothing(i)
         dat = poolRunDat(pd)
         labels = getLabels(pd)
@@ -64,7 +64,7 @@ function plotWindows!(p;pd::sample,blank=false,
     end
 end
 
-function plotFitted!(p;pd::run,i::Int,channels=nothing,
+function plotFitted!(p;pd::run,i::Integer,channels=nothing,
                      dy=Plots.ylims(p),transformation="sqrt",
                      linecolor="black",linestyle=:solid,label="")
     fittedchannels = getChannels(pd)

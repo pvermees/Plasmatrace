@@ -31,11 +31,18 @@ function loadtest(tt=nothing)
     return out
 end
 
-function plottest(tt=nothing)
+function plottest(tt=nothing,option=0)
     myrun = loadtest();
-    p = plot(myrun,i=1,channels=["Hf176 -> 258","Hf178 -> 260"]);
-    p = plot(myrun,i=1);
-    p = plot(myrun);
+    p = nothing
+    if option==0 || option==1
+        p = plot(myrun,i=1,channels=["Hf176 -> 258","Hf178 -> 260"]);
+    end
+    if option==0 || option==2
+        p = plot(myrun,i=1);
+    end
+    if option==0 || option==3
+        p = plot(myrun);
+    end
     timer!(tt,p);
 end
 
@@ -114,7 +121,7 @@ function standardtest(tt=nothing)
                   method="LuHf",
                   refmat=["Hogsbo","BP"],
                   n=1)
-    i = findSamples(myrun,prefix="BP -")
+    i = findSamples(myrun,prefix="hogsbo")
     plot(myrun,i=i[1]);
     timer!(tt,myrun);
     return myrun
