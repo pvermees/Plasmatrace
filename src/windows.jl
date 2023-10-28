@@ -4,6 +4,7 @@ end
 function setBlanks!(pd::run;windows=nothing,i=nothing)
     setWindows!(pd,blank=true,windows=windows,i=i)
 end
+export setBlanks!
 
 function setSignals!(pd::sample;windows=nothing)
     setWindows!(pd,blank=false,windows=windows)
@@ -11,6 +12,7 @@ end
 function setSignals!(pd::run;windows=nothing,i=nothing)
     setWindows!(pd,blank=false,windows=windows,i=i)
 end
+export setSignals!
 
 function setWindows!(pd::sample;blank=false,windows=nothing)
     if isnothing(windows) windows = autoWindow(pd,blank=blank) end
@@ -54,6 +56,7 @@ end
 function blankData(pd::run;channels=nothing,i=nothing)
     windowData(pd,blank=true,channels=channels,i=i)
 end
+export blankData
 
 function signalData(pd::sample;channels::Vector{String})
     windowData(pd,blank=false,channels=channels)

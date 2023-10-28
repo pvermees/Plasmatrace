@@ -1,20 +1,17 @@
-function plot(pd::sample;channels::Union{Nothing,Vector{String}},
-              transformation="sqrt",show=true)
+function plot(pd::sample;channels::Union{Nothing,Vector{String}},transformation="sqrt")
     if isnothing(channels) channels = getLabels(pd) end
     selected = [2;label2index(pd,channels)]
     plotdat = getDat(pd)[:,selected]
     p = plotHelper(plotdat,labels=getLabels(pd)[selected],
-                   transformation=transformation,show=show)
+                   transformation=transformation)
     dy = Plots.ylims(p)
     plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
     plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
-    if show display(p) end
     return p
 end
-
 function plot(pd::run;channels::Union{Nothing,Vector{String}}=nothing,
               transformation="sqrt",steps=1000,
-              i::Union{Nothing,Integer}=nothing,show=true)
+              i::Union{Nothing,Integer}=nothing)
     if isnothing(i)
         dat = poolRunDat(pd)
         labels = getLabels(pd)
@@ -23,21 +20,20 @@ function plot(pd::run;channels::Union{Nothing,Vector{String}}=nothing,
         step = Int(ceil(size(dat,1)/steps))
         plotdat = dat[1:step:end,selected]
         p = plotHelper(plotdat,labels=labels[selected],
-                       transformation=transformation,show=show,
-                       seriestype=:path)
+                       transformation=transformation,seriestype=:path)
     else
         if isnothing(channels) channels = getChannels(pd) end
         p = plot(getSamples(pd)[i],channels=channels,
-                 transformation=transformation,show=show)
+                 transformation=transformation)
         plotFitted!(p,pd=pd,i=i,channels=channels,transformation=transformation)
     end
-    if show display(p) end
     return p
 end
+export plot
 
 function plotHelper(dat::Matrix;labels::Vector{String},
                     seriestype=:scatter,ms=2,ma=0.5,
-                    transformation="sqrt",show=false)
+                    transformation="sqrt")
     x = dat[:,1]
     y = dat[:,2:end]
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
@@ -47,7 +43,6 @@ function plotHelper(dat::Matrix;labels::Vector{String},
     ylab = transformation=="" ? "signal" : transformation*"(signal)"
     xlabel!(xlab)
     ylabel!(ylab)
-    if show display(p) end
     return p
 end
 

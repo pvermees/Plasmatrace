@@ -85,6 +85,7 @@ function setDat!(pd::sample;dat::Matrix) setproperty!(pd,:dat,dat) end
 function setBWin!(pd::sample,bwin::Vector{window}) setproperty!(pd,:bwin,bwin) end
 function setSWin!(pd::sample,swin::Vector{window}) setproperty!(pd,:swin,swin) end
 function setStandard!(pd::sample,standard::Integer) setproperty!(pd,:standard,standard) end
+export setStandard!
 
 # set run attributes
 function setSamples!(pd::run;samples::Vector{sample}) setproperty!(pd,:samples,samples) end

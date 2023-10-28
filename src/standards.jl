@@ -2,7 +2,8 @@ function markStandards!(pd;i=nothing,prefix=nothing,snames=nothing,standard=0)
     j = findSamples(pd,snames=snames,prefix=prefix,i=i)
     setStandard!(pd,i=j,standard=standard)
 end
-
+export markStandards!
+    
 function fitStandards!(pd::run;
                        method::String,
                        refmat::Union{String,Vector{String}},
@@ -32,6 +33,7 @@ function fitStandards!(pd::run;
     sol = Optim.minimizer(fit)
     setSPar!(pd,spar=sol)
 end
+export fitStandards!
 
 function groupStandards!(pd::run)
     bpar = getBPar(pd)

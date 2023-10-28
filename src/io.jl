@@ -60,3 +60,4 @@ function load(dname::String;ext::String=".csv")::run
     run(sortedsamples)
     
 end
+export load

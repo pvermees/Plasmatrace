@@ -11,6 +11,7 @@ function fitBlanks!(pd::run;method::String,n=2)
     end
     setBPar!(pd,bpar=bpar)
 end
+export fitBlanks!
 
 function parseBPar(bpar;par="bx")
     if isnothing(bpar) PTerror("missingBlank") end
