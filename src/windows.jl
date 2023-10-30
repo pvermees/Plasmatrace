@@ -30,7 +30,7 @@ end
 
 function autoWindow(pd::sample;blank=false)::Vector{window}
     dat = getDat(pd)[:,3:end]
-    total = vec(sum(dat,dims=2))
+    total = sum.(eachrow(dat))
     q = Statistics.quantile(total,[0.05,0.95])
     mid = (q[2]+q[1])/10
     low = total.<mid
@@ -71,9 +71,9 @@ function windowData(pd::sample;blank=false,channels=nothing)
     for w in windows
         append!(selection, w[1]:w[2])
     end
-    labels = [getLabels(pd)[1:2];channels] # add time columns
-    dat = getCols(pd,labels=labels)
-    dat[selection,:]
+    dat = getDat(pd)
+    labels = [names(dat)[1:2];channels] # add time columns
+    dat[selection,labels]
 end
 
 function windowData(pd::run;blank::Bool=false,
@@ -81,13 +81,13 @@ function windowData(pd::run;blank::Bool=false,
                     i::Union{Nothing,Int,Vector{Int}}=nothing)
     if isnothing(channels)
         channels = getChannels(pd)
-        if isnothing(channels) channels = getLabels(pd) end
+        if isnothing(channels) channels = names(pd) end
     end
     if isnothing(i) i = Vector{Integer}(1:length(pd)) 
     elseif isa(i,Integer) i = [i]
     end
     ni = size(i,1)
-    dats = Vector{Matrix}(undef,ni)
+    dats = Vector{DataFrame}(undef,ni)
     samples = getSamples(pd)
     for j in eachindex(i)
         dats[j] = windowData(samples[i[j]];blank=blank,channels=channels)

@@ -1,14 +1,3 @@
-# helper functions
-function label2index(pd::plasmaData,labels::Union{Nothing,Vector{String}})
-    allabels = getLabels(pd)
-    if isnothing(labels) return 1:size(allabels,1) end
-    out = Vector{Integer}(undef,0)
-    for label in labels
-        i = findfirst(in([label]),allabels)
-        if !isnothing(i) push!(out,i) end
-    end
-    out
-end
 # get sample attributes from a run:
 function accesSample(pd::run,
                      i::Union{Nothing,Integer,Vector{Integer}},
@@ -43,12 +32,10 @@ end
 # get sample attributes
 function getSname(pd::sample) getproperty(pd,:sname) end
 function getDateTime(pd::sample) getproperty(pd,:datetime) end
-function getLabels(pd::sample) getproperty(pd,:labels) end
 function getDat(pd::sample) getproperty(pd,:dat) end
 function getBWin(pd::sample) getproperty(pd,:bwin) end
 function getSWin(pd::sample) getproperty(pd,:swin) end
 function getStandard(pd::sample) getproperty(pd,:standard) end
-function getCols(pd::sample;labels) getDat(pd)[:,label2index(pd,labels)] end
 
 # get run attributes
 function getSamples(pd::run) getproperty(pd,:samples) end
@@ -61,8 +48,7 @@ function getSCov(pd::run) getproperty(pd,:scov) end
 # get sample attributes from a run
 function getSnames(pd::run;i=nothing) accesSample(pd,i,String,getSname) end
 function getDateTimes(pd::run;i=nothing) accesSample(pd,i,DateTime,getDateTime) end
-function getLabels(pd::run;i=1) out = accesSample(pd,i,Vector{String},getLabels) end
-function getDat(pd::run;i=nothing) accesSample(pd,i,Matrix,getDat) end
+function getDat(pd::run;i=nothing) accesSample(pd,i,DataFrame,getDat) end
 function getBWin(pd::run;i=nothing) accesSample(pd,i,Vector{window},getBWin) end
 function getSWin(pd::run;i=nothing) accesSample(pd,i,Vector{window},getSWin) end
 function getStandard(pd::run;i=nothing) accesSample(pd,i,Integer,getStandard) end
@@ -80,8 +66,7 @@ function getChannels(pd::run) getChannels(getControl(pd)) end
 # set sample attributes
 function setSname!(pd::sample;sname::String) setproperty!(pd,:sname,sname) end
 function setDateTime!(pd::sample;datetime::DateTime) setproperty!(pd,:datetime,datetime) end
-function setLabels!(pd::sample;labels::Vector{String}) setproperty!(pd,:labels,labels) end
-function setDat!(pd::sample;dat::Matrix) setproperty!(pd,:dat,dat) end
+function setDat!(pd::sample;dat::DataFrame) setproperty!(pd,:dat,dat) end
 function setBWin!(pd::sample,bwin::Vector{window}) setproperty!(pd,:bwin,bwin) end
 function setSWin!(pd::sample,swin::Vector{window}) setproperty!(pd,:swin,swin) end
 function setStandard!(pd::sample,standard::Integer) setproperty!(pd,:standard,standard) end
@@ -111,9 +96,9 @@ function setB!(pd::run,B::AbstractFloat) accessControl!(pd,:B,setB!,b) end
 function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,:channels,setChannels!,channels) end
 
 length(pd::run) = size(getSamples(pd),1)
-ncol(pd::plasmaData) = size(getLabels(pd),1)
 
 function poolRunDat(pd::run,i=nothing)
     dats = getDat(pd,i=i)
+    typeof(dats)
     reduce(vcat,dats)
 end

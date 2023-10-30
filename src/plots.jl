@@ -1,46 +1,50 @@
-function plot(pd::sample;channels::Union{Nothing,Vector{String}},
-              transformation="sqrt")
-    if isnothing(channels) channels = getLabels(pd) end
-    selected = [2;label2index(pd,channels)]
-    plotdat = getDat(pd)[:,selected]
-    p = plotHelper(plotdat,labels=getLabels(pd)[selected],
-                   transformation=transformation)
+function plot(pd::sample;channels=nothing,transformation="sqrt")
+    plotdat = getDat(pd)
+    p = plotHelper(plotdat,channels=channels,
+                   transformation=transformation,ix=2)
     dy = Plots.ylims(p)
     plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
     plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
     return p
 end
-function plot(pd::run;channels::Union{Nothing,Vector{String}}=nothing,
+function plot(pd::run;channels=nothing,
               transformation="sqrt",steps=1000,
               i::Union{Nothing,Integer}=nothing)
     if isnothing(i)
-        dat = poolRunDat(pd)
-        labels = getLabels(pd)
-        if isnothing(channels) selected = [1;3:ncol(pd)]
-        else selected = [1;label2index(pd,channels)] end
-        step = Int(ceil(size(dat,1)/steps))
-        plotdat = dat[1:step:end,selected]
-        p = plotHelper(plotdat,labels=labels[selected],
-                       transformation=transformation,seriestype=:path)
+        plotdat = poolRunDat(pd)
+        step = Int(ceil(size(plotdat,1)/steps))
+        p = plotHelper(plotdat[1:step:end,:],
+                       channels=channels,
+                       transformation=transformation,
+                       seriestype=:path,ix=1)
     else
         if isnothing(channels) channels = getChannels(pd) end
         p = plot(getSamples(pd)[i],channels=channels,
                  transformation=transformation)
-        plotFitted!(p,pd=pd,i=i,channels=channels,transformation=transformation)
+        plotFitted!(p,pd=pd,i=i,channels=channels,
+                    transformation=transformation)
     end
     return p
 end
 export plot
 
-function plotHelper(dat::Matrix;labels::Vector{String},
-                    seriestype=:scatter,ms=2,ma=0.5,
-                    transformation="sqrt")
-    x = dat[:,1]
-    y = dat[:,2:end]
+function plotHelper(plotdat::DataFrame;
+                    channels::Union{Nothing,Vector{String},Vector{Integer}}=nothing,
+                    seriestype=:scatter,ms=2,ma=0.5,transformation="sqrt",ix=1)
+    labels = names(plotdat)
+    if isnothing(channels)
+        i = 3:ncol(plotdat)
+    elseif isa(channels,Vector{String})
+        i = findall(in(channels),labels)
+    end
+    xy = Matrix(plotdat)
+    x = xy[:,ix]
+    y = xy[:,i]
+    plotlabels = labels[i]
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
     p = Plots.plot(x,ty,seriestype=seriestype,ms=ms,ma=ma,
-                   label=reshape(labels[2:end],1,:),legend=:topleft)
-    xlab = labels[1]
+                   label=permutedims(plotlabels),legend=:topleft)
+    xlab = names(plotdat)[1]
     ylab = transformation=="" ? "signal" : transformation*"(signal)"
     Plots.xlabel!(xlab)
     Plots.ylabel!(ylab)
@@ -80,17 +84,19 @@ function plotAtomic(pd::run;i::Integer,
                     scatter=true,transformation="sqrt",ms=4)
     fit = fitSample(pd,i=i)
     channels = getChannels(pd)
-    p = plotHelper(fit[:,2:end],labels=[getLabels(pd)[2];channels],
-                   transformation=transformation,ms=ms)
+    p = plotHelper(fit,transformation=transformation,ms=ms,ix=2)
     return p
 end
+export plotAtomic
 
-function plotCalibration(pd::run)
+function plotCalibration(pd::run,ms=1,ma=0.5)
     groups = groupStandards(pd)
     for g in groups
         s = hcat(g.t,g.T,g.Xm,g.Ym,g.Zm)
         S = atomic(pd=pd,s=s)
-        p = Plots.plot(S[:,3]./S[:,5],S[:,4]./S[:,5],seriestype=:scatter)
+        p = Plots.plot(S[:,3]./S[:,5],S[:,4]./S[:,5],
+                       seriestype=:scatter,ms=ms,ma=ma)
         display(p)
     end
 end
+export plotCalibration

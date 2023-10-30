@@ -1,4 +1,4 @@
-using Dates
+using Dates, DataFrames
 import Plots, Statistics, Optim
 
 include("types.jl")

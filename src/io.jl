@@ -16,16 +16,16 @@ function readFile(fname::String)::sample
     # read signals
     nr = size(strs,1)
     Float = Sys.WORD_SIZE==64 ? Float64 : Float32
-    dat = mapreduce(vcat, strs[5:(nr-3)]) do s
+    measurements = mapreduce(vcat, strs[5:(nr-3)]) do s
         (parse.(Float, split(s, ",")))'
     end
 
     labels = ["Run Time [hours]";labels]
-    dat = hcat(dat[:,1]./sph,dat)
+    dat = DataFrame(hcat(measurements[:,1]./sph,measurements),labels)
 
     close(f)
 
-    sample(sname,datetime,labels,dat)
+    sample(sname,datetime,dat)
 
 end
 

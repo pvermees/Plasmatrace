@@ -55,5 +55,5 @@ function atomic(;pd::Union{Nothing,run}=nothing,s=nothing,i=nothing)
     Z = @. (Zm-bZt)*exp(-c)
     Y = Ym-bYt
     
-    hcat(t,T,X,Y,Z)
+    DataFrame(t=t,T=T,X=X,Y=Y,Z=Z)
 end

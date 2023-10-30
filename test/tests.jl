@@ -46,7 +46,7 @@ function blanktest()
     myrun = loadtest()
     setBlanks!(myrun)
     fitBlanks!(myrun,method="LuHf",n=2)
-    b = blankData(myrun)
+    b = Matrix(blankData(myrun))
     t = b[:,1]
     bpar = getBPar(myrun)
     bx = parseBPar(bpar,par="bx")
@@ -58,13 +58,6 @@ function blanktest()
     p = Plots.plot(t,b[:,3:5])
     p = Plots.plot!(p,t,hcat(bXt,bYt,bZt),linecolor="black")
     @test display(p) != NaN
-end
-
-function methodtest()
-    myrun = loadtest()
-    labels = ["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"]
-    println(label2index(myrun,labels))
-    println(getLabels(myrun,i=15))
 end
 
 function forwardtest()
@@ -110,19 +103,18 @@ end
 
 function calibrationtest()
     myrun = standardtest(false)
-    plotCalibration(myrun)
+    p = plotCalibration(myrun)
     @test display(p) != NaN
 end
 
 Plots.closeall()
 
-#@testset "load" begin loaddat = loadtest() end
-#@testset "plot raw data" begin plottest() end
-#@testset "set selection window" begin windowout = windowtest() end
-#@testset "plot selection windows" begin plotwindowtest() end
-#@testset "set blanks" begin blankout = blanktest() end
-#@testset "auxiliary tests" begin methodout = methodtest() end
-#@testset "forward model" begin forwardout = forwardtest() end
-#@testset "fit standards" begin standardout = standardtest() end
-#@testset "plot atomic" begin atomictest() end
+@testset "load" begin loaddat = loadtest() end
+@testset "plot raw data" begin plottest() end
+@testset "set selection window" begin windowout = windowtest() end
+@testset "plot selection windows" begin plotwindowtest() end
+@testset "set blanks" begin blankout = blanktest() end
+@testset "forward model" begin forwardout = forwardtest() end
+@testset "fit standards" begin standardout = standardtest() end
+@testset "plot atomic" begin atomictest() end
 @testset "plot calibration" begin calibrationtest() end

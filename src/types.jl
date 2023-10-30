@@ -11,8 +11,7 @@ end
 mutable struct sample <: plasmaData
     sname::String
     datetime::DateTime
-    labels::Vector{String}
-    dat::Matrix
+    dat::DataFrame
     bwin::Union{Nothing,Vector{window}}
     swin::Union{Nothing,Vector{window}}
     standard::Integer
@@ -27,6 +26,6 @@ mutable struct run <: plasmaData
     scov::Union{Nothing,Matrix}
 end
 
-sample(sname,datetime,labels,dat) = sample(sname,datetime,labels,dat,nothing,nothing,0)
+sample(sname,datetime,dat) = sample(sname,datetime,dat,nothing,nothing,0)
 
 run(samples) = run(samples,nothing,nothing,nothing,nothing,nothing)
