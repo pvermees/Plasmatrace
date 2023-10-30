@@ -1,4 +1,5 @@
-function plot(pd::sample;channels::Union{Nothing,Vector{String}},transformation="sqrt")
+function plot(pd::sample;channels::Union{Nothing,Vector{String}},
+              transformation="sqrt")
     if isnothing(channels) channels = getLabels(pd) end
     selected = [2;label2index(pd,channels)]
     plotdat = getDat(pd)[:,selected]
@@ -60,8 +61,8 @@ function plotWindows!(p;pd::sample,blank=false,
 end
 
 function plotFitted!(p;pd::run,i::Integer,channels=nothing,
-                     dy=Plots.ylims(p),transformation="sqrt",
-                     linecolor="black",linestyle=:solid,label="")
+                     transformation="sqrt",linecolor="black",
+                     linestyle=:solid,label="")
     fittedchannels = getChannels(pd)
     if isnothing(fittedchannels) return end
     available = findall(in(channels),fittedchannels)
@@ -73,5 +74,23 @@ function plotFitted!(p;pd::run,i::Integer,channels=nothing,
     Plots.plot!(p,x,ty,linecolor=linecolor,linestyle=linestyle,label=label)
 end
 
-function plotCalibration(pd::run;i=nothing)
+function plotAtomic(pd::run;i::Integer,
+                    num::Union{Nothing,Vector{Integer}}=nothing,
+                    den::Union{Nothing,Vector{Integer}}=nothing,
+                    scatter=true,transformation="sqrt",ms=4)
+    fit = fitSample(pd,i=i)
+    channels = getChannels(pd)
+    p = plotHelper(fit[:,2:end],labels=[getLabels(pd)[2];channels],
+                   transformation=transformation,ms=ms)
+    return p
+end
+
+function plotCalibration(pd::run)
+    groups = groupStandards(pd)
+    for g in groups
+        s = hcat(g.t,g.T,g.Xm,g.Ym,g.Zm)
+        S = atomic(pd=pd,s=s)
+        p = Plots.plot(S[:,3]./S[:,5],S[:,4]./S[:,5],seriestype=:scatter)
+        display(p)
+    end
 end

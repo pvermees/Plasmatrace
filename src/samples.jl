@@ -26,13 +26,18 @@ function findSamples(pd::run;snames=nothing,
     out
 end
 
-function predictSample(pd::run;i=nothing)
+function fitSample(pd::run;i=nothing)
+    atomic(pd=pd,i=i)
+end
+
+function atomic(;pd::Union{Nothing,run}=nothing,s=nothing,i=nothing)
     bpar = getBPar(pd)
     spar = getSPar(pd)
     if isnothing(bpar) PTerror("missingBlank") end
     if isnothing(spar) PTerror("missingStandard") end
-    s = signalData(pd,i=i)
-    
+
+    if isnothing(s) s = signalData(pd,i=i) end
+
     t = s[:,1]
     T = s[:,2]
     Xm = s[:,3]
@@ -48,7 +53,7 @@ function predictSample(pd::run;i=nothing)
 
     X = @. (Xm-bXt)/(ft*FT)
     Z = @. (Zm-bZt)*exp(-c)
-    Y = Ym
+    Y = Ym-bYt
     
     hcat(t,T,X,Y,Z)
 end

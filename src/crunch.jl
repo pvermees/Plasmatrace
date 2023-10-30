@@ -7,5 +7,5 @@ function getZ(Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
 end
 
 function getS(X,Z,Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
-    @. ((-FT*X*ft)-bXt+Xm)^2+((-Z*exp(c))-bZt+Zm)^2+((-bYt)-A*Z+Ym-B*X)^2
+    @. ((-FT*X*ft)-bXt+Xm)^2 + ((-bYt)-A*Z+Ym-B*X)^2 + ((-Z*exp(c))-bZt+Zm)^2
 end

@@ -6,4 +6,3 @@ include("../src/include.jl")
 include("tests.jl")
 
 cd(odir);
-
