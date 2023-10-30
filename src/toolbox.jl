@@ -8,7 +8,7 @@ function polyFit(;t,y,n=1)
 
     b0 = log(abs(Statistics.mean(y)))
     init = [b0;fill(-10,n-1)]
-    fit = optimize(misfit,init)
+    fit = Optim.optimize(misfit,init)
     Optim.minimizer(fit)
 
 end

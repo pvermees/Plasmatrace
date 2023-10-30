@@ -41,8 +41,8 @@ function plotHelper(dat::Matrix;labels::Vector{String},
                    label=reshape(labels[2:end],1,:),legend=:topleft)
     xlab = labels[1]
     ylab = transformation=="" ? "signal" : transformation*"(signal)"
-    xlabel!(xlab)
-    ylabel!(ylab)
+    Plots.xlabel!(xlab)
+    Plots.ylabel!(ylab)
     return p
 end
 

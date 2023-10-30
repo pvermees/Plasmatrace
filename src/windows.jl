@@ -31,7 +31,7 @@ end
 function autoWindow(pd::sample;blank=false)::Vector{window}
     dat = getDat(pd)[:,3:end]
     total = vec(sum(dat,dims=2))
-    q = quantile(total,[0.05,0.95])
+    q = Statistics.quantile(total,[0.05,0.95])
     mid = (q[2]+q[1])/10
     low = total.<mid
     blk = findall(low)
@@ -56,7 +56,6 @@ end
 function blankData(pd::run;channels=nothing,i=nothing)
     windowData(pd,blank=true,channels=channels,i=i)
 end
-export blankData
 
 function signalData(pd::sample;channels::Vector{String})
     windowData(pd,blank=false,channels=channels)
