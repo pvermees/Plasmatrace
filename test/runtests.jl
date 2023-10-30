@@ -14,5 +14,3 @@ const getChannels = Plasmatrace.getChannels
 const findSamples = Plasmatrace.findSamples
 
 include("tests.jl")
-
-include("testsets.jl")

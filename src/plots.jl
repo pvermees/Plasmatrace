@@ -72,3 +72,6 @@ function plotFitted!(p;pd::run,i::Integer,channels=nothing,
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
     Plots.plot!(p,x,ty,linecolor=linecolor,linestyle=linestyle,label=label)
 end
+
+function plotCalibration(pd::run;i=nothing)
+end

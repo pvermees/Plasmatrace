@@ -75,26 +75,52 @@ function forwardtest()
     fitBlanks!(myrun,method="LuHf",n=1)
     i = findSamples(myrun,prefix="BP -")
     setStandard!(myrun,i=i[1],standard=1)
-    setSPar!(myrun,spar=[0.0,4.0])
+    setSPar!(myrun,spar=[4.0,-0.34])
     channels = getChannels(myrun)
     p = plot(myrun,i=i[1],channels=channels,transformation="sqrt")
     @test display(p) != NaN
     return myrun
 end
 
-function standardtest()
+function standardtest(doplot=true)
     myrun = loadtest()
     setBlanks!(myrun)
     setSignals!(myrun)
     fitBlanks!(myrun,method="LuHf",n=2)
     markStandards!(myrun,prefix="hogsbo_",standard=1)
     markStandards!(myrun,prefix="BP -",standard=2)
-    fitStandards!(myrun,
-                  method="LuHf",
-                  refmat=["Hogsbo","BP"],
-                  n=1)
+    pars = fitStandards!(myrun,
+                         method="LuHf",
+                         refmat=["Hogsbo","BP"],
+                         n=1,verbose=true)
     i = findSamples(myrun,prefix="hogsbo")
-    p = plot(myrun,i=i[1])
-    @test display(p) != NaN
+    if doplot
+        p = plot(myrun,i=i[1])
+        @test display(p) != NaN
+    end
     return myrun
 end
+
+function calibrationtest()
+    myrun = standardtest(false)
+    i = findSamples(myrun,prefix="BP -")
+    fit = predictSample(myrun,i=i[1])
+    println(fit[1:3,:])
+    ratios = hcat(fit[:,3]./fit[:,4],fit[:,5]./fit[:,4])
+    p = Plots.plot(ratios[:,1],ratios[:,2],seriestype=:scatter)
+    display(p)
+end
+
+Plots.closeall()
+
+if false
+    @testset "load" begin loaddat = loadtest() end
+    @testset "plot raw data" begin plottest() end
+    @testset "set selection window" begin windowout = windowtest() end
+    @testset "plot selection windows" begin plotwindowtest() end
+    @testset "set blanks" begin blankout = blanktest() end
+    @testset "auxiliary tests" begin methodout = methodtest() end
+    @testset "forward model" begin forwardout = forwardtest() end
+    @testset "fit standards" begin standardout = standardtest() end
+end
+@testset "plot calibration" begin calibrationtest() end

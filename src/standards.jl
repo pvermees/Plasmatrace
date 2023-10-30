@@ -7,10 +7,10 @@ export markStandards!
 function fitStandards!(pd::run;
                        method::String,
                        refmat::Union{String,Vector{String}},
-                       n=1)
+                       n=1,verbose=false)
     if isa(refmat,String) refmat = [refmat] end
     setDRS!(pd,method=method,refmat=refmat)
-    groups = groupStandards!(pd)
+    groups = groupStandards(pd)
 
     function misfit(par)
         out = 0
@@ -29,13 +29,13 @@ function fitStandards!(pd::run;
 
     init = fill(0.0,2*n)
     fit = Optim.optimize(misfit,init)
-    println(fit)
+    if verbose println(fit) end
     sol = Optim.minimizer(fit)
     setSPar!(pd,spar=sol)
 end
 export fitStandards!
 
-function groupStandards!(pd::run)
+function groupStandards(pd::run)
     bpar = getBPar(pd)
     if isnothing(bpar) PTerror("missingBlank") end
     A = getA(pd)
@@ -93,9 +93,9 @@ function predictStandard(pd::run;
     X = getX(Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
     Z = getZ(Xm,Ym,Zm,A,B,ft,FT,bXt,bYt,bZt,c)
 
-    Xp = @. X + bXt
-    Yp = @. A*Z*exp(c) + B*X*ft*FT + bYt
-    Zp = @. Z + bZt
+    Xp = @. X*ft*FT + bXt
+    Yp = @. A*Z + B*X + bYt
+    Zp = @. Z*exp(c) + bZt
 
     hcat(t,T,Xp,Yp,Zp)
 end
