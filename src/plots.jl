@@ -99,8 +99,10 @@ function plotCalibration(pd::run,ms=2,ma=0.5,xlim=nothing,ylim=nothing)
     xM = -Inf
     ym = Inf
     yM = -Inf
+    bpar = getBPar(pd)
+    spar = getSPar(pd)
     for i in 1:ng
-        df = atomic(pd=pd,s=groups[i].s)
+        df = atomic(s=groups[i].s,bpar=bpar,spar=spar)
         x = df[:,"X"]./df[:,"Z"]
         y = df[:,"Y"]./df[:,"Z"]
         plotdat[i] = DataFrame(x=x,y=y)
@@ -123,7 +125,6 @@ function plotCalibration(pd::run,ms=2,ma=0.5,xlim=nothing,ylim=nothing)
     for i in 1:ng
         A = groups[i].A
         B = groups[i].B
-        println([A,B])
         x0 = -A/B
         x = [0.,x0]
         y = A .+ B .* x

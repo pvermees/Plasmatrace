@@ -14,16 +14,16 @@ function prompt(key)
         "v: View the data\n"*
         "j: Save the session as .json\n"*
         "c: Export the data as .csv\n"*
-        "x: Exit\n",
+        "x: Exit",
         "view"
         =>
-        "n,[Enter]: next\n"*
-        "p,[Space]: previous\n"*
+        "[Enter]: next\n"*
+        "[Space]: previous\n"*
         "b: Select blank window(s)\n"*
         "w: Select signal window(s)\n"*
         "s: Mark as standard\n"*
         "g: Mark as glass\n"*
-        "x: Exit\n",
+        "x: Exit",
         "load"
         =>
         "Enter the path of the data directory:",
@@ -32,10 +32,6 @@ function prompt(key)
         "Specify the file extension (default = .csv):"
     )
     println(messages[key])
-end
-
-function unsupported()
-    println("This feature is not available yet.\n")
 end
 
 function dispatch!(pd::Union{Nothing,run};chain)
@@ -55,9 +51,8 @@ function dispatch!(pd::Union{Nothing,run};chain)
         end
     elseif (key=="load")
         out = load(response)
-        pop!(chain)
     elseif (key=="view")
-        interplot(pd)
+        out = interplot(pd)
     else
         unsupported()
     end
@@ -72,32 +67,35 @@ function Plasmatrace()
         out = dispatch!(myrun,chain=chain)
         if isa(out,run)
             myrun = out
+            pop!(chain)
         elseif out=="x"
             pop!(chain)
             if size(chain,1)<1 return end
-        elseif isnothing(out)
-            # do nothing
-        else
+        elseif !isnothing(out)
             push!(chain,out)
         end
     end
 end
 
+function unsupported()
+    println("This feature is not available yet.\n")
+end
+
 function interplot(pd)
     i = 1
     while true
+        prompt("view")
         samples = getSamples(pd)
         ns = size(samples,1)
         p = plot(samples[i])
         display(p)
         s = readline()
-        println(s)
-        if s=="n" || s==""
+        if s==""
             i = i<ns ? i+1 : 1
-        elseif s=="p" || s==" "
+        elseif s==" "
             i = i>1 ? i-1 : ns
         else
-            return p
+            return "x"
         end
     end
 end

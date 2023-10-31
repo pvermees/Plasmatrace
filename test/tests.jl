@@ -82,10 +82,10 @@ function standardtest(doplot=true)
     fitBlanks!(myrun,method="LuHf",n=2)
     markStandards!(myrun,prefix="hogsbo_",standard=1)
     markStandards!(myrun,prefix="BP -",standard=2)
-    pars = fitStandards!(myrun,
-                         method="LuHf",
-                         refmat=["Hogsbo","BP"],
-                         n=1,verbose=true)
+    fitStandards!(myrun,
+                  method="LuHf",
+                  refmat=["Hogsbo","BP"],
+                  n=1,verbose=true)
     i = findSamples(myrun,prefix="BP -")
     if doplot
         p = plot(myrun,i=i[1])
@@ -109,12 +109,12 @@ end
 
 Plots.closeall()
 
-#@testset "load" begin loaddat = loadtest() end
-#@testset "plot raw data" begin plottest() end
-#@testset "set selection window" begin windowout = windowtest() end
-#@testset "plot selection windows" begin plotwindowtest() end
-#@testset "set blanks" begin blankout = blanktest() end
-#@testset "forward model" begin forwardout = forwardtest() end
-#@testset "fit standards" begin standardout = standardtest() end
-#@testset "plot atomic" begin atomictest() end
-#@testset "plot calibration" begin calibrationtest() end
+@testset "load" begin loaddat = loadtest() end
+@testset "plot raw data" begin plottest() end
+@testset "set selection window" begin windowout = windowtest() end
+@testset "plot selection windows" begin plotwindowtest() end
+@testset "set blanks" begin blankout = blanktest() end
+@testset "forward model" begin forwardout = forwardtest() end
+@testset "fit standards" begin standardout = standardtest() end
+@testset "plot atomic" begin atomictest() end
+@testset "plot calibration" begin calibrationtest() end
