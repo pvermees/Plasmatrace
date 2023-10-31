@@ -5,7 +5,8 @@ function PTerror(key)
         "missingStandard" => "The data haven't be calibrated. Run fitStandards!(...) first.",
         "missingControl" => "No DRS control parameters set. Run setDRS!(...) first.",
         "unknownRefMat" => "Unknown reference material.",
-        "unknownMethod" => "Unknown method."
+        "unknownMethod" => "Unknown method.",
+        "isochanmismatch" => "The number of channels does not equal number of isotopes."
     )
     throw(error(errormessages[key]))
 end

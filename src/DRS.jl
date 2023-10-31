@@ -1,19 +1,17 @@
-function setDRS!(pd::run;method="LuHf",refmat="Hogsbo")
-    setMethod!(pd,method=method)
-    setAB!(pd,method=method,refmat=refmat)
-end
-
-function setMethod!(pd::run;method::String)
+function setMethod!(pd::run;method::String,channels::Vector{String})
     if (method=="LuHf")
-        channels = ["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"]
+        isotopes = ["Lu176","Hf177","Hf176"]
     else
         PTerror("UnknownMethod")
     end
+    if size(channels,1)!=size(isotopes,1) PTerror("isochanmismatch") end
     ctrl = getControl(pd)
     if isnothing(ctrl)
-        ctrl = control(nothing,nothing,channels)
+        ctrl = control(method,nothing,nothing,isotopes,channels)
     else
-        ctrl.channels = channels
+        setIsotopess!(ctrl,isotopes)
+        setChannels!(ctrl,channels)
     end
     setControl!(pd;ctrl=ctrl)
 end
+export setMethod!

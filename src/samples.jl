@@ -43,11 +43,7 @@ end
 
 # s is a data frame with the output of signalData(...)
 function atomic(;s,bpar,spar)
-    t = s[:,1]
-    T = s[:,2]
-    Xm = s[:,3]
-    Ym = s[:,4]
-    Zm = s[:,5]
+    t = s[:,1]; T = s[:,2]; Xm = s[:,3]; Ym = s[:,4]; Zm = s[:,5]
     c = parseSPar(spar,par="c")
     ft = polyVal(p=parseSPar(spar,par="f"),t=t)
     FT = polyVal(p=parseSPar(spar,par="F"),t=T)
@@ -57,5 +53,5 @@ function atomic(;s,bpar,spar)
     X = @. (Xm-bXt)/(ft*FT)
     Z = @. (Zm-bZt)*exp(-c)
     Y = Ym-bYt
-    DataFrame(t=t,T=T,X=X,Y=Y,Z=Z)
+    DataFrame(hcat(t,T,X,Y,Z),names(s))
 end

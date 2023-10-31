@@ -5,11 +5,10 @@ end
 export markStandards!
     
 function fitStandards!(pd::run;
-                       method::String,
                        refmat::Union{String,Vector{String}},
                        n=1,verbose=false)
     if isa(refmat,String) refmat = [refmat] end
-    setDRS!(pd,method=method,refmat=refmat)
+    setAB!(pd,refmat=refmat)
     groups = groupStandards(pd)
 
     function misfit(par)

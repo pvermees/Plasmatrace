@@ -51,7 +51,9 @@ end
 function blanktest()
     myrun = loadtest()
     setBlanks!(myrun)
-    fitBlanks!(myrun,method="LuHf",n=2)
+    setMethod!(myrun,method="LuHf",
+               channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
+    fitBlanks!(myrun,n=2)
     b = Matrix(blankData(myrun))
     t = b[:,1]
     bpar = getBPar(myrun)
@@ -70,12 +72,14 @@ function forwardtest()
     myrun = loadtest()
     setBlanks!(myrun)
     setSignals!(myrun)
-    setDRS!(myrun,method="LuHf",refmat="BP")
-    fitBlanks!(myrun,method="LuHf",n=1)
+    setMethod!(myrun,method="LuHf",
+               channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
+    fitBlanks!(myrun,n=1)
     i = findSamples(myrun,prefix="BP -")
     setStandard!(myrun,i=i[1],standard=1)
     setSPar!(myrun,spar=[4.0,-0.34])
     channels = getChannels(myrun)
+    setAB!(myrun,refmat="BP")
     p = plot(myrun,i=i[1],channels=channels,transformation="sqrt")
     @test display(p) != NaN
     return myrun
@@ -85,13 +89,12 @@ function standardtest(doplot=true)
     myrun = loadtest()
     setBlanks!(myrun)
     setSignals!(myrun)
-    fitBlanks!(myrun,method="LuHf",n=2)
+    setMethod!(myrun,method="LuHf",
+               channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
+    fitBlanks!(myrun,n=2)
     markStandards!(myrun,prefix="hogsbo_",standard=1)
     markStandards!(myrun,prefix="BP -",standard=2)
-    fitStandards!(myrun,
-                  method="LuHf",
-                  refmat=["Hogsbo","BP"],
-                  n=1,verbose=true)
+    fitStandards!(myrun,refmat=["Hogsbo","BP"],n=1,verbose=true)
     i = findSamples(myrun,prefix="BP -")
     if doplot
         p = plot(myrun,i=i[1])

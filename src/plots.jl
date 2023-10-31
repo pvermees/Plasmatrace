@@ -88,32 +88,28 @@ function plotCalibration(pd::run,ms=2,ma=0.5,xlim=nothing,ylim=nothing)
     groups = groupStandards(pd)
     ng = size(groups,1)
     plotdat = Vector{DataFrame}(undef,ng)
-    xm = Inf
-    xM = -Inf
-    ym = Inf
-    yM = -Inf
+    xm = Inf; xM = -Inf; ym = Inf; yM = -Inf
     bpar = getBPar(pd)
     spar = getSPar(pd)
     for i in 1:ng
         df = atomic(s=groups[i].s,bpar=bpar,spar=spar)
-        x = df[:,"X"]./df[:,"Z"]
-        y = df[:,"Y"]./df[:,"Z"]
-        plotdat[i] = DataFrame(x=x,y=y)
+        plotdat[i] = getPlotDat(df,den=[names(df)[5]])
         if !isnothing(xlim)
-            xm = minimum([xm,minimum(x)])
-            xM = maximum([xM,maximum(x)])
+            xm = minimum([xm,minimum(plotdat[i][:,3])])
+            xM = maximum([xM,maximum(plotdat[i][:,3])])
         end
         if !isnothing(ylim)
-            ym = minimum([ym,minimum(y)])
-            yM = maximum([yM,maximum(y)])
+            ym = minimum([ym,minimum(plotdat[i][:,4])])
+            yM = maximum([yM,maximum(plotdat[i][:,4])])
         end
     end
     xlim = isnothing(xlim) ? :auto : (xm,xM)
     ylim = isnothing(ylim) ? :auto : (ym,yM)
-    p = Plots.plot(0,0,xlimits=xlim,ylimits=ylim,xlab="X/Z",ylab="Y/Z")
+    axislabels = names(plotdat[1])[3:4]
+    p = Plots.plot(0,0,xlimits=xlim,ylimits=ylim,
+                   xlab=axislabels[1],ylab=axislabels[2])
     for i in 1:ng
-        xy = Matrix(plotdat[i])
-        Plots.scatter!(p,xy[:,1],xy[:,2],ms=ms,ma=ma)
+        Plots.scatter!(p,plotdat[i][:,3],plotdat[i][:,4],ms=ms,ma=ma)
     end
     for i in 1:ng
         A = groups[i].A

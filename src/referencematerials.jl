@@ -20,14 +20,13 @@ function getAB(;method::String,refmat::String)
     return A, B
 end
 
-function setAB!(pd::run;method::String,
-                refmat::Union{String,Vector{String}})
+function setAB!(pd::run;refmat::Union{String,Vector{String}})
     if isa(refmat,String) refmat = [refmat] end
     nref = size(refmat,1)
     A = fill(0.0,nref)
     B = fill(0.0,nref)
     for i in eachindex(refmat)
-        A[i], B[i] = getAB(method=method,refmat=refmat[i])
+        A[i], B[i] = getAB(method=getMethod(pd),refmat=refmat[i])
     end
     ctrl = getControl(pd)
     if isnothing(ctrl)

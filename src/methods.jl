@@ -54,13 +54,17 @@ function getSWin(pd::run;i=nothing) accesSample(pd,i,Vector{window},getSWin) end
 function getStandard(pd::run;i=nothing) accesSample(pd,i,Integer,getStandard) end
 
 # get control attributes
+function getMethod(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:method) end
 function getA(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:A) end
 function getB(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:B) end
+function getIsotopes(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:isotopes) end
 function getChannels(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:channels) end
 
 # get control attributes from a run
+function getMethod(pd::run) getMethod(getControl(pd)) end
 function getA(pd::run) getA(getControl(pd)) end
 function getB(pd::run) getB(getControl(pd)) end
+function getIsotopes(pd::run) getIsotopes(getControl(pd)) end
 function getChannels(pd::run) getChannels(getControl(pd)) end
 
 # set sample attributes
@@ -86,13 +90,17 @@ function setSWin!(pd::run;i,swin::Vector{window}) accessSample!(pd,i,setSWin!,bw
 function setStandard!(pd::run;i,standard::Integer) accessSample!(pd,i,setStandard!,standard) end
 
 # set control attributes
+function setMethod!(ctrl::control,method::String) setproperty!(pd,:method,method) end
 function setA!(ctrl::control,A::Vector{AbstractFloat}) setproperty!(pd,:A,A) end
 function setB!(ctrl::control,B::Vector{AbstractFloat}) setproperty!(pd,:B,B) end
+function setIsotopes!(ctrl::control,isotopes::Vector{String}) setproperty!(pd,:isotopes,isotopes) end
 function setChannels!(ctrl::control,channels::Vector{String}) setproperty!(pd,:channels,channels) end
 
 # set control attributes in a run
+function setMethod!(pd::run,method::String) accessControl!(pd,:method,setMethod!,method) end
 function setA!(pd::run,A::AbstractFloat) accessControl!(pd,:A,setA!,A) end
 function setB!(pd::run,B::AbstractFloat) accessControl!(pd,:B,setB!,b) end
+function setIsotopes!(pd::run,isotopes::Vector{String}) accessControl!(pd,:isotopes,setIsotopes!,isotopes) end
 function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,:channels,setChannels!,channels) end
 
 length(pd::run) = size(getSamples(pd),1)

@@ -3,8 +3,10 @@ const window = Tuple{Int,Int}
 abstract type plasmaData end
 
 mutable struct control
+    method::Union{Nothing,String}
     A::Union{Nothing,Vector{AbstractFloat}}
     B::Union{Nothing,Vector{AbstractFloat}}
+    isotopes::Union{Nothing,Vector{String}}
     channels::Union{Nothing,Vector{String}}
 end
 

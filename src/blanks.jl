@@ -1,5 +1,4 @@
-function fitBlanks!(pd::run;method::String,n=2)
-    setMethod!(pd,method=method)
+function fitBlanks!(pd::run;n=2)
     ctrl = getControl(pd)
     if isnothing(ctrl) PTerror("missingControl") end
     channels = getChannels(ctrl)
