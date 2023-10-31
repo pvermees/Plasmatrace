@@ -1,9 +1,10 @@
 function plot(pd::sample;channels=nothing,
-              transformation="sqrt",
-              num=nothing,den=nothing)
+              num=nothing,den=nothing,
+              transformation="sqrt")
     dat = getDat(pd)
     plotdat = getPlotDat(dat,channels=channels,num=num,den=den)
-    p = plotHelper(plotdat,transformation=transformation,ix=2)
+    ylab = isnothing(channels) & !isnothing(den) ? "ratio" : "signal"
+    p = plotHelper(plotdat,transformation=transformation,ix=2,ylab=ylab)
     tit = replace(getSname(pd),"\\" => "∖")
     Plots.title!(tit,titlefontsize=10)
     dy = Plots.ylims(p)
@@ -11,20 +12,21 @@ function plot(pd::sample;channels=nothing,
     plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
     return p
 end
-function plot(pd::run;channels=nothing,
-              transformation="sqrt",steps=1000,
-              i::Union{Nothing,Integer}=nothing,
-              num=nothing,den=nothing)
+function plot(pd::run;i::Union{Nothing,Integer}=nothing,
+              channels=nothing,num=nothing,den=nothing,
+              transformation="sqrt",steps=1000)
     if isnothing(i)
         dat = poolRunDat(pd)
         step = Int(ceil(size(dat,1)/steps))
         plotdat = getPlotDat(dat[1:step:end,:],channels=channels,num=num,den=den)
-        p = plotHelper(plotdat,transformation=transformation,seriestype=:path,ix=1)
+        ylab = isnothing(channels) & !isnothing(den) ? "ratio" : "signal"
+        p = plotHelper(plotdat,transformation=transformation,
+                       seriestype=:path,ix=1,ylab=ylab)
     else
-        if isnothing(channels) channels = getChannels(pd) end
+        if isnothing(channels) & isnothing(den) channels = getChannels(pd) end
         p = plot(getSamples(pd)[i],channels=channels,
-                 transformation=transformation)
-        plotFitted!(p,pd=pd,i=i,channels=channels,
+                 num=num,den=den,transformation=transformation)
+        plotFitted!(p,pd=pd,i=i,channels=channels,num=num,den=den,
                     transformation=transformation)
     end
     return p
@@ -32,7 +34,8 @@ end
 export plot
 
 function plotHelper(plotdat::DataFrame;seriestype=:scatter,
-                    ms=2,ma=0.5,transformation="sqrt",ix=1)
+                    ms=2,ma=0.5,transformation="sqrt",ix=1,
+                    ylab="signal")
     xy = Matrix(plotdat)
     x = xy[:,ix]
     y = xy[:,3:end]
@@ -41,7 +44,7 @@ function plotHelper(plotdat::DataFrame;seriestype=:scatter,
     p = Plots.plot(x,ty,seriestype=seriestype,ms=ms,ma=ma,
                    label=permutedims(plotlabels[3:end]),legend=:topleft)
     xlab = plotlabels[ix]
-    ylab = transformation=="" ? "signal" : transformation*"(signal)"
+    ylab = transformation=="" ? ylab : transformation*"("*ylab*")"
     Plots.xlabel!(xlab)
     Plots.ylabel!(ylab)
     return p
@@ -61,17 +64,15 @@ function plotWindows!(p;pd::sample,blank=false,
 end
 
 function plotFitted!(p;pd::run,i::Integer,channels=nothing,
-                     transformation="sqrt",linecolor="black",
-                     linestyle=:solid,label="")
-    fittedchannels = getChannels(pd)
-    if isnothing(fittedchannels) return end
-    available = findall(in(channels),fittedchannels)
-    if (size(available,1)<1) return end
+                     num=nothing,den=nothing,transformation="sqrt",
+                     linecolor="black",linestyle=:solid)
     pred = predictStandard(pd,i=i)
+    if isnothing(pred) return end
+    plotdat = getPlotDat(pred,channels=channels,num=num,den=den)
     x = pred[:,2]
-    y = pred[:,available .+ 2]
+    y = Matrix(plotdat[:,3:end])
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
-    Plots.plot!(p,x,ty,linecolor=linecolor,linestyle=linestyle,label=label)
+    Plots.plot!(p,x,ty,linecolor=linecolor,linestyle=linestyle,label="")
 end
 
 function plotAtomic(pd::run;i::Integer,num=nothing,den=nothing,
@@ -127,14 +128,31 @@ end
 export plotCalibration
 
 function getPlotDat(dat::DataFrame;
-                    channels::Union{Nothing,Vector{String},Vector{Integer}}=nothing,
-                    num::Union{Nothing,Vector{Integer}}=nothing,
-                    den::Union{Nothing,Vector{Integer}}=nothing)
-    labels = names(dat)
+                    channels::Union{Nothing,Vector{String}}=nothing,
+                    num::Union{Nothing,Vector{String}}=nothing,
+                    den::Union{Nothing,Vector{String}}=nothing)
+    tT = dat[:,1:2]
+    meas = dat[:,3:end]
     if isnothing(channels)
-        selection = 3:ncol(dat)
-    elseif isa(channels,Vector{String})
-        selection = findall(in(channels),labels)
+        if !isnothing(den)
+            nd = size(den,1)
+            if isnothing(num)
+                meas = meas[:,Not(den[1])] ./ meas[:,den[1]]
+                labels = "(" .* names(meas) .* ")/(" .* den[1] .* ")"
+            else
+                nn = size(num,1)
+                if nn==nd
+                    meas = meas[:,num] ./ meas[:,den]
+                    labels = "(" .* num .* ")/(" .* den .* ")"
+                else
+                    meas = meas[:,num] ./ meas[:,den[1]]
+                    labels = "(" .* num .* ")/(" .* den[1] .* ")"
+                end
+            end
+            rename!(meas,labels)
+        end
+    else
+        meas = meas[:,channels]
     end
-    dat[:,[1:2;selection]]
+    hcat(tT,meas)
 end

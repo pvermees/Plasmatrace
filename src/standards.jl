@@ -67,6 +67,8 @@ function predictStandard(pd::run;
                          sname::Union{Nothing,String}=nothing,
                          prefix::Union{Nothing,String}=nothing,
                          i::Union{Nothing,Integer}=nothing)
+    channels = getChannels(pd)
+    if isnothing(channels) return nothing end
     bpar = getBPar(pd)
     spar = getSPar(pd)
     if isnothing(bpar) PTerror("missingBlank") end
@@ -99,7 +101,7 @@ function predictStandard(pd::run;
     Yp = @. A*Z + B*X + bYt
     Zp = @. Z*exp(c) + bZt
 
-    hcat(t,T,Xp,Yp,Zp)
+    DataFrame(hcat(t,T,Xp,Yp,Zp),[names(s)[1:2];channels])
 end
 
 function parseSPar(spar;par="c")

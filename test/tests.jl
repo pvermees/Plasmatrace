@@ -21,6 +21,12 @@ function plottest(option=0)
         p = plot(myrun)
         @test display(p) != NaN
     end
+    if option==0 || option==4
+        p = plot(myrun,i=3,
+                 num=["Lu175 -> 175","Hf178 -> 260"],
+                 den=["Hf176 -> 258"])
+        @test display(p) != NaN
+    end
 end
 
 function windowtest()
@@ -89,6 +95,10 @@ function standardtest(doplot=true)
     i = findSamples(myrun,prefix="BP -")
     if doplot
         p = plot(myrun,i=i[1])
+        @test display(p) != NaN
+        p = plot(myrun,i=i[1],
+                 num=["Lu175 -> 175","Hf178 -> 260"],
+                 den=["Hf176 -> 258"])
         @test display(p) != NaN
     end
     return myrun
