@@ -4,6 +4,7 @@ import Plots, Statistics, Optim
 include("types.jl")
 include("errors.jl")
 include("methods.jl")
+include("interaction.jl")
 include("io.jl")
 include("plots.jl")
 include("windows.jl")

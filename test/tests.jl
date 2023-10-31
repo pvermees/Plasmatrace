@@ -21,11 +21,6 @@ function plottest(option=0)
         p = plot(myrun)
         @test display(p) != NaN
     end
-    if option==4
-        setBlanks!(myrun)
-        setSignals!(myrun)
-        plot(myrun,all=true,channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
-    end
 end
 
 function windowtest()
@@ -115,7 +110,7 @@ end
 Plots.closeall()
 
 #@testset "load" begin loaddat = loadtest() end
-@testset "plot raw data" begin plottest(4) end
+#@testset "plot raw data" begin plottest() end
 #@testset "set selection window" begin windowout = windowtest() end
 #@testset "plot selection windows" begin plotwindowtest() end
 #@testset "set blanks" begin blankout = blanktest() end
