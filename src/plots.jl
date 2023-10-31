@@ -91,9 +91,11 @@ function plotCalibration(pd::run,ms=2,ma=0.5,xlim=nothing,ylim=nothing)
     xm = Inf; xM = -Inf; ym = Inf; yM = -Inf
     bpar = getBPar(pd)
     spar = getSPar(pd)
+    colnames = [names(groups[1].s)[1:2];getIsotopes(pd)]
     for i in 1:ng
-        df = atomic(s=groups[i].s,bpar=bpar,spar=spar)
-        plotdat[i] = getPlotDat(df,den=[names(df)[5]])
+        mat = atomic(s=groups[i].s,bpar=bpar,spar=spar)
+        df = DataFrame(mat,colnames)
+        plotdat[i] = getPlotDat(df,den=[colnames[5]])
         if !isnothing(xlim)
             xm = minimum([xm,minimum(plotdat[i][:,3])])
             xM = maximum([xM,maximum(plotdat[i][:,3])])

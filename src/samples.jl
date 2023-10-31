@@ -26,10 +26,6 @@ function findSamples(pd::run;snames=nothing,
     out
 end
 
-function fitSample(pd::sample;bpar,spar,channels)
-    s = signalData(pd,channels=channels)
-    atomic(s=s,bpar=bpar,spar=spar)
-end
 function fitSample(pd::run;i::Integer)
     bpar = getBPar(pd)
     spar = getSPar(pd)
@@ -38,7 +34,10 @@ function fitSample(pd::run;i::Integer)
     if isnothing(spar) PTerror("missingStandard") end
     if isnothing(channels) PTerror("missingControl") end
     samp = getSamples(pd)[i]
-    fitSample(samp,bpar=bpar,spar=spar,channels=channels)
+    s = signalData(samp,channels=channels)
+    mat = atomic(s=s,bpar=bpar,spar=spar)
+    colnames = [names(s)[1:2];getIsotopes(pd)]
+    DataFrame(mat,colnames)
 end
 
 # s is a data frame with the output of signalData(...)
@@ -53,5 +52,5 @@ function atomic(;s,bpar,spar)
     X = @. (Xm-bXt)/(ft*FT)
     Z = @. (Zm-bZt)*exp(-c)
     Y = Ym-bYt
-    DataFrame(hcat(t,T,X,Y,Z),names(s))
+    hcat(t,T,X,Y,Z)
 end
