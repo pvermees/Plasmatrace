@@ -1,7 +1,9 @@
-function plot(pd::sample;channels=nothing,transformation="sqrt")
-    plotdat = getDat(pd)
-    p = plotHelper(plotdat,channels=channels,
-                   transformation=transformation,ix=2)
+function plot(pd::sample;channels=nothing,
+              transformation="sqrt",
+              num=nothing,den=nothing)
+    dat = getDat(pd)
+    plotdat = getPlotDat(dat,channels=channels,num=num,den=den)
+    p = plotHelper(plotdat,transformation=transformation,ix=2)
     tit = replace(getSname(pd),"\\" => "∖")
     Plots.title!(tit,titlefontsize=10)
     dy = Plots.ylims(p)
@@ -11,14 +13,13 @@ function plot(pd::sample;channels=nothing,transformation="sqrt")
 end
 function plot(pd::run;channels=nothing,
               transformation="sqrt",steps=1000,
-              i::Union{Nothing,Integer}=nothing)
+              i::Union{Nothing,Integer}=nothing,
+              num=nothing,den=nothing)
     if isnothing(i)
-        plotdat = poolRunDat(pd)
-        step = Int(ceil(size(plotdat,1)/steps))
-        p = plotHelper(plotdat[1:step:end,:],
-                       channels=channels,
-                       transformation=transformation,
-                       seriestype=:path,ix=1)
+        dat = poolRunDat(pd)
+        step = Int(ceil(size(dat,1)/steps))
+        plotdat = getPlotDat(dat[1:step:end,:],channels=channels,num=num,den=den)
+        p = plotHelper(plotdat,transformation=transformation,seriestype=:path,ix=1)
     else
         if isnothing(channels) channels = getChannels(pd) end
         p = plot(getSamples(pd)[i],channels=channels,
@@ -30,23 +31,16 @@ function plot(pd::run;channels=nothing,
 end
 export plot
 
-function plotHelper(plotdat::DataFrame;
-                    channels::Union{Nothing,Vector{String},Vector{Integer}}=nothing,
-                    seriestype=:scatter,ms=2,ma=0.5,transformation="sqrt",ix=1)
-    labels = names(plotdat)
-    if isnothing(channels)
-        i = 3:ncol(plotdat)
-    elseif isa(channels,Vector{String})
-        i = findall(in(channels),labels)
-    end
+function plotHelper(plotdat::DataFrame;seriestype=:scatter,
+                    ms=2,ma=0.5,transformation="sqrt",ix=1)
     xy = Matrix(plotdat)
     x = xy[:,ix]
-    y = xy[:,i]
-    plotlabels = labels[i]
+    y = xy[:,3:end]
+    plotlabels = names(plotdat)
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
     p = Plots.plot(x,ty,seriestype=seriestype,ms=ms,ma=ma,
-                   label=permutedims(plotlabels),legend=:topleft)
-    xlab = names(plotdat)[1]
+                   label=permutedims(plotlabels[3:end]),legend=:topleft)
+    xlab = plotlabels[ix]
     ylab = transformation=="" ? "signal" : transformation*"(signal)"
     Plots.xlabel!(xlab)
     Plots.ylabel!(ylab)
@@ -80,13 +74,11 @@ function plotFitted!(p;pd::run,i::Integer,channels=nothing,
     Plots.plot!(p,x,ty,linecolor=linecolor,linestyle=linestyle,label=label)
 end
 
-function plotAtomic(pd::run;i::Integer,
-                    num::Union{Nothing,Vector{Integer}}=nothing,
-                    den::Union{Nothing,Vector{Integer}}=nothing,
+function plotAtomic(pd::run;i::Integer,num=nothing,den=nothing,
                     scatter=true,transformation="sqrt",ms=4)
     fit = fitSample(pd,i=i)
-    channels = getChannels(pd)
-    p = plotHelper(fit,transformation=transformation,ms=ms,ix=2)
+    plotdat = getPlotDat(fit,num=num,den=den)
+    p = plotHelper(plotdat,transformation=transformation,ms=ms,ix=2)
     return p
 end
 export plotAtomic
@@ -133,3 +125,16 @@ function plotCalibration(pd::run,ms=2,ma=0.5,xlim=nothing,ylim=nothing)
     return p
 end
 export plotCalibration
+
+function getPlotDat(dat::DataFrame;
+                    channels::Union{Nothing,Vector{String},Vector{Integer}}=nothing,
+                    num::Union{Nothing,Vector{Integer}}=nothing,
+                    den::Union{Nothing,Vector{Integer}}=nothing)
+    labels = names(dat)
+    if isnothing(channels)
+        selection = 3:ncol(dat)
+    elseif isa(channels,Vector{String})
+        selection = findall(in(channels),labels)
+    end
+    dat[:,[1:2;selection]]
+end
