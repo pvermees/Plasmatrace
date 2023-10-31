@@ -2,6 +2,8 @@ function plot(pd::sample;channels=nothing,transformation="sqrt")
     plotdat = getDat(pd)
     p = plotHelper(plotdat,channels=channels,
                    transformation=transformation,ix=2)
+    tit = replace(getSname(pd),"\\" => "∖")
+    Plots.title!(tit,titlefontsize=10)
     dy = Plots.ylims(p)
     plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
     plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
@@ -9,8 +11,28 @@ function plot(pd::sample;channels=nothing,transformation="sqrt")
 end
 function plot(pd::run;channels=nothing,
               transformation="sqrt",steps=1000,
-              i::Union{Nothing,Integer}=nothing)
-    if isnothing(i)
+              i::Union{Nothing,Integer}=nothing,
+              all=false)
+    if all
+        samples = getSamples(pd)
+        ns = size(samples,1)
+        j = isnothing(i) ? 1 : i
+        while true
+            println("'n' or 'Enter'='next', 'p' or 'Space'='previous'" *
+                    ",any other character to exit")
+            p = plot(samples[j],channels=channels,transformation=transformation)
+            display(p)
+            s = readline()
+            println(s)
+            if s=="n" || s==""
+                j = j<ns ? j+1 : 1
+            elseif s=="p" || s==" "
+                j = j>1 ? j-1 : ns
+            else
+                return p
+            end
+        end
+    elseif isnothing(i)
         plotdat = poolRunDat(pd)
         step = Int(ceil(size(plotdat,1)/steps))
         p = plotHelper(plotdat[1:step:end,:],
