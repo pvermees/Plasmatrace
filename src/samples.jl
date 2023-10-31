@@ -43,6 +43,7 @@ function atomic(;pd::Union{Nothing,run}=nothing,s=nothing,i=nothing)
     Xm = s[:,3]
     Ym = s[:,4]
     Zm = s[:,5]
+    
     c = parseSPar(spar,par="c")
     ft = polyVal(p=parseSPar(spar,par="f"),t=t)
     FT = polyVal(p=parseSPar(spar,par="F"),t=T)

@@ -89,14 +89,44 @@ function plotAtomic(pd::run;i::Integer,
 end
 export plotAtomic
 
-function plotCalibration(pd::run,ms=1,ma=0.5)
+function plotCalibration(pd::run,ms=2,ma=0.5,xlim=nothing,ylim=nothing)
     groups = groupStandards(pd)
-    for g in groups
-        s = hcat(g.t,g.T,g.Xm,g.Ym,g.Zm)
-        S = atomic(pd=pd,s=s)
-        p = Plots.plot(S[:,3]./S[:,5],S[:,4]./S[:,5],
-                       seriestype=:scatter,ms=ms,ma=ma)
-        display(p)
+    ng = size(groups,1)
+    plotdat = Vector{DataFrame}(undef,ng)
+    xm = Inf
+    xM = -Inf
+    ym = Inf
+    yM = -Inf
+    for i in 1:ng
+        df = atomic(pd=pd,s=groups[i].s)
+        x = df[:,"X"]./df[:,"Z"]
+        y = df[:,"Y"]./df[:,"Z"]
+        plotdat[i] = DataFrame(x=x,y=y)
+        if !isnothing(xlim)
+            xm = minimum([xm,minimum(x)])
+            xM = maximum([xM,maximum(x)])
+        end
+        if !isnothing(ylim)
+            ym = minimum([ym,minimum(y)])
+            yM = maximum([yM,maximum(y)])
+        end
     end
+    xlim = isnothing(xlim) ? :auto : (xm,xM)
+    ylim = isnothing(ylim) ? :auto : (ym,yM)
+    p = Plots.plot(0,0,xlimits=xlim,ylimits=ylim,xlab="X/Z",ylab="Y/Z")
+    for i in 1:ng
+        xy = Matrix(plotdat[i])
+        Plots.scatter!(p,xy[:,1],xy[:,2],ms=ms,ma=ma)
+    end
+    for i in 1:ng
+        A = groups[i].A
+        B = groups[i].B
+        println([A,B])
+        x0 = -A/B
+        x = [0.,x0]
+        y = A .+ B .* x
+        Plots.plot!(p,x,y)
+    end
+    return p
 end
 export plotCalibration
