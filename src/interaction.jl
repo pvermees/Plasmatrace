@@ -59,7 +59,7 @@ function dispatch!(pd::Union{Nothing,run};chain)
     out
 end
 
-function Plasmatrace()
+function PT()
     prompt("welcome")
     myrun = nothing
     chain = ["top"]

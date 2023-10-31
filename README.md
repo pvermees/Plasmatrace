@@ -1,6 +1,6 @@
 # Plasmatrace.jl
 
-##Julia package for LA-ICP-MS data reduction
+## Julia package for LA-ICP-MS data reduction
 
 `Plasmatrace.jl` is in early development, and is not yet ready for
 use. For this reason, it has not yet been added to the Julia package
@@ -15,13 +15,13 @@ Pkg.add https://github.com/pvermees/Plasmatrace.jl
 There are two ways that future users will be able to interact with the
 code:
 
-1. Interactive, text-based user interface.
+## 1. Interactive, text-based user interface.
 
 Here is an example of a menu-driven `Plasmatrace` session:
 
 ```
 julia> using Plasmatrace
-julia> Plasmatrace()
+julia> PT()
 ===========
 Plasmatrace
 ===========
@@ -75,7 +75,7 @@ x
 julia>
 ```
 
-2. Via the command-line API
+## 2. Via the command-line API
 
 Here is an example of a Lu-Hf calibration using two mineral standards.
 The blanks are fitted using a second order polynomial, whereas the
