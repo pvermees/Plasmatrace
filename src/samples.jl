@@ -40,6 +40,31 @@ function fitSample(pd::run;i::Integer)
     DataFrame(mat,colnames)
 end
 
+function fitSamples(pd::run;i::Vector{Integer},num=nothing,den=nothing)
+    nr = size(i,1)
+    v = Vector{Vector}(undef,nr)
+    dat = nothing
+    for j in eachindex(i)
+        df = fitSample(pd,i=i[j])
+        dat = getPlotDat(df,num=num,den=den)[:,3:end]
+        v[j] = average(dat)
+    end
+    nc = ncol(dat)
+    ncov = Int(nc*(nc-1)/2)
+    nms = names(dat)
+    labels = Vector{String}(undef,2*nc+ncov)
+    labels[1:2:2*nc-1] = nms
+    labels[2:2:2*nc] = "s[".*nms.*"]"
+    ncov = Int(nc*(nc-1)/2)
+    for j in 1:ncov
+        r,c = iuppert(j,nc)
+        labels[2*nc+j] = "r["*nms[r]*","*nms[c]*"]"
+    end
+    mat = mapreduce(permutedims,vcat,v)
+    DataFrame(mat,labels)
+end
+export fitSamples
+
 # s is a data frame with the output of signalData(...)
 function atomic(;s,bpar,spar)
     t = s[:,1]; T = s[:,2]; Xm = s[:,3]; Ym = s[:,4]; Zm = s[:,5]

@@ -120,6 +120,13 @@ function calibrationtest()
     @test display(p) != NaN
 end
 
+function averagetest()
+    myrun = standardtest(false)
+    i = findSamples(myrun,prefix="BP -")
+    out = fitSamples(myrun,i=i,den=["Hf176"])
+    println(out[1:3,:])
+end
+
 Plots.closeall()
 
 @testset "load" begin loaddat = loadtest() end
@@ -131,3 +138,4 @@ Plots.closeall()
 @testset "fit standards" begin standardout = standardtest() end
 @testset "plot atomic" begin atomictest() end
 @testset "plot calibration" begin calibrationtest() end
+@testset "average results" begin averagetest() end

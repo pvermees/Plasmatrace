@@ -1,5 +1,5 @@
 using Dates, DataFrames
-import Plots, Statistics, Optim
+import Plots, Statistics, Optim, LinearAlgebra
 
 include("types.jl")
 include("methods.jl")

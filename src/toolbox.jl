@@ -24,3 +24,33 @@ function polyVal(;p,t)
     end
     out
 end
+
+function average(df;logratios=false)
+    nin = ncol(df)
+    function misfit(mu,df,logratios)
+        expected = logratios ? exp.(mu) : mu
+    end
+    mu = Statistics.mean.(eachcol(df))
+    if logratios # TODO
+        init = log.(mu)
+        # optimise
+    else
+        sigma = Statistics.cov(Matrix(df))
+    end
+    ncov = Int(nin*(nin-1)/2)
+    nout = 2*nin+ncov
+    out = Vector{AbstractFloat}(undef,nout)
+    out[1:2:(2*nin-1)] = mu
+    out[2:2:2*nin] = sqrt.(LinearAlgebra.diag(sigma))
+    for i in 1:ncov
+        j, k = iuppert(i,nin)
+        out[2*nin+i] = sigma[j,k]/sqrt(sigma[j,j]*sigma[k,k])
+    end
+    out
+end
+
+function iuppert(k::Integer,n::Integer)
+  i = n - 1 - floor(Int,sqrt(-8*k + 4*n*(n-1) + 1)/2 - 0.5)
+  j = k + i + ( (n-i+1)*(n-i) - n*(n-1) )÷2
+  return i, j
+end
