@@ -1,44 +1,41 @@
 function prompt(key)
     messages = Dict(
-        "welcome"
-        =>
+        "welcome" =>
         "===========\n"*
         "Plasmatrace\n"*
         "===========\n",
-        "top"
-        =>
+        "top" =>
         "f: Load the data files\n"*
         "m: Specify a method\n"*
         "s: Mark mineral standards\n"*
-        "g: Mark glass standards\n"*
         "v: View the data\n"*
         "j: Save the session as .json\n"*
         "c: Export the data as .csv\n"*
         "x: Exit",
-        "method"
-        =>
-        "Choose an application:\n"*
-        "1. Lu-Hf",
-        "load"
-        =>
+        "load" =>
         "i. Specify your instrument [default=Agilent]\n"*
         "r. Read the data\n"*
+        "l. List all the samples in the session\n"*
         "x. Exit",
-        "view"
-        =>
+        "method" =>
+        "Choose an application:\n"*
+        "1. Lu-Hf",
+        "standards" =>
+        "p. Add a standard by prefix\n"*
+        "r. Remove a standard\n"*
+        "l. List all the standards\n"*
+        "x. Exit",
+        "view" =>
         "[Enter]: next\n"*
         "[Space]: previous\n"*
         "b: Select blank window(s)\n"*
         "w: Select signal window(s)\n"*
         "s: Mark as standard\n"*
-        "g: Mark as glass\n"*
         "x: Exit",
-        "instrument"
-        =>
+        "instrument" =>
         "Choose a file format:\n"*
         "1. Agilent",
-        "read"
-        =>
+        "read" =>
         "Enter the full path of the data directory:"
     )
     println(messages[key])
@@ -49,36 +46,50 @@ function dispatch!(pd::Union{Nothing,run};chain)
     prompt(key)
     response = readline()
     out = "x"
-    if (key=="top")
-        if (response=="f")
+    if key=="top"
+        if response=="f"
             out = "load"
-        elseif (response=="m")
+        elseif response=="m"
             out = "method"
-        elseif (response=="v")
+        elseif response=="s"
+            out = "standards"
+        elseif response=="v"
             out = "view"
-        elseif (response=="x")
+        elseif response=="x"
             out = "x"
         else
             out = unsupported()
         end
-    elseif (key=="method")
+    elseif key=="method"
         chooseMethod!(pd,response)
-    elseif (key=="load")
-        if (response=="i")
+    elseif key=="load"
+        if response=="i"
             out = "instrument"
-        elseif (response=="r")
+        elseif response=="r"
             out = "read"
-        elseif (response!="x")
+        elseif response=="l"
+            listSamples(pd)
+        elseif response!="x"
             out = unsupported()
         end
-    elseif (key=="application")
+    elseif key=="application"
         method_a!(pd,response)
-    elseif (key=="view")
-        interplot(pd)
-    elseif (key=="instrument")
+    elseif key=="view"
+        viewer(pd)
+    elseif key=="instrument"
         load_i!(pd,response)
-    elseif (key=="read")
+    elseif key=="read"
         load!(pd,dname=response)
+    elseif key=="standards"
+        if response=="p"
+            addStandardPrefix!(pd)
+        elseif response=="r"
+            deleteStandards!(pd)
+        elseif response=="l"
+            listStandards(pd)
+        elseif response!="x"
+            out = unsupported()
+        end
     else
         out = unsupported()
     end
@@ -125,13 +136,13 @@ function chooseMethod!(pd,response)
         println("Load the data first.")
     else
         println("Select the data columns (as a comma-separated list of numbers)\n")
-        labels = names(getDat(samples[1]))
+        labels = names(getDat(samples[1]))[3:end]
         for i in eachindex(labels)
             println(string(i)*". "*labels[i])
         end
         println("\ncorresponding to the following isotopes or their proxies:")
         println(join(isotopes,","))
-        println("For example: "*join(3:2+size(isotopes,1),","))
+        println("For example: "*join(1:size(isotopes,1),","))
         response = readline()
         selected = parse.(Int,split(response,","))
         DRSchannels!(pd,channels=labels[selected])
@@ -145,21 +156,47 @@ function load_i!(pd,response)
     setInstrument!(pd,instrument)
 end
 
-function interplot(pd)
+function viewer(pd)
     i = 1
     while true
-        prompt("view")
         samples = getSamples(pd)
         ns = size(samples,1)
         p = plot(samples[i])
         display(p)
-        s = readline()
-        if s==""
+        response = readline()
+        if response==""
             i = i<ns ? i+1 : 1
-        elseif s==" "
+        elseif response==" "
             i = i>1 ? i-1 : ns
         else
             return
         end
+        prompt("view")
     end
+end
+
+function listSamples(pd)
+    snames = getSnames(pd)
+    for sname in snames
+        println(sname)
+    end
+end
+
+function addStandardPrefix!(pd)
+    println("Enter the prefix of the standards:")
+    prefix = readline()
+    println("Enter the number of the standard")
+    
+    number = readline()
+    markStandards!(pd,prefix=response,standard=parse(Int,number))
+end
+
+function deleteStandard!(pd)
+    
+end
+
+function listStandards(pd)
+    samples = getSnames(pd)
+    standards = getStandard(pd)
+    println(standards)
 end
