@@ -1,17 +1,26 @@
-function setMethod!(pd::run;method::String,channels::Vector{String})
+function setMethod!(pd::run;
+                    method::String,
+                    channels::Vector{String})
+    isotopes = nothing
     if (method=="LuHf")
         isotopes = ["Lu176","Hf177","Hf176"]
     else
         PTerror("UnknownMethod")
     end
-    if size(channels,1)!=size(isotopes,1) PTerror("isochanmismatch") end
-    ctrl = getControl(pd)
-    if isnothing(ctrl)
-        ctrl = control(method,nothing,nothing,isotopes,channels)
+    setMethod!(pd,method)
+    setIsotopes!(pd,isotopes)
+    if size(channels,1)==size(isotopes,1)
+        setChannels!(pd,channels)
     else
-        setIsotopess!(ctrl,isotopes)
-        setChannels!(ctrl,channels)
+        PTerror("isochanmismatch")
     end
-    setControl!(pd;ctrl=ctrl)
 end
 export setMethod!
+
+function getExt(instrument)
+    if instrument == "Agilent"
+        return ".csv"
+    else
+        PTerror("unknownInstrument")
+    end
+end

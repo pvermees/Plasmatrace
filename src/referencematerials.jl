@@ -21,19 +21,15 @@ function getAB(;method::String,refmat::String)
 end
 
 function setAB!(pd::run;refmat::Union{String,Vector{String}})
+    method = getMethod(pd)
+    if isnothing(method) PTerror("undefinedMethod") end
     if isa(refmat,String) refmat = [refmat] end
     nref = size(refmat,1)
-    A = fill(0.0,nref)
-    B = fill(0.0,nref)
+    A = Vector{AbstractFloat}(undef,nref)
+    B = Vector{AbstractFloat}(undef,nref)
     for i in eachindex(refmat)
-        A[i], B[i] = getAB(method=getMethod(pd),refmat=refmat[i])
+        A[i], B[i] = getAB(method=method,refmat=refmat[i])
     end
-    ctrl = getControl(pd)
-    if isnothing(ctrl)
-        ctrl = control(A,B,nothing)
-    else
-        ctrl.A = A
-        ctrl.B = B
-    end
-    setControl!(pd,ctrl=ctrl)
+    setA!(pd,A)
+    setB!(pd,B)
 end

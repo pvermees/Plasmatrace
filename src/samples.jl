@@ -26,13 +26,29 @@ function findSamples(pd::run;snames=nothing,
     out
 end
 
+function fitable(pd::run;throw=false)
+    if isnothing(getBPar(pd))
+        if throw PTerror("missingBlank ")
+        else return false end
+    elseif isnothing(getSPar(pd))
+        if throw PTerror("missingStandard")
+        else return false end
+    elseif isnothing(getChannels(pd))
+        if throw PTerror("undefinedMethod")
+        else return false end
+    elseif isnothing(getIsotopes(pd))
+        if throw PTerror("undefinedMethod")
+        else return false end
+    else
+        if !throw return true end
+    end
+end
+
 function fitSample(pd::run;i::Integer)
+    fitable(pd,throw=true)
     bpar = getBPar(pd)
     spar = getSPar(pd)
     channels = getChannels(pd)
-    if isnothing(bpar) PTerror("missingBlank") end
-    if isnothing(spar) PTerror("missingStandard") end
-    if isnothing(channels) PTerror("missingControl") end
     samp = getSamples(pd)[i]
     s = signalData(samp,channels=channels)
     mat = atomic(s=s,bpar=bpar,spar=spar)
@@ -46,7 +62,7 @@ function fitSamples(pd::run;i::Vector{Integer},num=nothing,den=nothing)
     dat = nothing
     for j in eachindex(i)
         df = fitSample(pd,i=i[j])
-        dat = getPlotDat(df,num=num,den=den)[:,3:end]
+        dat = getPlotDat(df,num=num,den=den,brackets=false)[:,3:end]
         v[j] = average(dat)
     end
     nc = ncol(dat)

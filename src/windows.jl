@@ -25,7 +25,7 @@ function setWindows!(pd::run;blank=false,windows=nothing,i=nothing)
     for j in i
         setWindows!(samples[j],blank=blank,windows=windows)
     end
-    setSamples!(pd,samples=samples)
+    setSamples!(pd,samples)
 end
 
 function autoWindow(pd::sample;blank=false)::Vector{window}
@@ -64,7 +64,7 @@ function signalData(pd::run;channels=nothing,i=nothing)
     windowData(pd,blank=false,channels=channels,i=i)
 end
 
-function windowData(pd::sample;blank=false,channels=nothing)
+function windowData(pd::sample;blank=false,channels)
     windows = blank ? getBWin(pd) : getSWin(pd)
     selection = Vector{Integer}()
     if isnothing(windows) PTerror("missingWindows") end

@@ -26,8 +26,10 @@ function plot(pd::run;i::Union{Nothing,Integer}=nothing,
         if isnothing(channels) & isnothing(den) channels = getChannels(pd) end
         p = plot(getSamples(pd)[i],channels=channels,
                  num=num,den=den,transformation=transformation)
-        plotFitted!(p,pd=pd,i=i,channels=channels,num=num,den=den,
-                    transformation=transformation)
+        if fitable(pd)
+            plotFitted!(p,pd=pd,i=i,channels=channels,num=num,den=den,
+                        transformation=transformation)
+        end
     end
     return p
 end
@@ -67,7 +69,6 @@ function plotFitted!(p;pd::run,i::Integer,channels=nothing,
                      num=nothing,den=nothing,transformation="sqrt",
                      linecolor="black",linestyle=:solid)
     pred = predictStandard(pd,i=i)
-    if isnothing(pred) return end
     plotdat = getPlotDat(pred,channels=channels,num=num,den=den)
     x = pred[:,2]
     y = Matrix(plotdat[:,3:end])
@@ -78,7 +79,7 @@ end
 function plotAtomic(pd::run;i::Integer,num=nothing,den=nothing,
                     scatter=true,transformation="sqrt",ms=4)
     fit = fitSample(pd,i=i)
-    plotdat = getPlotDat(fit,num=num,den=den)
+    plotdat = getPlotDat(fit,num=num,den=den,brackets=false)
     p = plotHelper(plotdat,transformation=transformation,ms=ms,ix=2)
     return p
 end
@@ -95,7 +96,7 @@ function plotCalibration(pd::run,ms=2,ma=0.5,xlim=nothing,ylim=nothing)
     for i in 1:ng
         mat = atomic(s=groups[i].s,bpar=bpar,spar=spar)
         df = DataFrame(mat,colnames)
-        plotdat[i] = getPlotDat(df,den=[colnames[5]])
+        plotdat[i] = getPlotDat(df,den=[colnames[5]],brackets=false)
         if !isnothing(xlim)
             xm = minimum([xm,minimum(plotdat[i][:,3])])
             xM = maximum([xM,maximum(plotdat[i][:,3])])
@@ -128,23 +129,26 @@ export plotCalibration
 function getPlotDat(dat::DataFrame;
                     channels::Union{Nothing,Vector{String}}=nothing,
                     num::Union{Nothing,Vector{String}}=nothing,
-                    den::Union{Nothing,Vector{String}}=nothing)
+                    den::Union{Nothing,Vector{String}}=nothing,
+                    brackets=true)
     tT = dat[:,1:2]
     meas = dat[:,3:end]
     if isnothing(channels)
         if !isnothing(den)
+            o = brackets ? "(" : ""
+            c = brackets ? ")" : ""
             nd = size(den,1)
             if isnothing(num)
                 meas = meas[:,Not(den[1])] ./ meas[:,den[1]]
-                labels = "(" .* names(meas) .* ")/(" .* den[1] .* ")"
+                labels = o.*names(meas).*c.*"/".*o.*den[1].*c
             else
                 nn = size(num,1)
                 if nn==nd
                     meas = meas[:,num] ./ meas[:,den]
-                    labels = "(" .* num .* ")/(" .* den .* ")"
+                    labels = o.*num.*c.*"/".*o.*den.*c
                 else
                     meas = meas[:,num] ./ meas[:,den[1]]
-                    labels = "(" .* num .* ")/(" .* den[1] .* ")"
+                    labels = o.*num.*c.*"/".*o.*den[1].*c
                 end
             end
             rename!(meas,labels)

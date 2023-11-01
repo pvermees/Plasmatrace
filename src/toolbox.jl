@@ -49,8 +49,9 @@ function average(df;logratios=false)
     out
 end
 
+# gets k-th linear index (i,j) of n x n matrix
 function iuppert(k::Integer,n::Integer)
   i = n - 1 - floor(Int,sqrt(-8*k + 4*n*(n-1) + 1)/2 - 0.5)
-  j = k + i + ( (n-i+1)*(n-i) - n*(n-1) )÷2
+  j = k + i + div( (n-i+1)*(n-i) - n*(n-1) , 2)
   return i, j
 end

@@ -3,8 +3,12 @@ import Plots
 
 function loadtest()
     dname = "/home/pvermees/Documents/Plasmatrace/GlorieGarnet/"
-    out = load(dname)
-    return out
+    out = run()
+    setMethod!(out,
+               method="LuHf",
+               channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
+    load!(out,dname=dname,instrument="Agilent")
+    out
 end
 
 function plottest(option=0)
@@ -51,8 +55,6 @@ end
 function blanktest()
     myrun = loadtest()
     setBlanks!(myrun)
-    setMethod!(myrun,method="LuHf",
-               channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
     fitBlanks!(myrun,n=2)
     b = Matrix(blankData(myrun))
     t = b[:,1]
@@ -72,15 +74,12 @@ function forwardtest()
     myrun = loadtest()
     setBlanks!(myrun)
     setSignals!(myrun)
-    setMethod!(myrun,method="LuHf",
-               channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
     fitBlanks!(myrun,n=1)
     i = findSamples(myrun,prefix="BP -")
     setStandard!(myrun,i=i[1],standard=1)
-    setSPar!(myrun,spar=[4.0,-0.34])
-    channels = getChannels(myrun)
+    setSPar!(myrun,[4.0,-0.34])
     setAB!(myrun,refmat="BP")
-    p = plot(myrun,i=i[1],channels=channels,transformation="sqrt")
+    p = plot(myrun,i=i[1],transformation="sqrt")
     @test display(p) != NaN
     return myrun
 end
@@ -89,8 +88,6 @@ function standardtest(doplot=true)
     myrun = loadtest()
     setBlanks!(myrun)
     setSignals!(myrun)
-    setMethod!(myrun,method="LuHf",
-               channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
     fitBlanks!(myrun,n=2)
     markStandards!(myrun,prefix="hogsbo_",standard=1)
     markStandards!(myrun,prefix="BP -",standard=2)

@@ -1,6 +1,48 @@
-# Currently only works for Agilent files
-function readFile(fname::String)::sample
+function readFile(fname::String;instrument="Agilent")::sample
+    if instrument=="Agilent"
+        sname, datetime, dat = readAgilent(fname)
+    else
+        PTerror("unknownInstrument")
+    end
+    sample(sname,datetime,dat)
+end
 
+function load!(pd::run;dname::String,instrument="Agilent")
+    temp = load(dname,instrument=instrument)
+    setSamples!(pd,getSamples(temp))
+end
+export load!
+
+function load(dname::String;instrument="Agilent")::run
+    fnames = readdir(dname)
+    samples = Vector{sample}(undef,0)
+    datetimes = Vector{DateTime}(undef,0)
+    ext = getExt(instrument)
+    for fname in fnames
+        if occursin(ext,fname)
+            samp = readFile(dname*fname,instrument=instrument)
+            push!(samples,samp)
+            push!(datetimes,getDateTime(samp))
+        end
+    end
+    order = sortperm(datetimes)
+    sortedsamples = samples[order]
+    sorteddatetimes = datetimes[order]
+    dt = sorteddatetimes .- sorteddatetimes[1]
+    runtime = Dates.value.(dt)./sph
+    for i in eachindex(sortedsamples)
+        samp = sortedsamples[i]
+        dat = getDat(samp)
+        dat[:,1] = dat[:,2]./sph .+ runtime[i]
+        setDat!(samp,dat)
+    end
+    out = run(sortedsamples)
+    setInstrument!(out,instrument)
+    out
+end
+export load
+
+function readAgilent(fname::String)
     f = open(fname,"r")
     strs = readlines(f)
 
@@ -19,45 +61,9 @@ function readFile(fname::String)::sample
     measurements = mapreduce(vcat, strs[5:(nr-3)]) do s
         (parse.(Float, split(s, ",")))'
     end
-
     labels = ["Run Time [hours]";labels]
     dat = DataFrame(hcat(measurements[:,1]./sph,measurements),labels)
 
     close(f)
-
-    sample(sname,datetime,dat)
-
+    return sname, datetime, dat
 end
-
-function load(dname::String;ext::String=".csv")::run
-
-    fnames = readdir(dname)
-    samples = Vector{sample}(undef,0)
-    datetimes = Vector{DateTime}(undef,0)
-
-    for fname in fnames
-        if occursin(ext,fname)
-            samp = readFile(dname*fname)
-            push!(samples,samp)
-            push!(datetimes,getDateTime(samp))
-        end
-    end
-
-    order = sortperm(datetimes)
-    sortedsamples = samples[order]
-    sorteddatetimes = datetimes[order]
-    
-    dt = sorteddatetimes .- sorteddatetimes[1]
-    runtime = Dates.value.(dt)./sph
-
-    for i in eachindex(sortedsamples)
-        samp = sortedsamples[i]
-        dat = getDat(samp)
-        dat[:,1] = dat[:,2]./sph .+ runtime[i]
-        setDat!(samp;dat=dat)
-    end
-
-    run(sortedsamples)
-    
-end
-export load

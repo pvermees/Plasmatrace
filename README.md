@@ -81,16 +81,16 @@ The blanks are fitted using a second order polynomial, whereas the
 signal drift is modelled using a linear function:
 
 ```
-julia> dname = "/home/pvermees/Documents/Plasmatrace/MyGarnet/"
-julia> session = load(dname)
+julia> dname = "/home/pvermees/Documents/Plasmatrace/MyGarnet/";
+julia> session = load(dname,instrument="Agilent");
 julia> setMethod!(session,method="LuHf",
        channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
-julia> setBlanks!(session)
-julia> setSignals!(session)
-julia> fitBlanks!(session,method="LuHf",n=2)
-julia> markStandards!(session,prefix="hogsbo_",standard=1)
-julia> markStandards!(session,prefix="BP -",standard=2)
-julia> fitStandards!(session,refmat=["Hogsbo","BP"],n=1)
+julia> setBlanks!(session);
+julia> setSignals!(session);
+julia> fitBlanks!(session,n=2);
+julia> markStandards!(session,prefix="hogsbo_",standard=1);
+julia> markStandards!(session,prefix="BP -",standard=2);
+julia> fitStandards!(session,refmat=["Hogsbo","BP"],n=1);
 julia> p = plot(session,i=15)
 julia> display(p)
 ```

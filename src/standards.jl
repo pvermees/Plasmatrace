@@ -35,7 +35,7 @@ function fitStandards!(pd::run;
     fit = Optim.optimize(misfit,init)
     if verbose println(fit) end
     sol = Optim.minimizer(fit)
-    setSPar!(pd,spar=sol)
+    setSPar!(pd,sol)
 end
 export fitStandards!
 
@@ -66,8 +66,6 @@ function predictStandard(pd::run;
                          sname::Union{Nothing,String}=nothing,
                          prefix::Union{Nothing,String}=nothing,
                          i::Union{Nothing,Integer}=nothing)
-    channels = getChannels(pd)
-    if isnothing(channels) return nothing end
     bpar = getBPar(pd)
     spar = getSPar(pd)
     if isnothing(bpar) PTerror("missingBlank") end
@@ -99,7 +97,8 @@ function predictStandard(pd::run;
     Xp = @. X*ft*FT + bXt
     Yp = @. A*Z + B*X + bYt
     Zp = @. Z*exp(c) + bZt
-
+    
+    channels = getChannels(pd)
     DataFrame(hcat(t,T,Xp,Yp,Zp),[names(s)[1:2];channels])
 end
 

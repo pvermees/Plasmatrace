@@ -3,6 +3,7 @@ const window = Tuple{Int,Int}
 abstract type plasmaData end
 
 mutable struct control
+    instrument::Union{Nothing,String}
     method::Union{Nothing,String}
     A::Union{Nothing,Vector{AbstractFloat}}
     B::Union{Nothing,Vector{AbstractFloat}}
@@ -20,7 +21,7 @@ mutable struct sample <: plasmaData
 end
 
 mutable struct run <: plasmaData
-    samples::Vector{sample}
+    samples::Union{Nothing,Vector{sample}}
     control::Union{Nothing,control}
     bpar::Union{Nothing,Vector}
     spar::Union{Nothing,Vector}
@@ -30,4 +31,8 @@ end
 
 sample(sname,datetime,dat) = sample(sname,datetime,dat,nothing,nothing,0)
 
-run(samples) = run(samples,nothing,nothing,nothing,nothing,nothing)
+control() = control(nothing,nothing,nothing,nothing,nothing,nothing)
+
+run(samples) = run(samples,control(),nothing,nothing,nothing,nothing)
+
+run() = run(nothing)

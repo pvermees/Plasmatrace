@@ -10,5 +10,6 @@ const findSamples = Plasmatrace.findSamples
 const setSPar! = Plasmatrace.setSPar!
 const getChannels = Plasmatrace.getChannels
 const findSamples = Plasmatrace.findSamples
+const run = Plasmatrace.run
 
 include("tests.jl")
