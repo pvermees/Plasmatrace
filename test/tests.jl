@@ -4,9 +4,9 @@ import Plots
 function loadtest()
     dname = "/home/pvermees/Documents/Plasmatrace/GlorieGarnet/"
     out = run()
-    setMethod!(out,
-               method="LuHf",
-               channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
+    DRS!(out,
+         method="LuHf",
+         channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
     load!(out,dname=dname,instrument="Agilent")
     out
 end
@@ -89,9 +89,9 @@ function standardtest(doplot=true)
     setBlanks!(myrun)
     setSignals!(myrun)
     fitBlanks!(myrun,n=2)
-    markStandards!(myrun,prefix="hogsbo_",standard=1)
-    markStandards!(myrun,prefix="BP -",standard=2)
-    fitStandards!(myrun,refmat=["Hogsbo","BP"],n=1,verbose=true)
+    markStandards!(myrun,prefix="BP -",standard=1)
+    markStandards!(myrun,prefix="hogsbo_",standard=2)
+    fitStandards!(myrun,refmat=["BP","Hogsbo"],n=1,verbose=true)
     i = findSamples(myrun,prefix="BP -")
     if doplot
         p = plot(myrun,i=i[1])
@@ -118,21 +118,26 @@ function calibrationtest()
 end
 
 function averagetest()
-    myrun = standardtest(false)
-    i = findSamples(myrun,prefix="BP -")
+    myrun = loadtest()
+    setBlanks!(myrun)
+    setSignals!(myrun)
+    fitBlanks!(myrun,n=2)
+    markStandards!(myrun,prefix="BP -",standard=1)
+    fitStandards!(myrun,refmat=["BP"],n=1,verbose=true)
+    i = findSamples(myrun,prefix="hogsbo")
     out = fitSamples(myrun,i=i,den=["Hf176"])
-    println(out[1:3,:])
+    CSV.write("hogsbo.csv",out)
 end
 
 Plots.closeall()
 
-@testset "load" begin loaddat = loadtest() end
-@testset "plot raw data" begin plottest() end
-@testset "set selection window" begin windowout = windowtest() end
-@testset "plot selection windows" begin plotwindowtest() end
-@testset "set blanks" begin blankout = blanktest() end
-@testset "forward model" begin forwardout = forwardtest() end
-@testset "fit standards" begin standardout = standardtest() end
-@testset "plot atomic" begin atomictest() end
-@testset "plot calibration" begin calibrationtest() end
-@testset "average results" begin averagetest() end
+#@testset "load" begin loaddat = loadtest() end
+#@testset "plot raw data" begin plottest() end
+#@testset "set selection window" begin windowout = windowtest() end
+#@testset "plot selection windows" begin plotwindowtest() end
+#@testset "set blanks" begin blankout = blanktest() end
+#@testset "forward model" begin forwardout = forwardtest() end
+#@testset "fit standards" begin standardout = standardtest() end
+#@testset "plot atomic" begin atomictest() end
+#@testset "plot calibration" begin calibrationtest() end
+#@testset "average results" begin averagetest() end

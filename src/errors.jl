@@ -9,5 +9,5 @@ function PTerror(key)
         "isochanmismatch" => "The number of channels does not equal number of isotopes.",
         "unknownInstrument" => "Unsupported instrument."
     )
-    throw(error(errormessages[key]))
+    throw(error(errormessage[key]))
 end

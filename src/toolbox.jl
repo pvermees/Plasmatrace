@@ -30,12 +30,13 @@ function average(df;logratios=false)
     function misfit(mu,df,logratios)
         expected = logratios ? exp.(mu) : mu
     end
+    nr = nrow(df)
     mu = Statistics.mean.(eachcol(df))
     if logratios # TODO
         init = log.(mu)
         # optimise
     else
-        sigma = Statistics.cov(Matrix(df))
+        sigma = Statistics.cov(Matrix(df))/nr
     end
     ncov = Int(nin*(nin-1)/2)
     nout = 2*nin+ncov
