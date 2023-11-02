@@ -132,7 +132,7 @@ end
 Plots.closeall()
 
 #@testset "load" begin loaddat = loadtest() end
-#@testset "plot raw data" begin plottest() end
+#@testset "plot raw data" begin plottest(4) end
 #@testset "set selection window" begin windowout = windowtest() end
 #@testset "plot selection windows" begin plotwindowtest() end
 #@testset "set blanks" begin blankout = blanktest() end
@@ -140,4 +140,4 @@ Plots.closeall()
 #@testset "fit standards" begin standardout = standardtest() end
 #@testset "plot atomic" begin atomictest() end
 #@testset "plot calibration" begin calibrationtest() end
-#@testset "average results" begin averagetest() end
+@testset "average results" begin averagetest() end

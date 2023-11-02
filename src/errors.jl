@@ -7,7 +7,8 @@ function PTerror(key)
         "unknownRefMat" => "Unknown reference material.",
         "unknownMethod" => "Unknown method.",
         "isochanmismatch" => "The number of channels does not equal number of isotopes.",
-        "unknownInstrument" => "Unsupported instrument."
+        "unknownInstrument" => "Unsupported instrument.",
+        "missingNumDen" => "You must provide either a numerator or denominator, or both."
     )
-    throw(error(errormessage[key]))
+    throw(error(errormessages[key]))
 end
