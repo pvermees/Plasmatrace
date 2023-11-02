@@ -60,7 +60,6 @@ function fitSamples(pd::run;i::Vector{Integer},
                     num=nothing,den,logratios=false)
     nr = size(i,1)
     v = Vector{DataFrame}(undef,nr)
-    dat = nothing
     for j in eachindex(i)
         dat = fitRawSampleData(pd,i=i[j])
         v[j] = averat(dat[:,3:end],num=num,den=den,logratios=logratios)

@@ -22,14 +22,15 @@ function prompt(key)
         "method" =>
         "Choose an application:\n"*
         "1. Lu-Hf",
+        "channels" => "",
         "standards" =>
         "p. Add a standard by prefix\n"*
         "r. Remove a standard\n"*
         "l. List all the standards\n"*
         "x. Exit",
         "view" =>
-        "[Enter]: next\n"*
-        "[Space]: previous\n"*
+        "n,[Enter]: next\n"*
+        "p,[Space]: previous\n"*
         "b: Select blank window(s)\n"*
         "w: Select signal window(s)\n"*
         "s: Mark as standard\n"*
@@ -43,101 +44,151 @@ function prompt(key)
     println(messages[key])
 end
 
-function dispatch!(pd::Union{Nothing,run};chain,history,action=nothing)
-    key = chain[end]
-    prompt(key)
-    response = readline()
-    out = "x"
-    if key=="top"
-        if response=="f"
-            out = "load"
-        elseif response=="m"
-            out = "method"
-        elseif response=="s"
-            out = "standards"
-        elseif response=="v"
-            out = "view"
-        elseif response=="j"
-            out = unsupported()
-        elseif response=="c"
-            out = unsupported()
-        elseif response=="l"
-            savelog(history)
-        elseif response=="r"
-            restorelog!(history)
-            runhistory!(chain,history)
-        elseif response=="x"
-            out = "x"
-        else
-            out = unsupported()
+function dispatch!(pd::Union{Nothing,run};
+                   i,task,action=nothing,verbatim=false)
+    prompt(task)
+    if isnothing(action) action = readline()
+    else println(action) end
+    next = "x"
+    if task=="top"
+        if action=="f"
+            next = "load"
+        elseif action=="m"
+            next = "method"
+        elseif action=="s"
+            next = "standards"
+        elseif action=="v"
+            next = "view"
+        elseif action=="j"
+            next = unsupported()
+        elseif action=="c"
+            next = unsupported()
+        elseif action=="l"
+            next = "savelog"
+        elseif action=="r"
+            next = "restorelog"
+        elseif action!="x"
+            next = unsupported()
         end
-    elseif key=="method"
-        chooseMethod!(pd,response)
-    elseif key=="load"
-        if response=="i"
-            out = "instrument"
-        elseif response=="r"
-            out = "read"
-        elseif response=="l"
+    elseif task=="method"
+        next = chooseMethod!(pd,action)
+    elseif task=="channels"
+        chooseChannels!(pd,action)
+    elseif task=="load"
+        if action=="i"
+            next = "instrument"
+        elseif action=="r"
+            next = "read"
+        elseif action=="l"
             listSamples(pd)
-        elseif response!="x"
-            out = unsupported()
+        elseif action!="x"
+            next = unsupported()
         end
-    elseif key=="application"
-        method_a!(pd,response)
-    elseif key=="view"
-        viewer(pd)
-    elseif key=="instrument"
-        load_i!(pd,response)
-    elseif key=="read"
-        load!(pd,dname=response)
-    elseif key=="standards"
-        if response=="p"
+    elseif task=="application"
+        method_a!(pd,action)
+    elseif task=="view"
+        samples = getSamples(pd)
+        ns = size(samples,1)
+        p = plot(samples[i[1]])
+        display(p)
+        next = nothing
+        if action=="" || action=="n"
+            i[1] = i[1]<ns ? i[1]+1 : 1
+            action = "n" # easier to recognise in log
+        elseif action==" " || action=="p"
+            i[1] = i[1]>1 ? i[1]-1 : ns
+            action = "p" # easier to recognise in log
+        elseif action=="b"
+            next = unsupported()
+        elseif action=="w"
+            next = unsupported()
+        elseif action=="w"
+            next = unsupported()
+        elseif action=="s"
+            next = unsupported()
+        elseif action=="x"
+            next = "x"
+        else
+            next = unsupported()
+        end
+    elseif task=="instrument"
+        load_i!(pd,action)
+    elseif task=="read"
+        load!(pd,dname=action)
+    elseif task=="standards"
+        if action=="p"
             addStandardPrefix!(pd)
-        elseif response=="r"
+        elseif action=="r"
             deleteStandards!(pd)
-        elseif response=="l"
+        elseif action=="l"
             listStandards(pd)
-        elseif response!="x"
-            out = unsupported()
+        elseif action!="x"
+            next = unsupported()
         end
     else
-        out = unsupported()
+        next = unsupported()
     end
-    out
+    (action=action,next=next)
 end
 
-function PT(logbook::Union{Nothing,Vector{String}}=nothing)
-    prompt("welcome")
-    chain = ["top"]
-    history = ["top"]
-    myrun = run()
-    if isnothing(logbook)
-        while true
-            feedbackloop!(myrun,chain=chain,history=history)
-            if isempty(chain) return end
-        end
-    else
-        for action in logbook
-            feedbackloop!(myrun,chain=chain,history=history,action=action)
-        end
-    end
+function PT()
+    PT!()
 end
 export PT
 
-function feedbackloop!(pd::run;chain,history,action=nothing)
+function PT!(logbook::Union{Nothing,DataFrame}=nothing)
+    prompt("welcome")
+    chain = ["top"]
+    myrun = run()
+    history = DataFrame(task=String[],action=String[])
+    i = [1]
+    if isnothing(logbook)
+        while true
+            out = arbeid!(myrun,i=i,chain=chain,history=history)
+            if out == "exit" return end
+            if out == "restorelog"
+                restorelog!(history)
+                myrun = PT!(history)
+            end
+        end
+    else
+        for row in eachrow(logbook)
+            out = arbeid!(myrun,i=i,chain=chain,history=history,
+                          task=row[1],action=row[2],restore=true)
+        end
+        return myrun
+    end
+end
+
+function arbeid!(pd::run;i,chain,history,task=nothing,
+                 action=nothing,restore=false,verbatim=false)
     try
-        out = dispatch!(pd,chain=chain,history=history,action=action)
-        if out=="x"
+        if verbatim
+            println(chain)
+            println(history)
+        end
+        if isempty(chain) return "exit" end
+        if !restore # new run
+            task = chain[end]
+            action = nothing
+        end
+        out = dispatch!(pd,i=i,task=task,action=action,verbatim=verbatim)
+        if isnothing(action) action = out.action end
+        if out.next=="x"
             pop!(chain)
             if size(chain,1)<1 return end
-        elseif !isnothing(out)
-            push!(chain,out)
-            push!(history,out)
+        elseif out.next=="savelog"
+            savelog(history)
+        elseif out.next=="restorelog"
+            return "restorelog"
+        else
+            push!(chain,out.next)
         end
+        push!(history,[task,action])
     catch e
         println(e)
     end
+    return "continue"
 end
 
 function unsupported()
@@ -145,8 +196,8 @@ function unsupported()
     return nothing
 end
 
-function chooseMethod!(pd,response)
-    if response=="1"
+function chooseMethod!(pd,action)
+    if action=="1"
         method = "LuHf"
     else
         return
@@ -154,6 +205,7 @@ function chooseMethod!(pd,response)
     DRSmethod!(pd,method=method)
     isotopes = getIsotopes(pd)
     samples = getSamples(pd)
+    out = "x"
     if isnothing(isotopes)
         println("Choose a geochronometer first.")
     elseif isnothing(samples)
@@ -167,36 +219,30 @@ function chooseMethod!(pd,response)
         println("\ncorresponding to the following isotopes or their proxies:")
         println(join(isotopes,","))
         println("For example: "*join(1:size(isotopes,1),","))
-        response = readline()
-        selected = parse.(Int,split(response,","))
-        DRSchannels!(pd,channels=labels[selected])
+        out = "channels"
     end
+    out
 end
 
-function load_i!(pd,response)
-    instrument = nothing
-    if response=="1" instrument = "Agilent"
+function chooseChannels!(pd,response)
+    samples = getSamples(pd)
+    selected = parse.(Int,split(response,","))
+    labels = names(getDat(samples[1]))[3:end]
+    DRSchannels!(pd,channels=labels[selected])
+end
+
+function load_i!(pd,action)
+    if action=="1" instrument = "Agilent"
     else return end
     setInstrument!(pd,instrument)
 end
 
-function viewer(pd)
-    i = 1
-    while true
-        samples = getSamples(pd)
-        ns = size(samples,1)
-        p = plot(samples[i])
-        display(p)
-        prompt("view")
-        response = readline()
-        if response==""
-            i = i<ns ? i+1 : 1
-        elseif response==" "
-            i = i>1 ? i-1 : ns
-        else
-            return
-        end
-    end
+function plotnext(pd,i)
+    
+end
+
+function plotprevious(pd,i)
+    
 end
 
 function listSamples(pd)
@@ -229,24 +275,15 @@ function savelog(history)
     println("Name the log file "*
             "(e.g., history.log or /home/johndoe/mydata/mylog.txt):")
     fpath = readline()
-    write(fpath,join(history,","))
+    println(history)
+    CSV.write(fpath,history)
 end
 
 function restorelog!(history)
     println("Provide the path of the log file "*
             "(e.g., history.log or /home/johndoe/mydata/mylog.txt):")
     fpath = readline()
-    contents = read(fpath,String)
-    hist = String.(split(contents,","))
+    hist = CSV.read(fpath,DataFrame)
     empty!(history)
     append!(history,hist)
-end
-
-function runhistory!(pd,chain,history)
-    previousrun = history
-    empty!(chain)
-    empty!(history)
-    for h in previousrun
-        dispatch!(pd,chain=chain,history=history)
-    end
 end

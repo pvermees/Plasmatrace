@@ -61,14 +61,14 @@ function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
             PTerror("missingNumDen")
         else
             n = findall(!=(den[1]),labels)
-            d = fill(findfirst(==(den[1]),labels),nc-1)
+            d = fill(findfirst(==(den[1]),labels),size(n,1))
         end
     elseif isnothing(den)
         if isnothing(num)
             PTerror("missingNumDen")
         else
             d = findall(!=(num[1]),labels)
-            n = fill(findfirst(==(num[1]),labels),nc-1)
+            n = fill(findfirst(==(num[1]),labels),size(d,1))
         end
     else
         nnum = size(num,1)
@@ -78,10 +78,10 @@ function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
             d = findall(in(den),labels)
         elseif nnum>nden
             n = findall(in(num),labels)
-            d = fill(findfirst(==(den[1]),labels),nc-1)
+            d = fill(findfirst(==(den[1]),labels),size(n,1))
         else
             d = findall(in(den),labels)
-            n = fill(findfirst(==(num[1]),labels),nc-1)
+            n = fill(findfirst(==(num[1]),labels),size(d,1))
         end
     end
     mat = Matrix(df)
@@ -90,7 +90,7 @@ function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
     den = labels[d]
     ratlabs = brackets ? "(".*num.*")/(".*den.*")" : num.*"/".*den
     if isnothing(sigma)
-        DataFrame(ratios,ratlabs)
+        out = DataFrame(ratios,ratlabs)
     else # error propagation
         nin = ncol(df)
         nrat = size(ratios,2)

@@ -7,7 +7,6 @@ end
 export DRS!
 
 function DRSmethod!(pd::run;method::String)
-    isotopes = nothing
     if (method=="LuHf")
         isotopes = ["Lu176","Hf177","Hf176"]
     else

@@ -1,0 +1,5 @@
+task,action
+top,f
+load,r
+read,/home/pvermees/Documents/Plasmatrace/GlorieGarnet/
+load,x
