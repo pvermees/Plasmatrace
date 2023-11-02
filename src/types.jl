@@ -29,6 +29,12 @@ mutable struct run <: plasmaData
     scov::Union{Nothing,Matrix}
 end
 
+mutable struct TUIpars
+    chain::Vector{String}
+    history::DataFrame
+    i::Integer
+end
+
 sample(sname,datetime,dat) = sample(sname,datetime,dat,nothing,nothing,0)
 
 control() = control(nothing,nothing,nothing,nothing,nothing,nothing)

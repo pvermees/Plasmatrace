@@ -31,6 +31,8 @@ function prompt(key)
         "view" =>
         "n,[Enter]: next\n"*
         "p,[Space]: previous\n"*
+        "c: Choose which channels to show\n"*
+        "r: Switch between ratios and raw signals\n"*
         "b: Select blank window(s)\n"*
         "w: Select signal window(s)\n"*
         "s: Mark as standard\n"*
@@ -45,7 +47,7 @@ function prompt(key)
 end
 
 function dispatch!(pd::Union{Nothing,run};
-                   i,task,action=nothing,verbatim=false)
+                   pars::TUIpars,task,action=nothing,verbatim=false)
     prompt(task)
     if isnothing(action) action = readline()
     else println(action) end
@@ -89,15 +91,15 @@ function dispatch!(pd::Union{Nothing,run};
     elseif task=="view"
         samples = getSamples(pd)
         ns = size(samples,1)
-        p = plot(samples[i[1]])
+        p = plot(samples[pars.i])
         display(p)
         next = nothing
         if action=="" || action=="n"
-            i[1] = i[1]<ns ? i[1]+1 : 1
-            action = "n" # easier to recognise in log
+            pars.i = pars.i<ns ? pars.i+1 : 1
+            action = "n" # easier to recognise in session log
         elseif action==" " || action=="p"
-            i[1] = i[1]>1 ? i[1]-1 : ns
-            action = "p" # easier to recognise in log
+            pars.i = pars.i>1 ? pars.i-1 : ns
+            action = "p" # easier to recognise in session log
         elseif action=="b"
             next = unsupported()
         elseif action=="w"
@@ -138,61 +140,53 @@ export PT
 
 function PT!(logbook::Union{Nothing,DataFrame}=nothing)
     prompt("welcome")
-    chain = ["top"]
+    pars = TUIpars(["top"],DataFrame(task=String[],action=String[]),1)
     myrun = run()
-    history = DataFrame(task=String[],action=String[])
-    i = [1]
     if isnothing(logbook)
         while true
-            out = arbeid!(myrun,i=i,chain=chain,history=history,
-                          verbatim=false)
+            out = arbeid!(myrun,pars=pars,verbatim=true)
             if out == "exit" return end
             if out == "restorelog"
-                restorelog!(history)
-                myrun = PT!(history)
+                restorelog!(pars)
+                myrun = PT!(pars.history)
             end
         end
     else
         for row in eachrow(logbook)
-            out = arbeid!(myrun,i=i,chain=chain,history=history,
-                          task=row[1],action=row[2],restore=true,
-                          verbatim=false)
+            arbeid!(myrun,pars=pars,task=row[1],action=row[2],
+                    restore=true,verbatim=true)
         end
         return myrun
     end
 end
 
-function arbeid!(pd::run;i,chain,history,task=nothing,
+function arbeid!(pd::run;pars::TUIpars,task=nothing,
                  action=nothing,restore=false,verbatim=false)
     try
-        if verbatim
-            println(chain)
-            println(history)
-        end
-        if isempty(chain) return "exit" end
+        if isempty(pars.chain) return "exit" end
         if !restore # new run
-            task = chain[end]
+            task = pars.chain[end]
             action = nothing
         end
-        out = dispatch!(pd,i=i,task=task,action=action,verbatim=verbatim)
+        out = dispatch!(pd,pars=pars,task=task,action=action,verbatim=verbatim)
         if isnothing(action) action = out.action end
         if out.next=="x"
-            pop!(chain)
+            pop!(pars.chain)
         elseif out.next=="xx"
-            pop!(chain)
-            pop!(chain)
+            pop!(pars.chain)
+            pop!(pars.chain)
         elseif out.next=="savelog"
-            savelog(history)
+            savelog(pars.history)
         elseif out.next=="restorelog"
             return "restorelog"
-        else
-            push!(chain,out.next)
+        elseif !isnothing(out.next)
+            push!(pars.chain,out.next)
         end
-        push!(history,[task,action])
+        push!(pars.history,[task,action])
     catch e
         println(e)
     end
-    if size(chain,1)<1 return "exit" end
+    if size(pars.chain,1)<1 return "exit" end
     return "continue"
 end
 
@@ -243,14 +237,6 @@ function load_i!(pd,action)
     setInstrument!(pd,instrument)
 end
 
-function plotnext(pd,i)
-    
-end
-
-function plotprevious(pd,i)
-    
-end
-
 function listSamples(pd)
     snames = getSnames(pd)
     for sname in snames
@@ -285,11 +271,11 @@ function savelog(history)
     CSV.write(fpath,history)
 end
 
-function restorelog!(history)
+function restorelog!(pars::TUIpars)
     println("Provide the path of the log file "*
             "(e.g., history.log or /home/johndoe/mydata/mylog.txt):")
     fpath = readline()
     hist = CSV.read(fpath,DataFrame)
-    empty!(history)
-    append!(history,hist)
+    empty!(pars.history)
+    append!(pars.history,hist)
 end
