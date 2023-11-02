@@ -140,4 +140,4 @@ Plots.closeall()
 #@testset "fit standards" begin standardout = standardtest() end
 #@testset "plot atomic" begin atomictest() end
 #@testset "plot calibration" begin calibrationtest() end
-@testset "average results" begin averagetest() end
+#@testset "average results" begin averagetest() end

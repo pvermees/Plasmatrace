@@ -9,8 +9,10 @@ function prompt(key)
         "m: Specify a method\n"*
         "s: Mark mineral standards\n"*
         "v: View the data\n"*
-        "j: Save the session as .json\n"*
-        "c: Export the data as .csv\n"*
+        "j: Save the data as .json\n"*
+        "c: Save the data as .csv\n"*
+        "l: Save a log of the current session\n"*
+        "r: Restore the log of a previous session\n"*
         "x: Exit",
         "load" =>
         "i. Specify your instrument [default=Agilent]\n"*
@@ -41,7 +43,7 @@ function prompt(key)
     println(messages[key])
 end
 
-function dispatch!(pd::Union{Nothing,run};chain)
+function dispatch!(pd::Union{Nothing,run};chain,history,action=nothing)
     key = chain[end]
     prompt(key)
     response = readline()
@@ -55,6 +57,15 @@ function dispatch!(pd::Union{Nothing,run};chain)
             out = "standards"
         elseif response=="v"
             out = "view"
+        elseif response=="j"
+            out = unsupported()
+        elseif response=="c"
+            out = unsupported()
+        elseif response=="l"
+            savelog(history)
+        elseif response=="r"
+            restorelog!(history)
+            runhistory!(chain,history)
         elseif response=="x"
             out = "x"
         else
@@ -96,25 +107,38 @@ function dispatch!(pd::Union{Nothing,run};chain)
     out
 end
 
-function PT()
+function PT(logbook::Union{Nothing,Vector{String}}=nothing)
     prompt("welcome")
-    myrun = run()
     chain = ["top"]
-    while true
-        try
-            out = dispatch!(myrun,chain=chain)
-            if out=="x"
-                pop!(chain)
-                if size(chain,1)<1 return end
-            elseif !isnothing(out)
-                push!(chain,out)
-            end
-        catch e
-            println(e)
+    history = ["top"]
+    myrun = run()
+    if isnothing(logbook)
+        while true
+            feedbackloop!(myrun,chain=chain,history=history)
+            if isempty(chain) return end
+        end
+    else
+        for action in logbook
+            feedbackloop!(myrun,chain=chain,history=history,action=action)
         end
     end
 end
 export PT
+
+function feedbackloop!(pd::run;chain,history,action=nothing)
+    try
+        out = dispatch!(pd,chain=chain,history=history,action=action)
+        if out=="x"
+            pop!(chain)
+            if size(chain,1)<1 return end
+        elseif !isnothing(out)
+            push!(chain,out)
+            push!(history,out)
+        end
+    catch e
+        println(e)
+    end
+end
 
 function unsupported()
     println("This feature is not available yet.\n")
@@ -163,6 +187,7 @@ function viewer(pd)
         ns = size(samples,1)
         p = plot(samples[i])
         display(p)
+        prompt("view")
         response = readline()
         if response==""
             i = i<ns ? i+1 : 1
@@ -171,7 +196,6 @@ function viewer(pd)
         else
             return
         end
-        prompt("view")
     end
 end
 
@@ -199,4 +223,30 @@ function listStandards(pd)
     samples = getSnames(pd)
     standards = getStandard(pd)
     println(standards)
+end
+
+function savelog(history)
+    println("Name the log file "*
+            "(e.g., history.log or /home/johndoe/mydata/mylog.txt):")
+    fpath = readline()
+    write(fpath,join(history,","))
+end
+
+function restorelog!(history)
+    println("Provide the path of the log file "*
+            "(e.g., history.log or /home/johndoe/mydata/mylog.txt):")
+    fpath = readline()
+    contents = read(fpath,String)
+    hist = String.(split(contents,","))
+    empty!(history)
+    append!(history,hist)
+end
+
+function runhistory!(pd,chain,history)
+    previousrun = history
+    empty!(chain)
+    empty!(history)
+    for h in previousrun
+        dispatch!(pd,chain=chain,history=history)
+    end
 end
