@@ -3,3 +3,6 @@ top,f
 load,r
 read,/home/pvermees/Documents/Plasmatrace/GlorieGarnet/
 load,x
+top,m
+method,1
+channels,"15,18,17"

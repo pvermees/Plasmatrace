@@ -73,7 +73,7 @@ function dispatch!(pd::Union{Nothing,run};
     elseif task=="method"
         next = chooseMethod!(pd,action)
     elseif task=="channels"
-        chooseChannels!(pd,action)
+        next = chooseChannels!(pd,action)
     elseif task=="load"
         if action=="i"
             next = "instrument"
@@ -144,7 +144,8 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
     i = [1]
     if isnothing(logbook)
         while true
-            out = arbeid!(myrun,i=i,chain=chain,history=history)
+            out = arbeid!(myrun,i=i,chain=chain,history=history,
+                          verbatim=false)
             if out == "exit" return end
             if out == "restorelog"
                 restorelog!(history)
@@ -154,7 +155,8 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
     else
         for row in eachrow(logbook)
             out = arbeid!(myrun,i=i,chain=chain,history=history,
-                          task=row[1],action=row[2],restore=true)
+                          task=row[1],action=row[2],restore=true,
+                          verbatim=false)
         end
         return myrun
     end
@@ -176,7 +178,9 @@ function arbeid!(pd::run;i,chain,history,task=nothing,
         if isnothing(action) action = out.action end
         if out.next=="x"
             pop!(chain)
-            if size(chain,1)<1 return end
+        elseif out.next=="xx"
+            pop!(chain)
+            pop!(chain)
         elseif out.next=="savelog"
             savelog(history)
         elseif out.next=="restorelog"
@@ -188,6 +192,7 @@ function arbeid!(pd::run;i,chain,history,task=nothing,
     catch e
         println(e)
     end
+    if size(chain,1)<1 return "exit" end
     return "continue"
 end
 
@@ -229,6 +234,7 @@ function chooseChannels!(pd,response)
     selected = parse.(Int,split(response,","))
     labels = names(getDat(samples[1]))[3:end]
     DRSchannels!(pd,channels=labels[selected])
+    return "xx"
 end
 
 function load_i!(pd,action)
