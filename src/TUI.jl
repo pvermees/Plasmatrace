@@ -1,5 +1,5 @@
 function unsupported(pd,pars,action)
-    println("This feature is not available yet.\n")
+    println("This feature is not available yet.")
     return nothing
 end,
 
@@ -39,16 +39,12 @@ function chooseChannelMessage(pd,pars)
     println("For example: "*join(1:size(isotopes,1),","))
 end
 
-function viewChannelMessage(pd,pars)
-    channelMessage(pd,pars)
-    println("\nSpecify your selection as a comma-separated list of numbers.")
-end
-
 function selectChannels!(pd,pars,action)
     samples = getSamples(pd)
     selected = parse.(Int,split(action,","))
     labels = names(getDat(samples[1]))[3:end]
     pars.channels = labels[selected]
+    pars.den = nothing
 end
 
 function chooseChannels!(pd,pars,action)
@@ -57,8 +53,52 @@ function chooseChannels!(pd,pars,action)
     return "xx"
 end
 
+function viewChannelMessage(pd,pars)
+    channelMessage(pd,pars)
+    println("\nSpecify your selection as a comma-separated list of numbers.")
+end
+
 function viewChannels!(pd,pars,action)
     selectChannels!(pd,pars,action)
+    viewer(pd=pd,pars=pars)
+    return "x"
+end
+
+function string2windows(pd,pars,action)
+    parts = split(action,['(',')',','])
+    stime = parse.(Int,parts[2:4:end])
+    ftime = parse.(Int,parts[3:4:end])
+    nw = Int(round(size(parts,1)/4))
+    windows = Vector{window}(undef,nw)
+    t = getDat(pd,i=pars.i)[:,2]
+    nt = size(t,1)
+    maxt = t[end]
+    for i in 1:nw
+        start = Int(ceil(nt*stime[i]/maxt))
+        finish = Int(floor(nt*ftime[i]/maxt))
+        windows[i] = (start,finish)
+    end
+    println(windows)
+    windows
+end
+
+function allBlankWindows!(pd,pars,action)
+    if action=="a"
+        setBlanks!(pd)
+    else
+        windows = string2windows(pd,pars,action)
+        setBlanks!(pd,windows=windows)
+    end
+    return "x"
+end
+
+function allSignalWindows!(pd,pars,action)
+    if action=="a"
+        setSignals!(pd)
+    else
+        windows = string2windows(pd,pars,action)
+        setSignals!(pd,windows=windows)
+    end
     return "x"
 end
 
@@ -84,7 +124,7 @@ end
 
 function viewer(;pd,pars)
     samp = getSamples(pd)[pars.i]
-    p = plot(samp,channels=pars.channels)
+    p = plot(samp,channels=pars.channels,den=pars.den)
     display(p)
 end
 
@@ -98,6 +138,22 @@ function viewprevious!(pd,pars,action)
     pars.i = pars.i>1 ? pars.i-1 : length(pd)
     viewer(pd=pd,pars=pars)
     return nothing
+end
+
+function setDenMessage(pd,pars)
+    println("To plot as ratios, choose one of the following "*
+            "channels as a denominator:")
+    for i in eachindex(pars.channels)
+        println(string(i)*". "*pars.channels[i])
+    end
+    println("Enter one number or leave empty to plot raw signals")
+end
+
+function setDen!(pd,pars,action)
+    i = parse(Int,action)
+    pars.den = action=="" ? nothing : [pars.channels[i]]
+    viewer(pd=pd,pars=pars)
+    return "x"
 end
 
 function savelog!(pd,pars,action)
@@ -125,15 +181,15 @@ tree = Dict(
         message =
         "f: Load the data files\n"*
         "m: Specify a method\n"*
-        "s: Mark mineral standards\n"*
-        "v: View the data\n"*
+        "b: Bulk settings\n"*
+        "v: View and adjust each sample\n"*
         "e: Export the results\n"*
         "l: Import/export a session log\n"*
         "x: Exit",
         actions = Dict(
             "f" => "load",
             "m" => "method",
-            "s" => "standards",
+            "b" => "bulk",
             "v" => "view",
             "e" => "export",
             "l" => "log",
@@ -154,18 +210,22 @@ tree = Dict(
         )
     ),
     "method" => (
-        message = 
+        message =
         "Choose an application:\n"*
         "1. Lu-Hf",
         actions = chooseMethod!
     ),
-    "standards" => (
+    "bulk" => (
         message =
+        "b. Set default blank windows\n"*
+        "s. Set default signal windows\n"*
         "p. Add a standard by prefix\n"*
         "r. Remove a standard\n"*
         "l. List all the standards\n"*
         "x. Exit",
         actions = Dict(
+            "b" => "allBlankWindows",
+            "s" => "allSignalWindows",
             "p" => unsupported,
             "r" => unsupported,
             "l" => unsupported,
@@ -177,16 +237,16 @@ tree = Dict(
         "n: next\n"*
         "p: previous\n"*
         "c: Choose which channels to show\n"*
-        "r: Switch between ratios and raw signals\n"*
+        "r: Signals or ratios?\n"*
         "b: Select blank window(s)\n"*
         "w: Select signal window(s)\n"*
-        "s: Mark as standard\n"*
+        "s: (un)mark as standard\n"*
         "x: Exit",
         actions = Dict(
             "n" => viewnext!,
             "p" => viewprevious!,
             "c" => "viewChannels",
-            "r" => unsupported,
+            "r" => "setDen",
             "b" => unsupported,
             "w" => unsupported,
             "s" => unsupported,
@@ -221,6 +281,22 @@ tree = Dict(
         "1. Agilent",
         actions = load_i!
     ),
+    "allBlankWindows" => (
+        message =
+        "\nSpecify the blank windows. The following are all valid entries:\n\n"*
+        "a: automatically select all the windows\n"*
+        "(m,M): set a single window from m to M seconds, e.g. (0,20)\n"*
+        "(m1,M1),(m2,M2): set multiple windows, e.g. (0,20),(25,30)",
+        actions = allBlankWindows!
+    ),
+    "allSignalWindows" => (
+        message =
+        "\nSpecify the signal windows. The following are all valid entries:\n\n"*
+        "a: automatically select all the windows\n"*
+        "(m,M): set a single window from m to M seconds, e.g. (0,20)\n"*
+        "(m1,M1),(m2,M2): set multiple windows, e.g. (0,20),(25,30)",
+        actions = allSignalWindows!
+    ),
     "read" => (
         message =
         "Enter the full path of the data directory:",
@@ -233,6 +309,10 @@ tree = Dict(
     "viewChannels" => (
         message = viewChannelMessage,
         actions = viewChannels!
+    ),
+    "setDen" => (
+        message = setDenMessage,
+        actions = setDen!
     ),
     "json" => (
         message = 
@@ -252,7 +332,8 @@ export PT
 function PT!(logbook::Union{Nothing,DataFrame}=nothing)
     println(tree["welcome"])
     myrun = run()
-    pars = TUIpars(["top"],DataFrame(task=String[],action=String[]),1,nothing)
+    pars = TUIpars(["top"],DataFrame(task=String[],action=String[]),
+                   1,nothing,nothing)
     if isnothing(logbook)
         while true
             out = arbeid!(myrun,pars=pars,verbatim=false)

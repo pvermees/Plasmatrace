@@ -3,7 +3,7 @@ function plot(pd::sample;channels=nothing,
               transformation="sqrt")
     dat = getDat(pd)
     plotdat = getRawPlotDat(dat,channels=channels,num=num,den=den)
-    ylab = isnothing(channels) & !isnothing(den) ? "ratio" : "signal"
+    ylab = !isnothing(den) ? "ratio" : "signal"
     p = plotHelper(plotdat,transformation=transformation,ix=2,ylab=ylab)
     tit = replace(getSname(pd),"\\" => "∖")
     Plots.title!(tit,titlefontsize=10)
@@ -131,13 +131,14 @@ function getRawPlotDat(df::DataFrame;
                        num::Union{Nothing,Vector{String}}=nothing,
                        den::Union{Nothing,Vector{String}}=nothing,
                        brackets=true)
-    if isnothing(channels) & isnothing(num) & isnothing(den) return df end
     tT = df[:,1:2]
-    meas = df[:,3:end]
     if isnothing(channels)
-        meas = formRatios(meas,num=num,den=den,brackets=brackets)
+        meas = df[:,3:end]
     else
-        meas = meas[:,channels]
+        meas = df[:,channels]
+    end
+    if !isnothing(den)
+        meas = formRatios(meas,num=num,den=den,brackets=brackets)
     end
     hcat(tT,meas)
 end
