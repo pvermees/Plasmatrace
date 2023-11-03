@@ -1,201 +1,9 @@
-function prompt(key)
-    messages = Dict(
-        "welcome" =>
-        "===========\n"*
-        "Plasmatrace\n"*
-        "===========\n",
-        "top" =>
-        "f: Load the data files\n"*
-        "m: Specify a method\n"*
-        "s: Mark mineral standards\n"*
-        "v: View the data\n"*
-        "j: Save the data as .json\n"*
-        "c: Save the data as .csv\n"*
-        "l: Save a log of the current session\n"*
-        "r: Restore the log of a previous session\n"*
-        "x: Exit",
-        "load" =>
-        "i. Specify your instrument [default=Agilent]\n"*
-        "r. Read the data\n"*
-        "l. List all the samples in the session\n"*
-        "x. Exit",
-        "method" =>
-        "Choose an application:\n"*
-        "1. Lu-Hf",
-        "channels" => "",
-        "standards" =>
-        "p. Add a standard by prefix\n"*
-        "r. Remove a standard\n"*
-        "l. List all the standards\n"*
-        "x. Exit",
-        "view" =>
-        "n,[Enter]: next\n"*
-        "p,[Space]: previous\n"*
-        "c: Choose which channels to show\n"*
-        "r: Switch between ratios and raw signals\n"*
-        "b: Select blank window(s)\n"*
-        "w: Select signal window(s)\n"*
-        "s: Mark as standard\n"*
-        "x: Exit",
-        "instrument" =>
-        "Choose a file format:\n"*
-        "1. Agilent",
-        "read" =>
-        "Enter the full path of the data directory:"
-    )
-    println(messages[key])
-end
-
-function dispatch!(pd::Union{Nothing,run};
-                   pars::TUIpars,task,action=nothing,verbatim=false)
-    prompt(task)
-    if isnothing(action) action = readline()
-    else println(action) end
-    next = "x"
-    if task=="top"
-        if action=="f"
-            next = "load"
-        elseif action=="m"
-            next = "method"
-        elseif action=="s"
-            next = "standards"
-        elseif action=="v"
-            next = "view"
-        elseif action=="j"
-            next = unsupported()
-        elseif action=="c"
-            next = unsupported()
-        elseif action=="l"
-            next = "savelog"
-        elseif action=="r"
-            next = "restorelog"
-        elseif action!="x"
-            next = unsupported()
-        end
-    elseif task=="method"
-        next = chooseMethod!(pd,action)
-    elseif task=="channels"
-        next = chooseChannels!(pd,action)
-    elseif task=="load"
-        if action=="i"
-            next = "instrument"
-        elseif action=="r"
-            next = "read"
-        elseif action=="l"
-            listSamples(pd)
-        elseif action!="x"
-            next = unsupported()
-        end
-    elseif task=="application"
-        method_a!(pd,action)
-    elseif task=="view"
-        samples = getSamples(pd)
-        ns = size(samples,1)
-        p = plot(samples[pars.i])
-        display(p)
-        next = nothing
-        if action=="" || action=="n"
-            pars.i = pars.i<ns ? pars.i+1 : 1
-            action = "n" # easier to recognise in session log
-        elseif action==" " || action=="p"
-            pars.i = pars.i>1 ? pars.i-1 : ns
-            action = "p" # easier to recognise in session log
-        elseif action=="b"
-            next = unsupported()
-        elseif action=="w"
-            next = unsupported()
-        elseif action=="w"
-            next = unsupported()
-        elseif action=="s"
-            next = unsupported()
-        elseif action=="x"
-            next = "x"
-        else
-            next = unsupported()
-        end
-    elseif task=="instrument"
-        load_i!(pd,action)
-    elseif task=="read"
-        load!(pd,dname=action)
-    elseif task=="standards"
-        if action=="p"
-            addStandardPrefix!(pd)
-        elseif action=="r"
-            deleteStandards!(pd)
-        elseif action=="l"
-            listStandards(pd)
-        elseif action!="x"
-            next = unsupported()
-        end
-    else
-        next = unsupported()
-    end
-    (action=action,next=next)
-end
-
-function PT()
-    PT!()
-end
-export PT
-
-function PT!(logbook::Union{Nothing,DataFrame}=nothing)
-    prompt("welcome")
-    pars = TUIpars(["top"],DataFrame(task=String[],action=String[]),1)
-    myrun = run()
-    if isnothing(logbook)
-        while true
-            out = arbeid!(myrun,pars=pars,verbatim=true)
-            if out == "exit" return end
-            if out == "restorelog"
-                restorelog!(pars)
-                myrun = PT!(pars.history)
-            end
-        end
-    else
-        for row in eachrow(logbook)
-            arbeid!(myrun,pars=pars,task=row[1],action=row[2],
-                    restore=true,verbatim=true)
-        end
-        return myrun
-    end
-end
-
-function arbeid!(pd::run;pars::TUIpars,task=nothing,
-                 action=nothing,restore=false,verbatim=false)
-    try
-        if isempty(pars.chain) return "exit" end
-        if !restore # new run
-            task = pars.chain[end]
-            action = nothing
-        end
-        out = dispatch!(pd,pars=pars,task=task,action=action,verbatim=verbatim)
-        if isnothing(action) action = out.action end
-        if out.next=="x"
-            pop!(pars.chain)
-        elseif out.next=="xx"
-            pop!(pars.chain)
-            pop!(pars.chain)
-        elseif out.next=="savelog"
-            savelog(pars.history)
-        elseif out.next=="restorelog"
-            return "restorelog"
-        elseif !isnothing(out.next)
-            push!(pars.chain,out.next)
-        end
-        push!(pars.history,[task,action])
-    catch e
-        println(e)
-    end
-    if size(pars.chain,1)<1 return "exit" end
-    return "continue"
-end
-
-function unsupported()
+function unsupported(pd,pars,action)
     println("This feature is not available yet.\n")
     return nothing
-end
+end,
 
-function chooseMethod!(pd,action)
+function chooseMethod!(pd,pars,action)
     if action=="1"
         method = "LuHf"
     else
@@ -210,7 +18,7 @@ function chooseMethod!(pd,action)
     elseif isnothing(samples)
         println("Load the data first.")
     else
-        println("Select the data columns (as a comma-separated list of numbers)\n")
+        println("Select the data columns as a comma-separated list of numbers\n")
         labels = names(getDat(samples[1]))[3:end]
         for i in eachindex(labels)
             println(string(i)*". "*labels[i])
@@ -223,59 +31,263 @@ function chooseMethod!(pd,action)
     out
 end
 
-function chooseChannels!(pd,response)
+function chooseChannels!(pd,pars,action)
     samples = getSamples(pd)
-    selected = parse.(Int,split(response,","))
+    selected = parse.(Int,split(action,","))
     labels = names(getDat(samples[1]))[3:end]
     DRSchannels!(pd,channels=labels[selected])
     return "xx"
 end
 
-function load_i!(pd,action)
+function load_i!(pd,pars,action)
     if action=="1" instrument = "Agilent"
     else return end
     setInstrument!(pd,instrument)
+    return nothing
 end
 
-function listSamples(pd)
+function loader!(pd,pars,action)
+    load!(pd,dname=action)
+    return "x"
+end
+
+function listSamples(pd,pars,action)
     snames = getSnames(pd)
     for sname in snames
         println(sname)
     end
+    return nothing
 end
 
-function addStandardPrefix!(pd)
-    println("Enter the prefix of the standards:")
-    prefix = readline()
-    println("Enter the number of the standard")
-    
-    number = readline()
-    markStandards!(pd,prefix=response,standard=parse(Int,number))
+function viewer(;pd,pars)
+    p = plot(getSamples(pd)[pars.i])
+    display(p)
 end
 
-function deleteStandard!(pd)
-    
+function viewnext!(pd,pars,action)
+    pars.i = pars.i<length(pd) ? pars.i+1 : 1
+    viewer(pd=pd,pars=pars)
+    return nothing
 end
 
-function listStandards(pd)
-    samples = getSnames(pd)
-    standards = getStandard(pd)
-    println(standards)
+function viewprevious!(pd,pars,action)
+    pars.i = pars.i>1 ? pars.i-1 : length(pd)
+    viewer(pd=pd,pars=pars)
+    return nothing
 end
 
-function savelog(history)
-    println("Name the log file "*
-            "(e.g., history.log or /home/johndoe/mydata/mylog.txt):")
-    fpath = readline()
-    println(history)
-    CSV.write(fpath,history)
+function savelog(pd,pars,action)
+    CSV.write(action,pars.history)
+    return "x"
 end
 
-function restorelog!(pars::TUIpars)
-    println("Provide the path of the log file "*
-            "(e.g., history.log or /home/johndoe/mydata/mylog.txt):")
+function restorelog!(pd,pars,action)
+    println("Provide the path of the log file:")
     fpath = readline()
     hist = CSV.read(fpath,DataFrame)
     empty!(pars.history)
     append!(pars.history,hist)
+    return "restorelog"
+end
+
+const tree = Dict(
+    "welcome" => 
+    "===========\n"*
+    "Plasmatrace\n"*
+    "===========\n",
+    "top" => (
+        message =
+        "f: Load the data files\n"*
+        "m: Specify a method\n"*
+        "s: Mark mineral standards\n"*
+        "v: View the data\n"*
+        "e: Export the results\n"*
+        "l: Import/export a session log\n"*
+        "x: Exit",
+        actions = Dict(
+            "f" => "load",
+            "m" => "method",
+            "s" => "standards",
+            "v" => "view",
+            "e" => "export",
+            "l" => "log",
+            "x" => "x"
+        )
+    ),
+    "load" => (
+        message =
+        "i. Specify your instrument [default=Agilent]\n"*
+        "r. Open and read the data files\n"*
+        "l. List all the samples in the session\n"*
+        "x. Exit",
+        actions = Dict(
+            "i" => "instrument",
+            "r" => "read",
+            "l" => listSamples,
+            "x" => "x"
+        )
+    ),
+    "method" => (
+        message = 
+        "Choose an application:\n"*
+        "1. Lu-Hf",
+        actions = chooseMethod!
+    ),
+    "standards" => (
+        message =
+        "p. Add a standard by prefix\n"*
+        "r. Remove a standard\n"*
+        "l. List all the standards\n"*
+        "x. Exit",
+        actions = Dict(
+            "p" => unsupported,
+            "r" => unsupported,
+            "l" => unsupported,
+            "x" => "x"
+        )
+    ),
+    "view" => (
+        message =
+        "n or [Enter]: next\n"*
+        "p: previous\n"*
+        "c: Choose which channels to show\n"*
+        "r: Switch between ratios and raw signals\n"*
+        "b: Select blank window(s)\n"*
+        "w: Select signal window(s)\n"*
+        "s: Mark as standard\n"*
+        "x: Exit",
+        actions = Dict(
+            "n" => viewnext!,
+            "" => viewnext!,
+            "p" => viewprevious!,
+            "c" => unsupported,
+            "r" => unsupported,
+            "b" => unsupported,
+            "w" => unsupported,
+            "s" => unsupported,
+            "x" => "x"
+        )
+    ),
+    "export" => (
+        message = 
+        "j: export to .json\n"*
+        "c: export to .csv\n"*
+        "x. Exit",
+        actions = Dict(
+            "j" => "json",
+            "c" => "csv",
+            "x" => "x"
+        )
+    ),
+    "log" => (
+        message =
+        "s: save session to a log file\n"*
+        "r: restore the log of a previous session\n"*
+        "x. Exit",
+        actions = Dict(
+            "s" => "savelog",
+            "r" => restorelog!,
+            "x" => "x"
+        )
+    ),
+    "instrument" => (
+        message = 
+        "Choose a file format:\n"*
+        "1. Agilent",
+        actions = load_i!
+    ),
+    "read" => (
+        message =
+        "Enter the full path of the data directory:",
+        actions = loader!
+    ),
+    "channels" => (
+        message = "",
+        actions = chooseChannels!
+    ),
+    "json" => (
+        message = 
+        "Enter the path and name of the .json file:",
+        actions = unsupported
+    ),    
+    "csv" => (
+        message = 
+        "Enter the path and name of the .csv file:",
+        actions = unsupported
+    ),
+    "savelog" => (
+        message = 
+        "Enter the path and name of the log file:",
+        actions = savelog
+    )
+)
+
+function PT() PT!() end
+export PT
+
+function PT!(logbook::Union{Nothing,DataFrame}=nothing)
+    println(tree["welcome"])
+    myrun = run()
+    pars = TUIpars(["top"],DataFrame(task=String[],action=String[]),1)
+    if isnothing(logbook)
+        while true
+            out = arbeid!(myrun,pars=pars,verbatim=false)
+            if out == "exit" return end
+            if out == "restorelog"
+                myrun = PT!(pars.history)
+            end
+        end
+    else
+        for row in eachrow(logbook)
+            arbeid!(myrun,pars=pars,task=row[1],action=row[2],verbatim=false)
+        end
+        return myrun
+    end
+end
+
+function arbeid!(pd::run;pars::TUIpars,
+                 task=nothing,action=nothing,verbatim=false)
+    try
+        if isempty(pars.chain) return "exit" end
+        if isnothing(task) task = pars.chain[end] end
+        out = dispatch!(pd,pars=pars,task=task,action=action,verbatim=verbatim)
+        if isnothing(action) action = out.action end
+        if out.next=="x"
+            pop!(pars.chain)
+        elseif out.next=="xx"
+            pop!(pars.chain)
+            pop!(pars.chain)
+        elseif out.next=="restorelog"
+            return "restorelog"
+        elseif !isnothing(out.next)
+            push!(pars.chain,out.next)
+        end
+        push!(pars.history,[task,action])
+    catch e
+        println(e)
+    end
+    return "continue"
+end
+
+function dispatch!(pd::Union{Nothing,run};
+                   pars::TUIpars,task,action=nothing,verbatim=false)
+    if verbatim
+        println(pars.chain)
+        println(pars.history)
+    end
+    todo = tree[task]
+    println(todo.message)
+    if isnothing(action) action = readline()
+    else println(action) end
+    if (verbatim)
+        println(todo.actions)
+    end
+    if isa(todo.actions,Function)
+        next = todo.actions(pd,pars,action)
+    elseif isa(todo.actions[action],Function)
+        next = todo.actions[action](pd,pars,action)
+    else
+        next = todo.actions[action]
+    end
+    (action=action,next=next)
 end
