@@ -33,6 +33,7 @@ mutable struct TUIpars
     chain::Vector{String}
     history::DataFrame
     i::Integer
+    channels::Union{Nothing,Vector{String}}
 end
 
 sample(sname,datetime,dat) = sample(sname,datetime,dat,nothing,nothing,0)

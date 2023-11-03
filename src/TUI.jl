@@ -36,6 +36,7 @@ function chooseChannels!(pd,pars,action)
     selected = parse.(Int,split(action,","))
     labels = names(getDat(samples[1]))[3:end]
     DRSchannels!(pd,channels=labels[selected])
+    pars.channels = labels[selected]
     return "xx"
 end
 
@@ -60,7 +61,8 @@ function listSamples(pd,pars,action)
 end
 
 function viewer(;pd,pars)
-    p = plot(getSamples(pd)[pars.i])
+    samp = getSamples(pd)[pars.i]
+    p = plot(samp,channels=pars.channels)
     display(p)
 end
 
@@ -76,8 +78,10 @@ function viewprevious!(pd,pars,action)
     return nothing
 end
 
-function savelog(pd,pars,action)
-    CSV.write(action,pars.history)
+function savelog!(pd,pars,action)
+    println("Enter the path and name of the log file:")
+    fpath = readline()
+    CSV.write(fpath,pars.history)
     return "x"
 end
 
@@ -90,7 +94,7 @@ function restorelog!(pd,pars,action)
     return "restorelog"
 end
 
-const tree = Dict(
+tree = Dict(
     "welcome" => 
     "===========\n"*
     "Plasmatrace\n"*
@@ -148,7 +152,7 @@ const tree = Dict(
     ),
     "view" => (
         message =
-        "n or [Enter]: next\n"*
+        "n: next\n"*
         "p: previous\n"*
         "c: Choose which channels to show\n"*
         "r: Switch between ratios and raw signals\n"*
@@ -158,7 +162,6 @@ const tree = Dict(
         "x: Exit",
         actions = Dict(
             "n" => viewnext!,
-            "" => viewnext!,
             "p" => viewprevious!,
             "c" => unsupported,
             "r" => unsupported,
@@ -185,7 +188,7 @@ const tree = Dict(
         "r: restore the log of a previous session\n"*
         "x. Exit",
         actions = Dict(
-            "s" => "savelog",
+            "s" => savelog!,
             "r" => restorelog!,
             "x" => "x"
         )
@@ -214,11 +217,6 @@ const tree = Dict(
         message = 
         "Enter the path and name of the .csv file:",
         actions = unsupported
-    ),
-    "savelog" => (
-        message = 
-        "Enter the path and name of the log file:",
-        actions = savelog
     )
 )
 
@@ -228,20 +226,20 @@ export PT
 function PT!(logbook::Union{Nothing,DataFrame}=nothing)
     println(tree["welcome"])
     myrun = run()
-    pars = TUIpars(["top"],DataFrame(task=String[],action=String[]),1)
+    pars = TUIpars(["top"],DataFrame(task=String[],action=String[]),1,nothing)
     if isnothing(logbook)
         while true
             out = arbeid!(myrun,pars=pars,verbatim=false)
             if out == "exit" return end
             if out == "restorelog"
-                myrun = PT!(pars.history)
+                myrun, pars = PT!(pars.history)
             end
         end
     else
         for row in eachrow(logbook)
             arbeid!(myrun,pars=pars,task=row[1],action=row[2],verbatim=false)
         end
-        return myrun
+        return myrun, pars
     end
 end
 
