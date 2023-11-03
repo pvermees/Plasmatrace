@@ -7,37 +7,59 @@ function chooseMethod!(pd,pars,action)
     if action=="1"
         method = "LuHf"
     else
-        return
+        return nothing
     end
     DRSmethod!(pd,method=method)
+    return "channels"
+end
+
+function channelMessage(pd,pars)
     isotopes = getIsotopes(pd)
     samples = getSamples(pd)
-    out = "x"
     if isnothing(isotopes)
         println("Choose a geochronometer first.")
     elseif isnothing(samples)
         println("Load the data first.")
     else
-        println("Select the data columns as a comma-separated list of numbers\n")
+        println("Choose from the following list of channels:\n")
         labels = names(getDat(samples[1]))[3:end]
         for i in eachindex(labels)
             println(string(i)*". "*labels[i])
         end
-        println("\ncorresponding to the following isotopes or their proxies:")
-        println(join(isotopes,","))
-        println("For example: "*join(1:size(isotopes,1),","))
-        out = "channels"
     end
-    out
 end
 
-function chooseChannels!(pd,pars,action)
+function chooseChannelMessage(pd,pars)
+    isotopes = getIsotopes(pd)
+    channelMessage(pd,pars)
+    println("\nand select the channels corresponding to " *
+            "the following isotopes or their proxies:")
+    println(join(isotopes,","))
+    println("\nSpecify your selection as a comma-separated list of numbers.")
+    println("For example: "*join(1:size(isotopes,1),","))
+end
+
+function viewChannelMessage(pd,pars)
+    channelMessage(pd,pars)
+    println("\nSpecify your selection as a comma-separated list of numbers.")
+end
+
+function selectChannels!(pd,pars,action)
     samples = getSamples(pd)
     selected = parse.(Int,split(action,","))
     labels = names(getDat(samples[1]))[3:end]
-    DRSchannels!(pd,channels=labels[selected])
     pars.channels = labels[selected]
+end
+
+function chooseChannels!(pd,pars,action)
+    selectChannels!(pd,pars,action)
+    DRSchannels!(pd,channels=pars.channels)
     return "xx"
+end
+
+function viewChannels!(pd,pars,action)
+    selectChannels!(pd,pars,action)
+    return "x"
 end
 
 function load_i!(pd,pars,action)
@@ -163,7 +185,7 @@ tree = Dict(
         actions = Dict(
             "n" => viewnext!,
             "p" => viewprevious!,
-            "c" => unsupported,
+            "c" => "viewChannels",
             "r" => unsupported,
             "b" => unsupported,
             "w" => unsupported,
@@ -205,8 +227,12 @@ tree = Dict(
         actions = loader!
     ),
     "channels" => (
-        message = "",
+        message = chooseChannelMessage,
         actions = chooseChannels!
+    ),
+    "viewChannels" => (
+        message = viewChannelMessage,
+        actions = viewChannels!
     ),
     "json" => (
         message = 
@@ -274,7 +300,11 @@ function dispatch!(pd::Union{Nothing,run};
         println(pars.history)
     end
     todo = tree[task]
-    println(todo.message)
+    if isa(todo.message,Function)
+        todo.message(pd,pars)
+    else
+        println(todo.message)
+    end
     if isnothing(action) action = readline()
     else println(action) end
     if (verbatim)
