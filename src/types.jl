@@ -35,6 +35,7 @@ mutable struct TUIpars
     i::Integer
     channels::Union{Nothing,Vector{String}}
     den::Union{Nothing,Vector{String}}
+    prefixes::Union{Nothing,Vector{String}}
     refmats::Union{Nothing,Vector{String}}
     n::Vector{Integer}
 end

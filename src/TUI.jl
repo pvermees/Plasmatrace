@@ -78,7 +78,6 @@ function string2windows(pd,pars,action)
         finish = Int(floor(nt*ftime[i]/maxt))
         windows[i] = (start,finish)
     end
-    println(windows)
     windows
 end
 
@@ -141,17 +140,16 @@ function viewprevious!(pd,pars,action)
 end
 
 function setDenMessage(pd,pars)
-    println("To plot as ratios, choose one of the following "*
-            "channels as a denominator:")
+    println("Choose one of the following denominators:")
     for i in eachindex(pars.channels)
         println(string(i)*". "*pars.channels[i])
     end
-    println("Enter one number or leave empty to plot raw signals")
+    println("or")
+    println("r. No denominator. Plot the raw signals")
 end
 
 function setDen!(pd,pars,action)
-    i = parse(Int,action)
-    pars.den = action=="" ? nothing : [pars.channels[i]]
+    pars.den = action=="r" ? nothing : [pars.channels[parse(Int,action)]]
     viewer(pd=pd,pars=pars)
     return "x"
 end
@@ -184,13 +182,23 @@ function chooseRefMat!(pd,pars,action)
 end
 
 function process!(pd,pars,action)
-    if action=="Y"
-        println("Fitting blanks...")
-        fitBlanks!(pd,n=pars.n[1])
-        println("Fitting standards...")
-        fitStandards!(pd,refmat=pars.refmats,n=pars.n[2])
-    end
-    return "x"
+    println("Fitting blanks...")
+    fitBlanks!(pd,n=pars.n[1])
+    println("Fitting standards...")
+    fitStandards!(pd,refmat=pars.refmats,n=pars.n[2])
+    return nothing
+end
+
+function setSamplePrefixes!(pd,pars,action)
+    pars.prefixes = string.(split(action,","))
+    return "export"
+end
+
+function export2csv(pd,pars,action)
+    i = findSamples(pd,prefix=pars.prefixes)
+    out = fitSamples(pd,i=i)
+    CSV.write(action,out)
+    return "xxx"
 end
 
 function savelog!(pd,pars,action)
@@ -229,8 +237,8 @@ tree = Dict(
             "m" => "method",
             "b" => "bulk",
             "v" => "view",
-            "p" => "process",
-            "e" => "export",
+            "p" => process!,
+            "e" => "samples",
             "l" => "log",
             "x" => "x"
         )
@@ -294,9 +302,11 @@ tree = Dict(
             "x" => "x"
         )
     ),
-    "process" => (
-        message = "Reprocess the data? [Y,n]",
-        actions = process!
+    "samples" => (
+        message =
+        "Enter the prefix of the samples to export.\n"*
+        "Alternatively, type 'a' to export all the samples.",
+        actions = setSamplePrefixes!
     ),
     "export" => (
         message = 
@@ -306,7 +316,7 @@ tree = Dict(
         actions = Dict(
             "j" => "json",
             "c" => "csv",
-            "x" => "x"
+            "x" => "xx"
         )
     ),
     "log" => (
@@ -347,8 +357,15 @@ tree = Dict(
         "Enter the prefix(es) of the primary standard(s) as "*
         "a comma-separated list of strings. For example:\n"*
         "hogsbo_\n"*
-        "hogsbo_,BP -",
+        "hogsbo,BP",
         actions = setStandardPrefixes!
+    ),
+    "setSamplePrefixes" => (
+        message =
+        "Enter the prefix(es) of the sample(s) to export, "*
+        "as a comma-separated list of strings. Alternatively, "*
+        "type 'a' to export all the samples.",
+        actions = setSamplePrefixes!
     ),
     "read" => (
         message =
@@ -375,11 +392,11 @@ tree = Dict(
         message = 
         "Enter the path and name of the .json file:",
         actions = unsupported
-    ),    
+    ),  
     "csv" => (
         message = 
         "Enter the path and name of the .csv file:",
-        actions = unsupported
+        actions = export2csv
     )
 )
 
@@ -390,13 +407,14 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
     println(tree["welcome"])
     myrun = run()
     pars = TUIpars(["top"],DataFrame(task=String[],action=String[]),
-                   1,nothing,nothing,nothing,[2,1])
+                   1,nothing,nothing,nothing,nothing,[2,1])
     if isnothing(logbook)
         while true
             out = arbeid!(myrun,pars=pars,verbatim=false)
             if out == "exit" return end
             if out == "restorelog"
                 myrun, pars = PT!(pars.history)
+                pop!(pars.chain)
             end
         end
     else
@@ -409,7 +427,7 @@ end
 
 function arbeid!(pd::run;pars::TUIpars,
                  task=nothing,action=nothing,verbatim=false)
-    try
+#    try
         if isempty(pars.chain) return "exit" end
         if isnothing(task) task = pars.chain[end] end
         out = dispatch!(pd,pars=pars,task=task,action=action,verbatim=verbatim)
@@ -419,15 +437,19 @@ function arbeid!(pd::run;pars::TUIpars,
         elseif out.next=="xx"
             pop!(pars.chain)
             pop!(pars.chain)
+        elseif out.next=="xxx"
+            pop!(pars.chain)
+            pop!(pars.chain)
+            pop!(pars.chain)
         elseif out.next=="restorelog"
             return "restorelog"
         elseif !isnothing(out.next)
             push!(pars.chain,out.next)
         end
         push!(pars.history,[task,action])
-    catch e
-        println(e)
-    end
+#    catch e
+#        println(e)
+#    end
     return "continue"
 end
 
