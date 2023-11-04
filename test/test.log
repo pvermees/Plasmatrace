@@ -15,3 +15,10 @@ bulk,s
 allSignalWindows,a
 bulk,x
 top,l
+log,x
+top,b
+bulk,p
+setStandardPrefixes,"hogsbo,BP"
+refmat,"1,2"
+bulk,x
+top,l

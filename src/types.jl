@@ -35,6 +35,8 @@ mutable struct TUIpars
     i::Integer
     channels::Union{Nothing,Vector{String}}
     den::Union{Nothing,Vector{String}}
+    refmats::Union{Nothing,Vector{String}}
+    n::Vector{Integer}
 end
 
 sample(sname,datetime,dat) = sample(sname,datetime,dat,nothing,nothing,0)

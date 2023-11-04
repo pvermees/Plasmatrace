@@ -156,6 +156,43 @@ function setDen!(pd,pars,action)
     return "x"
 end
 
+function setStandardPrefixes!(pd,pars,action)
+    prefixes = string.(split(action,","))
+    for i in eachindex(prefixes)
+        markStandards!(pd,prefix=prefixes[i],standard=i)
+    end
+    return "refmat"
+end
+
+function chooseRefMatMessage(pd,pars)
+    println("Now match this/these prefix(es) with the following reference materials:")
+    method = getMethod(pd)
+    refMats = collect(keys(referenceMaterials[method]))
+    for i in eachindex(refMats)
+        println(string(i)*". "*refMats[i])
+    end
+    println("Enter your choice(s) as number or a comma-separated list of numbers,")
+    println("matching the order in which you entered the prefixes.")
+end
+
+function chooseRefMat!(pd,pars,action)
+    method = getMethod(pd)
+    refmats = collect(keys(referenceMaterials[method]))
+    i = parse.(Int,split(action,","))
+    pars.refmats = refmats[i]
+    return "xx"
+end
+
+function process!(pd,pars,action)
+    if action=="Y"
+        println("Fitting blanks...")
+        fitBlanks!(pd,n=pars.n[1])
+        println("Fitting standards...")
+        fitStandards!(pd,refmat=pars.refmats,n=pars.n[2])
+    end
+    return "x"
+end
+
 function savelog!(pd,pars,action)
     println("Enter the path and name of the log file:")
     fpath = readline()
@@ -183,6 +220,7 @@ tree = Dict(
         "m: Specify a method\n"*
         "b: Bulk settings\n"*
         "v: View and adjust each sample\n"*
+        "p: Process the data\n"*
         "e: Export the results\n"*
         "l: Import/export a session log\n"*
         "x: Exit",
@@ -191,6 +229,7 @@ tree = Dict(
             "m" => "method",
             "b" => "bulk",
             "v" => "view",
+            "p" => "process",
             "e" => "export",
             "l" => "log",
             "x" => "x"
@@ -220,13 +259,15 @@ tree = Dict(
         "b. Set default blank windows\n"*
         "s. Set default signal windows\n"*
         "p. Add a standard by prefix\n"*
+        "n. Adjust the order of the polynomial fits\n"*
         "r. Remove a standard\n"*
         "l. List all the standards\n"*
         "x. Exit",
         actions = Dict(
             "b" => "allBlankWindows",
             "s" => "allSignalWindows",
-            "p" => unsupported,
+            "p" => "setStandardPrefixes",
+            "n" => unsupported,
             "r" => unsupported,
             "l" => unsupported,
             "x" => "x"
@@ -252,6 +293,10 @@ tree = Dict(
             "s" => unsupported,
             "x" => "x"
         )
+    ),
+    "process" => (
+        message = "Reprocess the data? [Y,n]",
+        actions = process!
     ),
     "export" => (
         message = 
@@ -283,7 +328,7 @@ tree = Dict(
     ),
     "allBlankWindows" => (
         message =
-        "\nSpecify the blank windows. The following are all valid entries:\n\n"*
+        "Specify the blank windows. The following are all valid entries:\n\n"*
         "a: automatically select all the windows\n"*
         "(m,M): set a single window from m to M seconds, e.g. (0,20)\n"*
         "(m1,M1),(m2,M2): set multiple windows, e.g. (0,20),(25,30)",
@@ -291,11 +336,19 @@ tree = Dict(
     ),
     "allSignalWindows" => (
         message =
-        "\nSpecify the signal windows. The following are all valid entries:\n\n"*
+        "Specify the signal windows. The following are all valid entries:\n\n"*
         "a: automatically select all the windows\n"*
         "(m,M): set a single window from m to M seconds, e.g. (0,20)\n"*
         "(m1,M1),(m2,M2): set multiple windows, e.g. (0,20),(25,30)",
         actions = allSignalWindows!
+    ),
+    "setStandardPrefixes" => (
+        message =
+        "Enter the prefix(es) of the primary standard(s) as "*
+        "a comma-separated list of strings. For example:\n"*
+        "hogsbo_\n"*
+        "hogsbo_,BP -",
+        actions = setStandardPrefixes!
     ),
     "read" => (
         message =
@@ -313,6 +366,10 @@ tree = Dict(
     "setDen" => (
         message = setDenMessage,
         actions = setDen!
+    ),
+    "refmat" => (
+        message = chooseRefMatMessage,
+        actions = chooseRefMat!
     ),
     "json" => (
         message = 
@@ -333,7 +390,7 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
     println(tree["welcome"])
     myrun = run()
     pars = TUIpars(["top"],DataFrame(task=String[],action=String[]),
-                   1,nothing,nothing)
+                   1,nothing,nothing,nothing,[2,1])
     if isnothing(logbook)
         while true
             out = arbeid!(myrun,pars=pars,verbatim=false)
