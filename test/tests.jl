@@ -2,7 +2,7 @@ using Test, CSV
 import Plots
 
 function loadtest()
-    dname = "/home/pvermees/Documents/Plasmatrace/GlorieGarnet/"
+    dname = "/home/pvermees/Documents/Plasmatrace/Garnet/"
     out = run()
     DRS!(out,
          method="LuHf",
@@ -131,14 +131,13 @@ end
 
 Plots.closeall()
 
-#@testset "load" begin loaddat = loadtest() end
-#@testset "plot raw data" begin plottest() end
-#@testset "set selection window" begin windowout = windowtest() end
-#@testset "plot selection windows" begin plotwindowtest() end
-#@testset "set blanks" begin blankout = blanktest() end
-#@testset "forward model" begin forwardout = forwardtest() end
-#@testset "fit standards" begin standardout = standardtest() end
-#@testset "plot atomic" begin atomictest() end
-#@testset "plot calibration" begin calibrationtest() end
-#@testset "average results" begin averagetest() end
-
+@testset "load" begin loaddat = loadtest() end
+@testset "plot raw data" begin plottest() end
+@testset "set selection window" begin windowout = windowtest() end
+@testset "plot selection windows" begin plotwindowtest() end
+@testset "set blanks" begin blankout = blanktest() end
+@testset "forward model" begin forwardout = forwardtest() end
+@testset "fit standards" begin standardout = standardtest() end
+@testset "plot atomic" begin atomictest() end
+@testset "plot calibration" begin calibrationtest() end
+@testset "average results" begin averagetest() end

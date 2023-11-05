@@ -33,10 +33,9 @@ function chooseChannelMessage(pd,pars)
     isotopes = getIsotopes(pd)
     channelMessage(pd,pars)
     println("\nand select the channels corresponding to " *
-            "the following isotopes or their proxies:")
+            "the following isotopes or their proxies: ")
     println(join(isotopes,","))
-    println("\nSpecify your selection as a comma-separated list of numbers.")
-    println("For example: "*join(1:size(isotopes,1),","))
+    println("Specify your selection as a comma-separated list of numbers:")
 end
 
 function selectChannels!(pd,pars,action)
@@ -55,7 +54,7 @@ end
 
 function viewChannelMessage(pd,pars)
     channelMessage(pd,pars)
-    println("\nSpecify your selection as a comma-separated list of numbers.")
+    println("\nSpecify your selection as a comma-separated list of numbers:")
 end
 
 function viewChannels!(pd,pars,action)
@@ -64,48 +63,77 @@ function viewChannels!(pd,pars,action)
     return "x"
 end
 
-function string2windows(pd,pars,action)
-    parts = split(action,['(',')',','])
-    stime = parse.(Int,parts[2:4:end])
-    ftime = parse.(Int,parts[3:4:end])
-    nw = Int(round(size(parts,1)/4))
+function string2windows(pd,pars,action;single=false)
+    if single
+        parts = split(action,',')
+        stime = [parse(Int,parts[1])]
+        ftime = [parse(Int,parts[2])]
+        nw = 1
+    else
+        parts = split(action,['(',')',','])
+        stime = parse.(Int,parts[2:4:end])
+        ftime = parse.(Int,parts[3:4:end])
+        nw = Int(round(size(parts,1)/4))
+    end
     windows = Vector{window}(undef,nw)
     t = getDat(pd,i=pars.i)[:,2]
     nt = size(t,1)
     maxt = t[end]
     for i in 1:nw
-        start = Int(ceil(nt*stime[i]/maxt))
-        finish = Int(floor(nt*ftime[i]/maxt))
+        sfrac = stime[i]/maxt
+        if sfrac>1
+            stime[i] = t[end-1]
+            println("Warning: start point out of bounds and truncated to ")
+            print(string(stime[i]) * " seconds.")
+        end
+        ffrac = ftime[i]/maxt
+        if ffrac>1
+            ftime[i] = t[end]
+            println("Warning: end point out of bounds and truncated to ")
+            print(string(maxt) * " seconds.")
+        end
+        start = max(1,Int(round(nt*sfrac)))
+        finish = min(nt,Int(round(nt*ffrac)))
         windows[i] = (start,finish)
     end
     windows
 end
 
-function allBlankWindows!(pd,pars,action)
-    if action=="a"
-        setBlanks!(pd)
-    else
-        windows = string2windows(pd,pars,action)
-        setBlanks!(pd,windows=windows)
-    end
+function allAutoBlankWindows!(pd,pars,action)
+    setBlanks!(pd)
     return "x"
 end
-
-function allSignalWindows!(pd,pars,action)
-    if action=="a"
-        setSignals!(pd)
-    else
-        windows = string2windows(pd,pars,action)
-        setSignals!(pd,windows=windows)
-    end
+function allAutoSignalWindows!(pd,pars,action)
+    setSignals!(pd)
     return "x"
+end
+function allSingleBlankWindows!(pd,pars,action)
+    println("allSingleBlankWindows!")
+    windows = string2windows(pd,pars,action;single=true)
+    setBlanks!(pd,windows=windows)
+    return "xx"
+end
+function allSingleSignalWindows!(pd,pars,action)
+    windows = string2windows(pd,pars,action;single=true)
+    setSignals!(pd,windows=windows)
+    return "xx"
+end
+function allMultiBlankWindows!(pd,pars,action)
+    windows = string2windows(pd,pars,action)
+    setBlanks!(pd,windows=windows)
+    return "xx"
+end
+function allMultiSignalWindows!(pd,pars,action)
+    windows = string2windows(pd,pars,action)
+    setSignals!(pd,windows=windows)
+    return "xx"
 end
 
 function load_i!(pd,pars,action)
     if action=="1" instrument = "Agilent"
-    else return end
+    else return nothing end
     setInstrument!(pd,instrument)
-    return nothing
+    return "x"
 end
 
 function loader!(pd,pars,action)
@@ -156,6 +184,7 @@ end
 
 function setStandardPrefixes!(pd,pars,action)
     prefixes = string.(split(action,","))
+    markStandards!(pd,standard=0) # reset
     for i in eachindex(prefixes)
         markStandards!(pd,prefix=prefixes[i],standard=i)
     end
@@ -163,14 +192,24 @@ function setStandardPrefixes!(pd,pars,action)
 end
 
 function chooseRefMatMessage(pd,pars)
-    println("Now match this/these prefix(es) with the following reference materials:")
+    nst = size(unique(getStandard(pd)),1)
+    if nst>2
+        println("Now match this/these prefix(es) with "*
+                "the following reference materials:")
+    else
+        println("Now match this prefix with one of "*
+                "the following reference materials:")
+    end
     method = getMethod(pd)
+    if isnothing(method) PTerror("undefinedMethod") end
     refMats = collect(keys(referenceMaterials[method]))
     for i in eachindex(refMats)
         println(string(i)*". "*refMats[i])
     end
-    println("Enter your choice(s) as number or a comma-separated list of numbers,")
-    println("matching the order in which you entered the prefixes.")
+    if nst>2
+        println("Enter your choices as number or a comma-separated list of "*
+                "numbers matching the order in which you entered the prefixes.")
+    end
 end
 
 function chooseRefMat!(pd,pars,action)
@@ -178,7 +217,7 @@ function chooseRefMat!(pd,pars,action)
     refmats = collect(keys(referenceMaterials[method]))
     i = parse.(Int,split(action,","))
     pars.refmats = refmats[i]
-    return "xx"
+    return "xxx"
 end
 
 function process!(pd,pars,action)
@@ -190,7 +229,11 @@ function process!(pd,pars,action)
 end
 
 function setSamplePrefixes!(pd,pars,action)
-    pars.prefixes = string.(split(action,","))
+    pars.prefixes = string.(split(action,','))
+    return "export"
+end
+function clearSamplePrefixes!(pd,pars,action)
+    pars.prefixes = nothing
     return "export"
 end
 
@@ -198,14 +241,15 @@ function export2csv(pd,pars,action)
     i = findSamples(pd,prefix=pars.prefixes)
     out = fitSamples(pd,i=i)
     CSV.write(action,out)
-    return "xxx"
+    if isnothing(pars.prefixes) return "xx"
+    else return "xxx" end
 end
 
 function savelog!(pd,pars,action)
     println("Enter the path and name of the log file:")
     fpath = readline()
     CSV.write(fpath,pars.history)
-    return "x"
+    return "xx"
 end
 
 function restorelog!(pd,pars,action)
@@ -221,7 +265,7 @@ tree = Dict(
     "welcome" => 
     "===========\n"*
     "Plasmatrace\n"*
-    "===========\n",
+    "===========",
     "top" => (
         message =
         "f: Load the data files\n"*
@@ -286,7 +330,7 @@ tree = Dict(
         "n: next\n"*
         "p: previous\n"*
         "c: Choose which channels to show\n"*
-        "r: Signals or ratios?\n"*
+        "r: Plot signals or ratios?\n"*
         "b: Select blank window(s)\n"*
         "w: Select signal window(s)\n"*
         "s: (un)mark as standard\n"*
@@ -338,33 +382,94 @@ tree = Dict(
     ),
     "allBlankWindows" => (
         message =
-        "Specify the blank windows. The following are all valid entries:\n\n"*
-        "a: automatically select all the windows\n"*
-        "(m,M): set a single window from m to M seconds, e.g. (0,20)\n"*
-        "(m1,M1),(m2,M2): set multiple windows, e.g. (0,20),(25,30)",
-        actions = allBlankWindows!
+        "a: automatic\n"*
+        "s: set a one-part window\n"*
+        "m: set a multi-part window",
+        actions = Dict(
+            "a" => allAutoBlankWindows!,
+            "s" => "allSingleBlankWindows",
+            "m" => "allMultiBlankWindows"
+        )
     ),
     "allSignalWindows" => (
         message =
-        "Specify the signal windows. The following are all valid entries:\n\n"*
-        "a: automatically select all the windows\n"*
-        "(m,M): set a single window from m to M seconds, e.g. (0,20)\n"*
-        "(m1,M1),(m2,M2): set multiple windows, e.g. (0,20),(25,30)",
-        actions = allSignalWindows!
+        "a: automatic\n"*
+        "s: set a one-part window\n"*
+        "m: set a multi-part window",
+        actions = Dict(
+            "a" => allAutoSignalWindows!,
+            "s" => "allSingleSignalWindows",
+            "m" => "allMultiSignalWindows"
+        )
+    ),
+    "allSingleBlankWindows" => (
+        message =
+        "Enter the start and end point of the selection window (in seconds) "*
+        "as a comma-separated pair of numbers. For example: 0,20 marks a blank "*
+        "window from 0 to 20 seconds",
+        actions = allSingleBlankWindows!
+    ),
+    "allSingleSignalWindows" => (
+        message =
+        "Enter the start and end point of the selection window (in seconds) "*
+        "as a comma-separated pair of numbers. For example: 0,20 marks a blank "*
+        "window from 0 to 20 seconds",
+        actions = allSingleSignalWindows!
+    ),
+    "allMultiBlankWindows" => (
+        message =
+        "Enter the start and end points of the multi-part selection window "*
+        "(in seconds) as a comma-separated list of bracketed pairs of numbers. "*
+        "For example: (0,20),(25,30) marks a two-part selection window from "*
+        "blank 0 to 20s, and from 25 to 30s.",
+        actions = allMultiBlankWindows!
+    ),
+    "allMultiSignalWindows" => (
+        message =
+        "Enter the start and end points of the multi-part selection window "*
+        "(in seconds) as a comma-separated list of bracketed pairs of numbers. "*
+        "For example: (0,20),(25,30) marks a two-part selection window from "*
+        "blank 0 to 20s, and from 25 to 30s.",
+        actions = allMultiSignalWindows!
     ),
     "setStandardPrefixes" => (
         message =
-        "Enter the prefix(es) of the primary standard(s) as "*
-        "a comma-separated list of strings. For example:\n"*
-        "hogsbo_\n"*
-        "hogsbo,BP",
-        actions = setStandardPrefixes!
+        "s: Use a single primary reference material\n"*
+        "m: Use multiple primary reference materials",
+        actions = Dict(
+            "s" => "setSingleStandardPrefix",
+            "m" => "setMultipleStandardPrefixes"
+        )
     ),
     "setSamplePrefixes" => (
         message =
-        "Enter the prefix(es) of the sample(s) to export, "*
-        "as a comma-separated list of strings. Alternatively, "*
-        "type 'a' to export all the samples.",
+        "s. Export one sample to a single table\n"*
+        "m. Export multiple samples to multiple tables\n"*
+        "a. Export all samples to a single table",
+        actions = Dict(
+            "s" => "exportOneSample",
+            "m" => "exportMultipleSamples",
+            "a" => clearSamplePrefixes!
+        )
+    ),
+    "setSingleStandardPrefix" => (
+        message = "Enter the prefix of the reference material:",
+        actions = setStandardPrefixes!
+    ),
+    "setMultipleStandardPrefixes" => (
+        message =
+        "Enter the prefixes of the reference material as"*
+        "a comma-separated list of names:",
+        actions = setStandardPrefixes!
+    ),
+    "exportOneSample" => (
+        message = "Enter the prefix of the sample to export:",
+        actions = setSamplePrefixes!
+    ),
+    "exportMultipleSamples" => (
+        message =
+        "Enter the prefixes of the samples to export as a "*
+        "comma-separated list of strings:",
         actions = setSamplePrefixes!
     ),
     "read" => (
@@ -410,10 +515,12 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
                    1,nothing,nothing,nothing,nothing,[2,1])
     if isnothing(logbook)
         while true
+            println()
             out = arbeid!(myrun,pars=pars,verbatim=false)
             if out == "exit" return end
             if out == "restorelog"
                 myrun, pars = PT!(pars.history)
+                pop!(pars.chain)
                 pop!(pars.chain)
             end
         end
@@ -427,7 +534,7 @@ end
 
 function arbeid!(pd::run;pars::TUIpars,
                  task=nothing,action=nothing,verbatim=false)
-#    try
+    try
         if isempty(pars.chain) return "exit" end
         if isnothing(task) task = pars.chain[end] end
         out = dispatch!(pd,pars=pars,task=task,action=action,verbatim=verbatim)
@@ -447,9 +554,9 @@ function arbeid!(pd::run;pars::TUIpars,
             push!(pars.chain,out.next)
         end
         push!(pars.history,[task,action])
-#    catch e
-#        println(e)
-#    end
+    catch e
+        println(e)
+    end
     return "continue"
 end
 

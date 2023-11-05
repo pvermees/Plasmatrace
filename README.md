@@ -229,7 +229,7 @@ The blanks are fitted using a second order polynomial, whereas the
 signal drift is modelled using a linear function:
 
 ```
-julia> dname = "/home/pvermees/Documents/Plasmatrace/MyGarnet/";
+julia> dname = "/home/pvermees/Documents/Plasmatrace/Garnet/";
 julia> session = load(dname,instrument="Agilent");
 julia> setMethod!(session,method="LuHf",
        channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
