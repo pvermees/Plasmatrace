@@ -29,17 +29,6 @@ mutable struct run <: plasmaData
     scov::Union{Nothing,Matrix}
 end
 
-mutable struct TUIpars
-    chain::Vector{String}
-    history::DataFrame
-    i::Integer
-    channels::Union{Nothing,Vector{String}}
-    den::Union{Nothing,Vector{String}}
-    prefixes::Union{Nothing,Vector{String}}
-    refmats::Union{Nothing,Vector{String}}
-    n::Vector{Integer}
-end
-
 sample(sname,datetime,dat) = sample(sname,datetime,dat,nothing,nothing,0)
 
 control() = control(nothing,nothing,nothing,nothing,nothing,nothing)
