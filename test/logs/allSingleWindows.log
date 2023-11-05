@@ -8,7 +8,19 @@ load,x
 top,m
 method,1
 channels,"15,18,17"
-top,l
+top,b
+bulk,b
+allBlankWindows,a
+bulk,s
+allSignalWindows,a
+bulk,l
+bulk,p
+setStandardPrefixes,s
+setSingleStandardPrefix,BP
+refmat,2
+bulk,x
+top,p
+log,s
 top,b
 bulk,b
 allBlankWindows,s
@@ -17,4 +29,3 @@ bulk,s
 allSignalWindows,s
 allSingleSignalWindows,"40,80"
 bulk,x
-top,l

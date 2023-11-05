@@ -86,9 +86,14 @@ function tree(key::String,prioritylist::Dict)
         ),
         "samples" => (
             message =
-            "Enter the prefix of the samples to export.\n"*
-            "Alternatively, type 'a' to export all the samples.",
-            actions = setSamplePrefixes!
+            "s. Export one sample to a single table\n"*
+            "m. Export multiple samples to multiple tables\n"*
+            "a. Export all samples to a single table",
+            actions = Dict(
+                "s" => "exportOneSample",
+                "m" => "exportMultipleSamples",
+                "a" => clearSamplePrefixes!
+            )
         ),
         "export" => (
             message = 
@@ -98,7 +103,7 @@ function tree(key::String,prioritylist::Dict)
             actions = Dict(
                 "j" => "json",
                 "c" => "csv",
-                "x" => "xx"
+                "x" => "xxx"
             )
         ),
         "log" => (
@@ -177,17 +182,6 @@ function tree(key::String,prioritylist::Dict)
             actions = Dict(
                 "s" => "setSingleStandardPrefix",
                 "m" => "setMultipleStandardPrefixes"
-            )
-        ),
-        "setSamplePrefixes" => (
-            message =
-            "s. Export one sample to a single table\n"*
-            "m. Export multiple samples to multiple tables\n"*
-            "a. Export all samples to a single table",
-            actions = Dict(
-                "s" => "exportOneSample",
-                "m" => "exportMultipleSamples",
-                "a" => clearSamplePrefixes!
             )
         ),
         "setSingleStandardPrefix" => (

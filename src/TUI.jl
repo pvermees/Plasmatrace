@@ -41,8 +41,6 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
             if out == "exit" return end
             if out == "restorelog"
                 myrun, pars = PT!(pars.history)
-                pop!(pars.chain)
-                pop!(pars.chain)
             end
         end
     else
@@ -67,6 +65,11 @@ function arbeid!(pd::run;pars::TUIpars,
             pop!(pars.chain)
             pop!(pars.chain)
         elseif out.next=="xxx"
+            pop!(pars.chain)
+            pop!(pars.chain)
+            pop!(pars.chain)
+        elseif out.next=="xxxx"
+            pop!(pars.chain)
             pop!(pars.chain)
             pop!(pars.chain)
             pop!(pars.chain)

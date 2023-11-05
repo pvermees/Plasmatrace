@@ -201,12 +201,13 @@ function export2csv(pd,pars,action)
     out = fitSamples(pd,i=i)
     CSV.write(action,out)
     if isnothing(pars.prefixes) return "xx"
-    else return "xxx" end
+    else return "xxxx" end
 end
 
 function savelog!(pd,pars,action)
     println("Enter the path and name of the log file:")
     fpath = readline()
+    pars.history = delete!(pars.history,nrow(pars.history))
     CSV.write(fpath,pars.history)
     return "x"
 end

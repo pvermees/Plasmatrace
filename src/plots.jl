@@ -1,12 +1,14 @@
 function plot(pd::sample;channels=nothing,
               num=nothing,den=nothing,
-              transformation="sqrt")
+              transformation="sqrt",titlefontsize=10)
     dat = getDat(pd)
     plotdat = getRawPlotDat(dat,channels=channels,num=num,den=den)
     ylab = !isnothing(den) ? "ratio" : "signal"
     p = plotHelper(plotdat,transformation=transformation,ix=2,ylab=ylab)
-    tit = replace(getSname(pd),"\\" => "∖")
-    Plots.title!(tit,titlefontsize=10)
+    tit = getSname(pd)
+    stand = getStandard(pd)
+    tit *= stand>0 ? " [standard "*string(stand)*"]" : ""
+    Plots.title!(tit,titlefontsize=titlefontsize)
     dy = Plots.ylims(p)
     plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
     plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
@@ -14,7 +16,7 @@ function plot(pd::sample;channels=nothing,
 end
 function plot(pd::run;i::Union{Nothing,Integer}=nothing,
               channels=nothing,num=nothing,den=nothing,
-              transformation="sqrt",steps=1000)
+              transformation="sqrt",titlefontsize=10,steps=1000)
     if isnothing(i)
         dat = poolRunDat(pd)
         step = Int(ceil(size(dat,1)/steps))
@@ -25,7 +27,8 @@ function plot(pd::run;i::Union{Nothing,Integer}=nothing,
     else
         if isnothing(channels) & isnothing(den) channels = getChannels(pd) end
         p = plot(getSamples(pd)[i],channels=channels,
-                 num=num,den=den,transformation=transformation)
+                 num=num,den=den,transformation=transformation,
+                 titlefontsize=titlefontsize)
         if fitable(pd)
             plotFitted!(p,pd=pd,i=i,channels=channels,num=num,den=den,
                         transformation=transformation)

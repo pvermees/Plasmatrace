@@ -47,7 +47,7 @@ function readAgilent(fname::String)
     strs = readlines(f)
 
     # read header
-    sname = strs[1]
+    sname = split.(split(strs[1],"\\"),"/")[end][end]
     dt = split(strs[3]," ")
     date = parse.(Int,split(dt[8],"/"))
     time = parse.(Int,split(dt[9],":"))
