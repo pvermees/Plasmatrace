@@ -1,0 +1,11 @@
+task,action
+top,f
+load,i
+instrument,1
+load,r
+read,/home/pvermees/Documents/Plasmatrace/Garnet/
+load,x
+top,m
+method,1
+channels,"15,18,17"
+top,l

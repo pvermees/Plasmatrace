@@ -66,13 +66,13 @@ end
 function string2windows(pd,pars,action;single=false)
     if single
         parts = split(action,',')
-        stime = [parse(Int,parts[1])]
-        ftime = [parse(Int,parts[2])]
+        stime = [parse(Float64,parts[1])]
+        ftime = [parse(Float64,parts[2])]
         nw = 1
     else
         parts = split(action,['(',')',','])
-        stime = parse.(Int,parts[2:4:end])
-        ftime = parse.(Int,parts[3:4:end])
+        stime = parse.(Float64,parts[2:4:end])
+        ftime = parse.(Float64,parts[3:4:end])
         nw = Int(round(size(parts,1)/4))
     end
     windows = Vector{window}(undef,nw)
@@ -80,20 +80,18 @@ function string2windows(pd,pars,action;single=false)
     nt = size(t,1)
     maxt = t[end]
     for i in 1:nw
-        sfrac = stime[i]/maxt
-        if sfrac>1
+        if stime[i]>t[end]
             stime[i] = t[end-1]
             println("Warning: start point out of bounds and truncated to ")
             print(string(stime[i]) * " seconds.")
         end
-        ffrac = ftime[i]/maxt
-        if ffrac>1
+        if ftime[i]>t[end]
             ftime[i] = t[end]
             println("Warning: end point out of bounds and truncated to ")
             print(string(maxt) * " seconds.")
         end
-        start = max(1,Int(round(nt*sfrac)))
-        finish = min(nt,Int(round(nt*ffrac)))
+        start = max(1,Int(round(nt*stime[i]/maxt)))
+        finish = min(nt,Int(round(nt*ftime[i]/maxt)))
         windows[i] = (start,finish)
     end
     windows
@@ -249,7 +247,7 @@ function savelog!(pd,pars,action)
     println("Enter the path and name of the log file:")
     fpath = readline()
     CSV.write(fpath,pars.history)
-    return "xx"
+    return "x"
 end
 
 function restorelog!(pd,pars,action)
@@ -508,6 +506,12 @@ tree = Dict(
 function PT() PT!() end
 export PT
 
+function PT!(fpath::String)
+    logbook = CSV.read(fpath,DataFrame)
+    myrun, pars = PT!(logbook)
+    myrun
+end
+
 function PT!(logbook::Union{Nothing,DataFrame}=nothing)
     println(tree["welcome"])
     myrun = run()
@@ -521,7 +525,6 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
             if out == "restorelog"
                 myrun, pars = PT!(pars.history)
                 pop!(pars.chain)
-                pop!(pars.chain)
             end
         end
     else
@@ -531,10 +534,11 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
         return myrun, pars
     end
 end
+export PT!
 
 function arbeid!(pd::run;pars::TUIpars,
                  task=nothing,action=nothing,verbatim=false)
-    try
+#    try
         if isempty(pars.chain) return "exit" end
         if isnothing(task) task = pars.chain[end] end
         out = dispatch!(pd,pars=pars,task=task,action=action,verbatim=verbatim)
@@ -554,10 +558,10 @@ function arbeid!(pd::run;pars::TUIpars,
             push!(pars.chain,out.next)
         end
         push!(pars.history,[task,action])
-    catch e
-        println(e)
-    end
-    return "continue"
+#    catch e
+#        println(e)
+#    end
+    return nothing
 end
 
 function dispatch!(pd::Union{Nothing,run};

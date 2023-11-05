@@ -129,6 +129,12 @@ function averagetest()
     CSV.write("hogsbo.csv",out)
 end
 
+function TUItest()
+    PT!("logs/load.log")
+    PT!("logs/allAutoWindows.log")
+    PT!("logs/allSingleWindows.log")
+end
+
 Plots.closeall()
 
 @testset "load" begin loaddat = loadtest() end
@@ -141,3 +147,4 @@ Plots.closeall()
 @testset "plot atomic" begin atomictest() end
 @testset "plot calibration" begin calibrationtest() end
 @testset "average results" begin averagetest() end
+@testset "TUI tests" begin TUItest() end
