@@ -131,9 +131,10 @@ end
 
 function TUItest()
     PT!("logs/load.log")
-    PT!("logs/allAutoWindows.log")
-    PT!("logs/allSingleWindows.log")
+    PT!("logs/autoWin.log")
+    PT!("logs/singleWin.log")
     PT!("logs/BP.log")
+    PT!("logs/hogsbo.log")
 end
 
 Plots.closeall()

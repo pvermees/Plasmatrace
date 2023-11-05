@@ -28,7 +28,7 @@ function setWindows!(pd::run;blank=false,windows=nothing,i=nothing)
     setSamples!(pd,samples)
 end
 
-function autoWindow(pd::sample;blank=false)::Vector{window}
+function autoWindow(pd::sample;blank=false)::AbstractVector
     dat = getDat(pd)[:,3:end]
     total = sum.(eachrow(dat))
     q = Statistics.quantile(total,[0.05,0.95])
@@ -50,14 +50,14 @@ function autoWindow(pd::sample;blank=false)::Vector{window}
     return [(from,to)]
 end
 
-function blankData(pd::sample;channels::Vector{String})
+function blankData(pd::sample;channels::AbstractVector)
     windowData(pd,blank=true,channels=channels)
 end
 function blankData(pd::run;channels=nothing,i=nothing)
     windowData(pd,blank=true,channels=channels,i=i)
 end
 
-function signalData(pd::sample;channels::Vector{String})
+function signalData(pd::sample;channels::AbstractVector)
     windowData(pd,blank=false,channels=channels)
 end
 function signalData(pd::run;channels=nothing,i=nothing)
@@ -66,7 +66,7 @@ end
 
 function windowData(pd::sample;blank=false,channels)
     windows = blank ? getBWin(pd) : getSWin(pd)
-    selection = Vector{Integer}()
+    selection = Integer[]
     if isnothing(windows) PTerror("missingWindows") end
     for w in windows
         append!(selection, w[1]:w[2])
@@ -77,8 +77,8 @@ function windowData(pd::sample;blank=false,channels)
 end
 
 function windowData(pd::run;blank::Bool=false,
-                    channels::Union{Nothing,Vector{String}}=nothing,
-                    i::Union{Nothing,Int,Vector{Int}}=nothing)
+                    channels::Union{Nothing,AbstractVector}=nothing,
+                    i::Union{Nothing,Int,AbstractVector}=nothing)
     if isnothing(channels)
         channels = getChannels(pd)
         if isnothing(channels) channels = names(pd) end

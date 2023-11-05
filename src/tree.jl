@@ -1,4 +1,4 @@
-function tree(key::String,prioritylist::Dict)
+function tree(key::AbstractString,pl::Dict)
     branches = Dict(
         "welcome" => 
         "===========\n"*
@@ -6,9 +6,9 @@ function tree(key::String,prioritylist::Dict)
         "===========",
         "top" => (
             message =
-            "f: Load the data files"*check(prioritylist,"load")*"\n"*
-            "m: Specify a method"*check(prioritylist,"method")*"\n"*
-            "b: Bulk settings"*check(prioritylist,"bulk")*"\n"*
+            "f: Load the data files"*check(pl,"load")*"\n"*
+            "m: Specify a method"*check(pl,"method")*"\n"*
+            "b: Bulk settings"*check(pl,"bulk")*"\n"*
             "v: View and adjust each sample\n"*
             "p: Process the data\n"*
             "e: Export the results\n"*
@@ -18,7 +18,7 @@ function tree(key::String,prioritylist::Dict)
                 "f" => "load",
                 "m" => "method",
                 "b" => "bulk",
-                "v" => "view",
+                "v" => initialView,
                 "p" => process!,
                 "e" => "samples",
                 "l" => "log",
@@ -27,8 +27,8 @@ function tree(key::String,prioritylist::Dict)
         ),
         "load" => (
             message =
-            "i. Specify your instrument"*check(prioritylist,"instrument")*"\n"*
-            "r. Open and read the data files"*check(prioritylist,"read")*"\n"*
+            "i. Specify your instrument"*check(pl,"instrument")*"\n"*
+            "r. Open and read the data files"*check(pl,"read")*"\n"*
             "l. List all the samples in the session\n"*
             "x. Exit",
             actions = Dict(
@@ -46,16 +46,16 @@ function tree(key::String,prioritylist::Dict)
         ),
         "bulk" => (
             message =
-            "b. Set default blank windows"*check(prioritylist,"bwin")*"\n"*
-            "s. Set default signal windows"*check(prioritylist,"swin")*"\n"*
-            "p. Add a standard by prefix"*check(prioritylist,"prefixes")*"\n"*
+            "b. Set default blank windows"*check(pl,"bwin")*"\n"*
+            "w. Set default signal windows"*check(pl,"swin")*"\n"*
+            "p. Add a standard by prefix"*check(pl,"prefixes")*"\n"*
             "n. Adjust the order of the polynomial fits\n"*
             "r. Remove a standard\n"*
             "l. List all the standards\n"*
             "x. Exit",
             actions = Dict(
                 "b" => "allBlankWindows",
-                "s" => "allSignalWindows",
+                "w" => "allSignalWindows",
                 "p" => "setStandardPrefixes",
                 "n" => unsupported,
                 "r" => unsupported,
@@ -64,9 +64,11 @@ function tree(key::String,prioritylist::Dict)
             )
         ),
         "view" => (
-            message =
-            "n: next\n"*
-            "p: previous\n"*
+            message = 
+            "n: Next\n"*
+            "p: Previous\n"*
+            "g: Go to\n"*
+            "l: List all the samples in the session\n"*
             "c: Choose which channels to show\n"*
             "r: Plot signals or ratios?\n"*
             "b: Select blank window(s)\n"*
@@ -76,10 +78,12 @@ function tree(key::String,prioritylist::Dict)
             actions = Dict(
                 "n" => viewnext!,
                 "p" => viewprevious!,
+                "g" => unsupported,
+                "l" => listSamples,
                 "c" => "viewChannels",
                 "r" => "setDen",
-                "b" => unsupported,
-                "w" => unsupported,
+                "b" => "oneBlankWindow",
+                "w" => "oneSignalWindow",
                 "s" => unsupported,
                 "x" => "x"
             )
@@ -134,6 +138,17 @@ function tree(key::String,prioritylist::Dict)
                 "m" => "allMultiBlankWindows"
             )
         ),
+        "oneBlankWindow" => (
+            message =
+            "a: automatic\n"*
+            "s: set a one-part window\n"*
+            "m: set a multi-part window",
+            actions = Dict(
+                "a" => oneAutoBlankWindow!,
+                "s" => "oneSingleBlankWindow",
+                "m" => "oneMultiBlankWindow"
+            )
+        ),
         "allSignalWindows" => (
             message =
             "a: automatic\n"*
@@ -145,6 +160,17 @@ function tree(key::String,prioritylist::Dict)
                 "m" => "allMultiSignalWindows"
             )
         ),
+        "oneSignalWindow" => (
+            message =
+            "a: automatic\n"*
+            "s: set a one-part window\n"*
+            "m: set a multi-part window",
+            actions = Dict(
+                "a" => oneAutoSignalWindow!,
+                "s" => "oneSingleSignalWindow",
+                "m" => "oneMultiSignalWindow"
+            )
+        ),
         "allSingleBlankWindows" => (
             message =
             "Enter the start and end point of the selection window (in seconds) "*
@@ -152,12 +178,26 @@ function tree(key::String,prioritylist::Dict)
             "window from 0 to 20 seconds",
             actions = allSingleBlankWindows!
         ),
-        "allSingleSignalWindows" => (
+        "oneSingleBlankWindow" => (
             message =
             "Enter the start and end point of the selection window (in seconds) "*
             "as a comma-separated pair of numbers. For example: 0,20 marks a blank "*
             "window from 0 to 20 seconds",
+            actions = oneSingleBlankWindow!
+        ),
+        "allSingleSignalWindows" => (
+            message =
+            "Enter the start and end point of the selection window (in seconds) "*
+            "as a comma-separated pair of numbers. For example: 30,60 marks a blank "*
+            "window from 30 to 60 seconds",
             actions = allSingleSignalWindows!
+        ),
+        "oneSingleSignalWindow" => (
+            message =
+            "Enter the start and end point of the selection window (in seconds) "*
+            "as a comma-separated pair of numbers. For example: 30,60 marks a blank "*
+            "window from 30 to 60 seconds",
+            actions = oneSingleSignalWindow!
         ),
         "allMultiBlankWindows" => (
             message =
@@ -167,13 +207,29 @@ function tree(key::String,prioritylist::Dict)
             "blank 0 to 20s, and from 25 to 30s.",
             actions = allMultiBlankWindows!
         ),
-        "allMultiSignalWindows" => (
+        "oneMultiBlankWindow" => (
             message =
             "Enter the start and end points of the multi-part selection window "*
             "(in seconds) as a comma-separated list of bracketed pairs of numbers. "*
             "For example: (0,20),(25,30) marks a two-part selection window from "*
             "blank 0 to 20s, and from 25 to 30s.",
+            actions = oneMultiBlankWindow!
+        ),
+        "allMultiSignalWindows" => (
+            message =
+            "Enter the start and end points of the multi-part selection window "*
+            "(in seconds) as a comma-separated list of bracketed pairs of numbers. "*
+            "For example: (40,45),(50,60) marks a two-part selection window from "*
+            "blank 40 to 45s, and from 50 to 60s.",
             actions = allMultiSignalWindows!
+        ),
+        "oneMultiSignalWindow" => (
+            message =
+            "Enter the start and end points of the multi-part selection window "*
+            "(in seconds) as a comma-separated list of bracketed pairs of numbers. "*
+            "For example: (40,45),(50,60) marks a two-part selection window from "*
+            "blank 40 to 45s, and from 50 to 60s.",
+            actions = oneMultiSignalWindow!
         ),
         "setStandardPrefixes" => (
             message =

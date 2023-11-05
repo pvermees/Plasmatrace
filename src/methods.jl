@@ -1,6 +1,6 @@
 # get sample attributes from a run:
 function accesSample(pd::run,
-                     i::Union{Nothing,Integer,Vector{Integer}},
+                     i::Union{Nothing,Integer,AbstractVector},
                      T::Type,
                      fun::Function)
     if isnothing(i) i = 1:length(pd) end
@@ -16,7 +16,7 @@ function accesSample(pd::run,
     out
 end
 function accesSample!(pd::run,
-                      i::Union{Integer,Vector{Integer}},
+                      i::Union{Integer,AbstractVector},
                       fun::Function,val::Any)
     samples = getSamples(pd)
     for j in i fun(samples[j],val) end
@@ -46,11 +46,11 @@ function getBCov(pd::run) getproperty(pd,:bcov) end
 function getSCov(pd::run) getproperty(pd,:scov) end
 
 # get sample attributes from a run
-function getSnames(pd::run;i=nothing) accesSample(pd,i,String,getSname) end
+function getSnames(pd::run;i=nothing) accesSample(pd,i,AbstractString,getSname) end
 function getDateTimes(pd::run;i=nothing) accesSample(pd,i,DateTime,getDateTime) end
 function getDat(pd::run;i=nothing) accesSample(pd,i,DataFrame,getDat) end
-function getBWin(pd::run;i=nothing) accesSample(pd,i,Vector{window},getBWin) end
-function getSWin(pd::run;i=nothing) accesSample(pd,i,Vector{window},getSWin) end
+function getBWin(pd::run;i=nothing) accesSample(pd,i,AbstractVector,getBWin) end
+function getSWin(pd::run;i=nothing) accesSample(pd,i,AbstractVector,getSWin) end
 function getStandard(pd::run;i=nothing) accesSample(pd,i,Integer,getStandard) end
 
 # get control attributes
@@ -69,42 +69,42 @@ function getIsotopes(pd::run) getIsotopes(getControl(pd)) end
 function getChannels(pd::run) getChannels(getControl(pd)) end
 
 # set sample attributes
-function setSname!(pd::sample,sname::String) setproperty!(pd,:sname,sname) end
+function setSname!(pd::sample,sname::AbstractString) setproperty!(pd,:sname,sname) end
 function setDateTime!(pd::sample,datetime::DateTime) setproperty!(pd,:datetime,datetime) end
 function setDat!(pd::sample,dat::DataFrame) setproperty!(pd,:dat,dat) end
-function setBWin!(pd::sample,bwin::Vector{window}) setproperty!(pd,:bwin,bwin) end
-function setSWin!(pd::sample,swin::Vector{window}) setproperty!(pd,:swin,swin) end
+function setBWin!(pd::sample,bwin::AbstractVector) setproperty!(pd,:bwin,bwin) end
+function setSWin!(pd::sample,swin::AbstractVector) setproperty!(pd,:swin,swin) end
 function setStandard!(pd::sample,standard::Integer) setproperty!(pd,:standard,standard) end
 export setStandard!
 
 # set run attributes
-function setSamples!(pd::run,samples::Vector{sample}) setproperty!(pd,:samples,samples) end
+function setSamples!(pd::run,samples::AbstractVector) setproperty!(pd,:samples,samples) end
 function setControl!(pd::run,ctrl::control) setproperty!(pd,:control,ctrl) end
-function setBPar!(pd::run,bpar::Vector) setproperty!(pd,:bpar,bpar) end
-function setSPar!(pd::run,spar::Vector) setproperty!(pd,:spar,spar) end
+function setBPar!(pd::run,bpar::AbstractVector) setproperty!(pd,:bpar,bpar) end
+function setSPar!(pd::run,spar::AbstractVector) setproperty!(pd,:spar,spar) end
 function setBCov!(pd::run,bcov::Matrix) setproperty!(pd,:bcov,bcov) end
 function setSCov!(pd::run,scov::Matrix) setproperty!(pd,:scov,scov) end
 
 # set key sample attributes in a run
-function setBWin!(pd::run;i,bwin::Vector{window}) accesSample!(pd,i,setBwin!,bwin) end
-function setSWin!(pd::run;i,swin::Vector{window}) accesSample!(pd,i,setSwin!,swin) end
+function setBWin!(pd::run;i,bwin::AbstractVector) accesSample!(pd,i,setBwin!,bwin) end
+function setSWin!(pd::run;i,swin::AbstractVector) accesSample!(pd,i,setSwin!,swin) end
 function setStandard!(pd::run;i,standard::Integer) accesSample!(pd,i,setStandard!,standard) end
 
 # set control attributes
-function setInstrument!(ctrl::control,instrument::String) setproperty!(ctrl,:instrument,instrument) end
-function setMethod!(ctrl::control,method::String) setproperty!(ctrl,:method,method) end
-function setA!(ctrl::control,A::Vector{AbstractFloat}) setproperty!(ctrl,:A,A) end
-function setB!(ctrl::control,B::Vector{AbstractFloat}) setproperty!(ctrl,:B,B) end
-function setIsotopes!(ctrl::control,isotopes::Vector{String}) setproperty!(ctrl,:isotopes,isotopes) end
-function setChannels!(ctrl::control,channels::Vector{String}) setproperty!(ctrl,:channels,channels) end
+function setInstrument!(ctrl::control,instrument::AbstractString) setproperty!(ctrl,:instrument,instrument) end
+function setMethod!(ctrl::control,method::AbstractString) setproperty!(ctrl,:method,method) end
+function setA!(ctrl::control,A::AbstractVector) setproperty!(ctrl,:A,A) end
+function setB!(ctrl::control,B::AbstractVector) setproperty!(ctrl,:B,B) end
+function setIsotopes!(ctrl::control,isotopes::AbstractVector) setproperty!(ctrl,:isotopes,isotopes) end
+function setChannels!(ctrl::control,channels::AbstractVector) setproperty!(ctrl,:channels,channels) end
 
 # set control attributes in a run
-function setInstrument!(pd::run,instrument::String) accessControl!(pd,setInstrument!,instrument) end
-function setMethod!(pd::run,method::String) accessControl!(pd,setMethod!,method) end
-function setA!(pd::run,A::Vector{AbstractFloat}) accessControl!(pd,setA!,A) end
-function setB!(pd::run,B::Vector{AbstractFloat}) accessControl!(pd,setB!,B) end
-function setIsotopes!(pd::run,isotopes::Vector{String}) accessControl!(pd,setIsotopes!,isotopes) end
-function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,setChannels!,channels) end
+function setInstrument!(pd::run,instrument::AbstractString) accessControl!(pd,setInstrument!,instrument) end
+function setMethod!(pd::run,method::AbstractString) accessControl!(pd,setMethod!,method) end
+function setA!(pd::run,A::AbstractVector) accessControl!(pd,setA!,A) end
+function setB!(pd::run,B::AbstractVector) accessControl!(pd,setB!,B) end
+function setIsotopes!(pd::run,isotopes::AbstractVector) accessControl!(pd,setIsotopes!,isotopes) end
+function setChannels!(pd::run,channels::AbstractVector) accessControl!(pd,setChannels!,channels) end
 
 length(pd::run) = size(getSamples(pd),1)
 

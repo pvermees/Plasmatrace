@@ -14,10 +14,3 @@ allBlankWindows,a
 bulk,w
 allSignalWindows,a
 bulk,x
-top,b
-bulk,p
-setStandardPrefixes,s
-setSingleStandardPrefix,BP
-refmat,2
-bulk,x
-top,p

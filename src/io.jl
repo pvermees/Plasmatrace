@@ -1,4 +1,4 @@
-function readFile(fname::String;instrument="Agilent")::sample
+function readFile(fname::AbstractString;instrument="Agilent")::sample
     if instrument=="Agilent"
         sname, datetime, dat = readAgilent(fname)
     else
@@ -7,13 +7,13 @@ function readFile(fname::String;instrument="Agilent")::sample
     sample(sname,datetime,dat)
 end
 
-function load!(pd::run;dname::String,instrument="Agilent")
+function load!(pd::run;dname::AbstractString,instrument="Agilent")
     temp = load(dname,instrument=instrument)
     setSamples!(pd,getSamples(temp))
 end
 export load!
 
-function load(dname::String;instrument="Agilent")::run
+function load(dname::AbstractString;instrument="Agilent")::run
     fnames = readdir(dname)
     samples = Vector{sample}(undef,0)
     datetimes = Vector{DateTime}(undef,0)
@@ -42,7 +42,7 @@ function load(dname::String;instrument="Agilent")::run
 end
 export load
 
-function readAgilent(fname::String)
+function readAgilent(fname::AbstractString)
     f = open(fname,"r")
     strs = readlines(f)
 

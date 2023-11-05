@@ -1,22 +1,12 @@
-function PT() PT!() end
+function PT()
+    PT!()
+end
 export PT
 
-function PT!(fpath::String)
+function PT!(fpath::AbstractString)
     logbook = CSV.read(fpath,DataFrame)
     myrun, pars = PT!(logbook)
     myrun
-end
-
-mutable struct TUIpars
-    chain::Vector{String}
-    i::Integer
-    history::DataFrame
-    channels::Union{Nothing,Vector{String}}
-    den::Union{Nothing,Vector{String}}
-    prefixes::Union{Nothing,Vector{String}}
-    refmats::Union{Nothing,Vector{String}}
-    n::Vector{Integer}
-    prioritylist::Dict
 end
 
 function PT!(logbook::Union{Nothing,DataFrame}=nothing)
@@ -31,7 +21,8 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
         "swin" => true,
         "prefixes" => true
     )
-    pars = TUIpars(["top"],1,DataFrame(task=String[],action=String[]),
+    pars = TUIpars(["top"],1,
+                   DataFrame(task=AbstractString[],action=AbstractString[]),
                    nothing,nothing,nothing,nothing,[2,1],prioritylist)
     println(tree("welcome",pars.prioritylist))
     if isnothing(logbook)
@@ -54,7 +45,7 @@ export PT!
 
 function arbeid!(pd::run;pars::TUIpars,
                  task=nothing,action=nothing,verbatim=false)
-    try
+#    try
         if isempty(pars.chain) return "exit" end
         if isnothing(task) task = pars.chain[end] end
         out = dispatch!(pd,pars=pars,task=task,action=action,verbatim=verbatim)
@@ -79,9 +70,9 @@ function arbeid!(pd::run;pars::TUIpars,
             push!(pars.chain,out.next)
         end
         push!(pars.history,[task,action])
-    catch e
-        println(e)
-    end
+#    catch e
+#        println(e)
+#    end
     return nothing
 end
 

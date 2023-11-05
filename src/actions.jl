@@ -83,16 +83,31 @@ function allAutoBlankWindows!(pd,pars,action)
     check!(pars.prioritylist,"bwin")
     return "x"
 end
+function oneAutoBlankWindow!(pd,pars,action)
+    setBlanks!(pd,i=pars.i)
+    viewer(pd=pd,pars=pars)
+    return "x"
+end
 function allAutoSignalWindows!(pd,pars,action)
     setSignals!(pd)
     check!(pars.prioritylist,"swin")
     return "x"
 end
+function oneAutoSignalWindow!(pd,pars,action)
+    setSignals!(pd,i=pars.i)
+    viewer(pd=pd,pars=pars)
+    return "x"
+end
 function allSingleBlankWindows!(pd,pars,action)
-    println("allSingleBlankWindows!")
     windows = string2windows(pd,pars,action;single=true)
     setBlanks!(pd,windows=windows)
     check!(pars.prioritylist,"bwin")
+    return "xx"
+end
+function oneSingleBlankWindow!(pd,pars,action)
+    windows = string2windows(pd,pars,action;single=true)
+    setBlanks!(pd,windows=windows,i=pars.i)
+    viewer(pd=pd,pars=pars)
     return "xx"
 end
 function allSingleSignalWindows!(pd,pars,action)
@@ -101,16 +116,34 @@ function allSingleSignalWindows!(pd,pars,action)
     check!(pars.prioritylist,"swin")
     return "xx"
 end
+function oneSingleSignalWindow!(pd,pars,action)
+    windows = string2windows(pd,pars,action;single=true)
+    setSignals!(pd,windows=windows,i=pars.i)
+    viewer(pd=pd,pars=pars)
+    return "xx"
+end
 function allMultiBlankWindows!(pd,pars,action)
     windows = string2windows(pd,pars,action)
     setBlanks!(pd,windows=windows)
     check!(pars.prioritylist,"bwin")
     return "xx"
 end
+function oneMultiBlankWindow!(pd,pars,action)
+    windows = string2windows(pd,pars,action)
+    setBlanks!(pd,windows=windows,i=pars.i)
+    viewer(pd=pd,pars=pars)
+    return "xx"
+end
 function allMultiSignalWindows!(pd,pars,action)
     windows = string2windows(pd,pars,action)
     setSignals!(pd,windows=windows)
     check!(pars.prioritylist,"swin")
+    return "xx"
+end
+function oneMultiSignalWindow!(pd,pars,action)
+    windows = string2windows(pd,pars,action)
+    setSignals!(pd,windows=windows,i=pars.i)
+    viewer(pd=pd,pars=pars)
     return "xx"
 end
 
@@ -130,8 +163,9 @@ end
 
 function listSamples(pd,pars,action)
     snames = getSnames(pd)
-    for sname in snames
-        println(sname)
+    for i in eachindex(snames)
+        if i==pars.i println(snames[i]*" [current plot]")
+        else println(snames[i]) end
     end
     return nothing
 end
@@ -140,6 +174,13 @@ function viewer(;pd,pars)
     samp = getSamples(pd)[pars.i]
     p = plot(samp,channels=pars.channels,den=pars.den)
     display(p)
+end
+
+function initialView(pd,pars,action)
+    if !isnothing(getSamples(pd))
+        viewer(pd=pd,pars=pars)
+    end
+    return "view"
 end
 
 function viewnext!(pd,pars,action)

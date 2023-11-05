@@ -130,9 +130,9 @@ end
 export plotCalibration
 
 function getRawPlotDat(df::DataFrame;
-                       channels::Union{Nothing,Vector{String}}=nothing,
-                       num::Union{Nothing,Vector{String}}=nothing,
-                       den::Union{Nothing,Vector{String}}=nothing,
+                       channels::Union{Nothing,AbstractVector}=nothing,
+                       num::Union{Nothing,AbstractVector}=nothing,
+                       den::Union{Nothing,AbstractVector}=nothing,
                        brackets=true)
     tT = df[:,1:2]
     if isnothing(channels)

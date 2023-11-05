@@ -1,17 +1,17 @@
 function findSamples(pd::run;snames=nothing,
-                     prefix=nothing,i=nothing)::Vector{Integer}
+                     prefix=nothing,i=nothing)::AbstractVector
     if isnothing(i)
         allsnames = getSnames(pd)
         if isnothing(prefix)
             if isnothing(snames) # return all samples
                 out = 1:length(pd)
             else # snames-based
-                if isa(snames,String) snames = [snames] end
+                if isa(snames,AbstractString) snames = [snames] end
                 out = findall(in(snames),allsnames)
             end
         else # prefix-based
-            if isa(prefix,String) prefix = [prefix] end
-            out = Vector{Integer}()
+            if isa(prefix,AbstractString) prefix = [prefix] end
+            out = Integer[]
             for j in eachindex(allsnames)
                 for p in prefix
                     if occursin(p,allsnames[j])
@@ -56,7 +56,7 @@ function fitRawSampleData(pd::run;i::Integer)
     DataFrame(mat,colnames)
 end
 
-function fitSamples(pd::run;i::Vector{Integer},
+function fitSamples(pd::run;i::AbstractVector,
                     num=nothing,den=[getIsotopes(pd)[end]],
                     logratios=false)
     nr = size(i,1)

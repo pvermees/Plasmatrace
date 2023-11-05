@@ -5,9 +5,9 @@ end
 export markStandards!
     
 function fitStandards!(pd::run;
-                       refmat::Union{String,Vector{String}},
+                       refmat::Union{AbstractString,AbstractVector},
                        n=1,verbose=false)
-    if isa(refmat,String) refmat = [refmat] end
+    if isa(refmat,AbstractString) refmat = [refmat] end
     setAB!(pd,refmat=refmat)
     groups = groupStandards(pd)
 
@@ -63,8 +63,8 @@ function groupStandards(pd::run)
 end
 
 function predictStandard(pd::run;
-                         sname::Union{Nothing,String}=nothing,
-                         prefix::Union{Nothing,String}=nothing,
+                         sname::Union{Nothing,AbstractString}=nothing,
+                         prefix::Union{Nothing,AbstractString}=nothing,
                          i::Union{Nothing,Integer}=nothing)
     bpar = getBPar(pd)
     spar = getSPar(pd)
