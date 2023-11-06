@@ -269,11 +269,10 @@ function clearSamplePrefixes!(pd,pars,action)
 end
 
 function export2csv(pd,pars,action)
-    i = findSamples(pd,prefix=pars.prefixes[1]) # TODO: extend to full vector
-    out = fitSamples(pd,i=i)
+    i = findSamples(pd,prefix=pars.prefixes)
+    out = fitSamples(pd,i=i,snames=true)
     CSV.write(action,out)
-    if isnothing(pars.prefixes) return "xx"
-    else return "xxxx" end
+    return "xxxx"
 end
 
 function savelog!(pd,pars,action)

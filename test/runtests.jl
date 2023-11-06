@@ -8,6 +8,7 @@ const polyVal = Plasmatrace.polyVal
 const setAB! = Plasmatrace.setAB!
 const findSamples = Plasmatrace.findSamples
 const setDriftPars! = Plasmatrace.setDriftPars!
+const setDownPars! = Plasmatrace.setDownPars!
 const setMassPars! = Plasmatrace.setMassPars!
 const getChannels = Plasmatrace.getChannels
 const findSamples = Plasmatrace.findSamples

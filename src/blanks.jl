@@ -10,7 +10,7 @@ function fitBlanks!(pd::run;n=2)
 end
 export fitBlanks!
 
-function parseBPar(bpar::Union{Nothing,AbstractVector{<:Number}};par="bx")
+function parseBPar(bpar::Union{Nothing,AbstractVector{<:AbstractFloat}};par="bx")
     nbp = Integer(size(bpar,1)//3)
     if (par=="bx") return bpar[1:nbp]
     elseif (par=="by") return bpar[nbp+1:2*nbp]

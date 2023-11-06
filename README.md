@@ -2,11 +2,10 @@
 
 ## Julia package for LA-ICP-MS data reduction
 
-Plasmatrace.jl is in early development and is not yet ready for
-practical use. For this reason, it has not yet been added to the
-[Julia](https://julialang.org/) package repository. However, if you
-want to play around with the current functionality, then you can
-install the package from GitHub.  At the Julia REPL:
+Plasmatrace.jl is in early development and has not yet been added to
+the [Julia](https://julialang.org/) package repository. However, if
+you want to play around with the current functionality, then you can
+install the package from GitHub. At the Julia REPL:
 
 ```
 import Pkg; Pkg.add(url="https://github.com/pvermees/Plasmatrace.jl")
@@ -24,48 +23,38 @@ julia> PT()
 ===========
 Plasmatrace
 ===========
-
-f: Load the data files
-m: Specify a method
-b: Bulk settings
+f: Load the data files[*]
+m: Specify a method[*]
+b: Bulk settings[*]
 v: View and adjust each sample
 p: Process the data
 e: Export the results
 l: Import/export a session log
 x: Exit
 f
-i. Specify your instrument [default=Agilent]
-r. Open and read the data files
+i. Specify your instrument[*]
+r. Open and read the data files[*]
+l. List all the samples in the session
+x. Exit
+i
+Choose a file format:
+1. Agilent
+1
+i. Specify your instrument
+r. Open and read the data files[*]
 l. List all the samples in the session
 x. Exit
 r
 Enter the full path of the data directory:
 /home/pvermees/Documents/Plasmatrace/Garnet/
-i. Specify your instrument [default=Agilent]
+i. Specify your instrument
 r. Open and read the data files
 l. List all the samples in the session
 x. Exit
 x
 f: Load the data files
-m: Specify a method
-b: Bulk settings
-v: View and adjust each sample
-p: Process the data
-e: Export the results
-l: Import/export a session log
-x: Exit
-b
-b. Set default blank windows
-s. Set default signal windows
-p. Add a standard by prefix
-n. Adjust the order of the polynomial fits
-r. Remove a standard
-l. List all the standards
-x. Exit
-x
-f: Load the data files
-m: Specify a method
-b: Bulk settings
+m: Specify a method[*]
+b: Bulk settings[*]
 v: View and adjust each sample
 p: Process the data
 e: Export the results
@@ -96,90 +85,85 @@ Choose from the following list of channels:
 17. Hf176 -> 258
 18. Hf178 -> 260
 
-and select the channels corresponding to the following isotopes or their proxies:
+and select the channels corresponding to the following isotopes or their proxies: 
 Lu176,Hf177,Hf176
-
-Specify your selection as a comma-separated list of numbers.
-For example: 1,2,3
+Specify your selection as a comma-separated list of numbers:
 15,18,17
 f: Load the data files
 m: Specify a method
-b: Bulk settings
+b: Bulk settings[*]
 v: View and adjust each sample
 p: Process the data
 e: Export the results
 l: Import/export a session log
 x: Exit
 b
-b. Set default blank windows
-s. Set default signal windows
-p. Add a standard by prefix
+b. Set default blank windows[*]
+w. Set default signal windows[*]
+p. Add a standard by prefix[*]
 n. Adjust the order of the polynomial fits
-r. Remove a standard
 l. List all the standards
+r. Remove a standard
 x. Exit
 b
-Specify the blank windows. The following are all valid entries:
-
-a: automatically select all the windows
-(m,M): set a single window from m to M seconds, e.g. (0,20)
-(m1,M1),(m2,M2): set multiple windows, e.g. (0,20),(25,30)
+a: automatic
+s: set a one-part window
+m: set a multi-part window
 a
 b. Set default blank windows
-s. Set default signal windows
-p. Add a standard by prefix
+w. Set default signal windows[*]
+p. Add a standard by prefix[*]
 n. Adjust the order of the polynomial fits
-r. Remove a standard
 l. List all the standards
+r. Remove a standard
 x. Exit
-s
-Specify the signal windows. The following are all valid entries:
-
-a: automatically select all the windows
-(m,M): set a single window from m to M seconds, e.g. (0,20)
-(m1,M1),(m2,M2): set multiple windows, e.g. (0,20),(25,30)
+w
+a: automatic
+s: set a one-part window
+m: set a multi-part window
 a
 b. Set default blank windows
-s. Set default signal windows
-p. Add a standard by prefix
+w. Set default signal windows
+p. Add a standard by prefix[*]
 n. Adjust the order of the polynomial fits
-r. Remove a standard
 l. List all the standards
-x. Exit
-p
-Enter the prefix(es) of the primary standard(s) as a comma-separated list of strings. For example:
-hogsbo_
-hogsbo,BP
-BP
-Now match this/these prefix(es) with the following reference materials:
-1. Hogsbo
-2. BP
-Enter your choice(s) as number or a comma-separated list of numbers,
-matching the order in which you entered the prefixes.
-2
-b. Set default blank windows
-s. Set default signal windows
-p. Add a standard by prefix
-n. Adjust the order of the polynomial fits
 r. Remove a standard
-l. List all the standards
 x. Exit
 x
 f: Load the data files
 m: Specify a method
-b: Bulk settings
+b: Bulk settings[*]
 v: View and adjust each sample
 p: Process the data
 e: Export the results
 l: Import/export a session log
 x: Exit
-l
-s: save session to a log file
-r: restore the log of a previous session
+b
+b. Set default blank windows
+w. Set default signal windows
+p. Add a standard by prefix[*]
+n. Adjust the order of the polynomial fits
+l. List all the standards
+r. Remove a standard
 x. Exit
+p
+s: Use a single primary reference material
+m: Use multiple primary reference materials
 s
-Enter the path and name of the log file:
-test.log
+Enter the prefix of the reference material:
+BP
+Now match this prefix with one of the following reference materials:
+1. Hogsbo
+2. BP
+2
+b. Set default blank windows
+w. Set default signal windows
+p. Add a standard by prefix
+n. Adjust the order of the polynomial fits
+l. List all the standards
+r. Remove a standard
+x. Exit
+x
 f: Load the data files
 m: Specify a method
 b: Bulk settings
@@ -200,8 +184,11 @@ e: Export the results
 l: Import/export a session log
 x: Exit
 e
-Enter the prefix of the samples to export.
-Alternatively, type 'a' to export all the samples.
+s. Export one sample
+m. Export multiple samples
+a. Export all samples
+s
+Enter the prefix of the sample to export:
 hogsbo
 j: export to .json
 c: export to .csv
@@ -209,6 +196,7 @@ x. Exit
 c
 Enter the path and name of the .csv file:
 /home/pvermees/Desktop/hogsbo.csv
+
 f: Load the data files
 m: Specify a method
 b: Bulk settings
@@ -238,7 +226,7 @@ julia> setSignals!(session);
 julia> fitBlanks!(session,n=2);
 julia> markStandards!(session,prefix="hogsbo_",standard=1);
 julia> markStandards!(session,prefix="BP -",standard=2);
-julia> fitStandards!(session,refmat=["Hogsbo","BP"],n=1);
+julia> fitStandards!(session,refmat=["Hogsbo","BP"],n=1,m=0);
 julia> p = plot(session,i=15)
 julia> display(p)
 ```

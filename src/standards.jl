@@ -17,7 +17,7 @@ function fitStandards!(pd::run;
     function misfit(par)
         out = 0
         aft = par[1:n]
-        aFT = [0;par[n+1:n+m+1]]
+        aFT = [0.0;par[n+1:n+m]]
         c = par[end]
         for g in groups
             t = g.s[:,1]
@@ -38,11 +38,9 @@ function fitStandards!(pd::run;
     fit = Optim.optimize(misfit,init)
     if verbose println(fit) end
     sol = Optim.minimizer(fit)
-    par = getPar(pd)
-    setDriftPars!(par,sol[1:n])
-    setDownPars!(par,sol[n+1:n+m+1])
-    setMassPars!(par,sol[end])
-    setPar!(pd,par)
+    setDriftPars!(pd,sol[1:n])
+    setDownPars!(pd,sol[n+1:n+m])
+    setMassPars!(pd,sol[end])
 end
 export fitStandards!
 
@@ -85,9 +83,9 @@ function predictStandard(pd::run;sname::Union{Nothing,AbstractString}=nothing,
     Ym = s[:,4]
     Zm = s[:,5]
     
-    c = getMassPars(pd)
     ft = polyVal(p=getDriftPars(pd),t=t)
-    FT = polyVal(p=[0;getDownPars(pd)],t=T)
+    FT = polyVal(p=[0.0;getDownPars(pd)],t=T)
+    c = getMassPars(pd)
     
     bpar = getBlankPars(pd)
     bXt = polyVal(p=parseBPar(bpar,par="bx"),t=t)

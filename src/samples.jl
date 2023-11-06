@@ -1,6 +1,7 @@
 function findSamples(pd::run;
                      snames::Union{Nothing,AbstractVector{<:AbstractString}}=nothing,
-                     prefix::Union{Nothing,AbstractString}=nothing,
+                     prefix::Union{Nothing,AbstractString,
+                                   AbstractVector{<:AbstractString}}=nothing,
                      i::Union{Nothing,Integer,Vector{<:Integer}}=nothing)
     if isnothing(i)
         allsnames = getSnames(pd)
@@ -65,14 +66,16 @@ end
 
 function fitSamples(pd::run;i::AbstractVector{<:Integer},
                     num=nothing,den=[getIsotopes(pd)[end]],
-                    logratios=false)
+                    logratios=false,snames=false)
     nr = size(i,1)
     v = Vector{DataFrame}(undef,nr)
     for j in eachindex(i)
         dat = fitRawSampleData(pd,i=i[j])
         v[j] = averat(dat[:,3:end],num=num,den=den,logratios=logratios)
     end
-    reduce(vcat, v)
+    out = reduce(vcat, v)
+    if snames insertcols!(out,1,:name => getSnames(pd,i=i)) end
+    return out
 end
 export fitSamples
 
@@ -81,7 +84,7 @@ function atomic(;s,par)
     t = s[:,1]; T = s[:,2]; Xm = s[:,3]; Ym = s[:,4]; Zm = s[:,5]
     c = getMassPars(par)
     ft = polyVal(p=getDriftPars(par),t=t)
-    FT = polyVal(p=getDownPars(par),t=T)
+    FT = polyVal(p=[0.0;getDownPars(par)],t=T)
     bpar = getBlankPars(par)
     bXt = polyVal(p=parseBPar(bpar,par="bx"),t=t)
     bYt = polyVal(p=parseBPar(bpar,par="by"),t=t)

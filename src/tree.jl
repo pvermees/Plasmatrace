@@ -50,16 +50,16 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             "w. Set default signal windows"*check(pl,"swin")*"\n"*
             "p. Add a standard by prefix"*check(pl,"prefixes")*"\n"*
             "n. Adjust the order of the polynomial fits\n"*
-            "r. Remove a standard\n"*
             "l. List all the standards\n"*
+            "r. Remove a standard\n"*
             "x. Exit",
             actions = Dict(
                 "b" => "allBlankWindows",
                 "w" => "allSignalWindows",
                 "p" => "setStandardPrefixes",
                 "n" => "polyFit",
-                "r" => unsupported,
                 "l" => unsupported,
+                "r" => unsupported,
                 "x" => "x"
             )
         ),
@@ -90,9 +90,9 @@ function tree(key::T,pl::Dict) where T<:AbstractString
         ),
         "samples" => (
             message =
-            "s. Export one sample to a single table\n"*
-            "m. Export multiple samples to multiple tables\n"*
-            "a. Export all samples to a single table",
+            "s. Export one sample\n"*
+            "m. Export multiple samples\n"*
+            "a. Export all samples",
             actions = Dict(
                 "s" => "exportOneSample",
                 "m" => "exportMultipleSamples",
@@ -283,7 +283,7 @@ function tree(key::T,pl::Dict) where T<:AbstractString
         "exportMultipleSamples" => (
             message =
             "Enter the prefixes of the samples to export as a "*
-            "comma-separated list of strings:",
+            "comma-separated list of names:",
             actions = setSamplePrefixes!
         ),
         "read" => (
