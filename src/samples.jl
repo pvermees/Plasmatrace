@@ -29,10 +29,16 @@ function findSamples(pd::run;
 end
 
 function fitable(pd::run;throw=false)
-    if isnothing(getBPar(pd))
+    if isnothing(getBlankPars(pd))
         if throw PTerror("missingBlank ")
         else return false end
-    elseif isnothing(getSPar(pd))
+    elseif isnothing(getDriftPars(pd))
+        if throw PTerror("missingStandard")
+        else return false end
+    elseif isnothing(getDownPars(pd))
+        if throw PTerror("missingStandard")
+        else return false end
+    elseif isnothing(getMassPars(pd))
         if throw PTerror("missingStandard")
         else return false end
     elseif isnothing(getChannels(pd))
@@ -48,12 +54,11 @@ end
 
 function fitRawSampleData(pd::run;i::Integer)
     fitable(pd,throw=true)
-    bpar = getBPar(pd)
-    spar = getSPar(pd)
     channels = getChannels(pd)
+    par = getPar(pd)
     samp = getSamples(pd)[i]
     s = signalData(samp,channels=channels)
-    mat = atomic(s=s,bpar=bpar,spar=spar)
+    mat = atomic(s=s,par=par)
     colnames = [names(s)[1:2];getIsotopes(pd)]
     DataFrame(mat,colnames)
 end
@@ -72,11 +77,12 @@ end
 export fitSamples
 
 # s is a data frame with the output of signalData(...)
-function atomic(;s,bpar,spar)
+function atomic(;s,par)
     t = s[:,1]; T = s[:,2]; Xm = s[:,3]; Ym = s[:,4]; Zm = s[:,5]
-    c = parseSPar(spar,par="c")
-    ft = polyVal(p=parseSPar(spar,par="f"),t=t)
-    FT = polyVal(p=parseSPar(spar,par="F"),t=T)
+    c = getMassPars(par)
+    ft = polyVal(p=getDriftPars(par),t=t)
+    FT = polyVal(p=getDownPars(par),t=T)
+    bpar = getBlankPars(par)
     bXt = polyVal(p=parseBPar(bpar,par="bx"),t=t)
     bYt = polyVal(p=parseBPar(bpar,par="by"),t=t)
     bZt = polyVal(p=parseBPar(bpar,par="bz"),t=t)

@@ -23,7 +23,7 @@ end
 function setAB!(pd::run;refmat::Union{T,AbstractVector{T}}) where T<:AbstractString
     method = getMethod(pd)
     if isnothing(method) PTerror("undefinedMethod") end
-    if isa(refmat,String) refmat = [refmat] end
+    if isa(refmat,AbstractString) refmat = [refmat] end
     nref = size(refmat,1)
     A = Vector{Float64}(undef,nref)
     B = Vector{Float64}(undef,nref)

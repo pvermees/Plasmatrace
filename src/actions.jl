@@ -228,6 +228,18 @@ function setStandardPrefixes!(pd,pars,action)
     return "refmat"
 end
 
+function setNblank!(pd,pars,action)
+    pars.n[1] = parse(Int,action)
+    return "x"
+end
+function setNdrift!(pd,pars,action)
+    pars.n[2] = parse(Int,action)
+    return "x"
+end
+function setNdown!(pd,pars,action)
+    pars.n[3] = parse(Int,action)
+    return "x"
+end
 
 function chooseRefMat!(pd,pars,action)
     method = getMethod(pd)
@@ -242,7 +254,7 @@ function process!(pd,pars,action)
     println("Fitting blanks...")
     fitBlanks!(pd,n=pars.n[1])
     println("Fitting standards...")
-    fitStandards!(pd,refmat=pars.refmats,n=pars.n[2])
+    fitStandards!(pd,refmat=pars.refmats,n=pars.n[2],m=pars.n[3])
     return nothing
 end
 

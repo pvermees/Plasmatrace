@@ -93,11 +93,10 @@ function plotCalibration(pd::run,ms=2,ma=0.5,xlim=nothing,ylim=nothing)
     ng = size(groups,1)
     plotdat = Vector{DataFrame}(undef,ng)
     xm = Inf; xM = -Inf; ym = Inf; yM = -Inf
-    bpar = getBPar(pd)
-    spar = getSPar(pd)
+    par = getPar(pd)
     colnames = [names(groups[1].s)[1:2];getIsotopes(pd)]
     for i in 1:ng
-        mat = atomic(s=groups[i].s,bpar=bpar,spar=spar)
+        mat = atomic(s=groups[i].s,par=par)
         df = DataFrame(mat,colnames)
         plotdat[i] = getRawPlotDat(df,den=[colnames[5]],brackets=false)
         if !isnothing(xlim)

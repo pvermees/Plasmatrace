@@ -22,7 +22,7 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
         "prefixes" => true
     )
     pars = TUIpars(["top"],1,DataFrame(task=String[],action=String[]),
-                   nothing,nothing,nothing,nothing,[2,1],prioritylist)
+                   nothing,nothing,nothing,nothing,Int[2,1,0],prioritylist)
     println(tree("welcome",pars.prioritylist))
     if isnothing(logbook)
         while true

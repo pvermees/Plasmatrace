@@ -28,6 +28,12 @@ function accessControl!(pd::run,fun::Function,val::Any)
     fun(ctrl,val)
     setControl!(pd,ctrl)
 end
+# set the pars parameters inside a run:
+function accessPar!(pd::run,fun::Function,val::Any)
+    par = getPar(pd)
+    fun(par,val)
+    setPar!(pd,par)
+end
 
 # get sample attributes
 function getSname(pd::sample) getproperty(pd,:sname) end
@@ -40,10 +46,8 @@ function getStandard(pd::sample) getproperty(pd,:standard) end
 # get run attributes
 function getSamples(pd::run) getproperty(pd,:samples) end
 function getControl(pd::run) getproperty(pd,:control) end
-function getBPar(pd::run) getproperty(pd,:bpar) end
-function getSPar(pd::run) getproperty(pd,:spar) end
-function getBCov(pd::run) getproperty(pd,:bcov) end
-function getSCov(pd::run) getproperty(pd,:scov) end
+function getPar(pd::run) getproperty(pd,:par) end
+function getCov(pd::run) getproperty(pd,:cov) end
 
 # get sample attributes from a run
 function getSnames(pd::run;i=nothing) accesSample(pd,i,AbstractString,getSname) end
@@ -80,10 +84,8 @@ export setStandard!
 # set run attributes
 function setSamples!(pd::run,samples::AbstractVector{sample}) setproperty!(pd,:samples,samples) end
 function setControl!(pd::run,ctrl::control) setproperty!(pd,:control,ctrl) end
-function setBPar!(pd::run,bpar::Vector{Float64}) setproperty!(pd,:bpar,bpar) end
-function setSPar!(pd::run,spar::Vector{Float64}) setproperty!(pd,:spar,spar) end
-function setBCov!(pd::run,bcov::Matrix) setproperty!(pd,:bcov,bcov) end
-function setSCov!(pd::run,scov::Matrix) setproperty!(pd,:scov,scov) end
+function setPar!(pd::run,par::fitPars) setproperty!(pd,:par,par) end
+function setCov!(pd::run,cov::Matrix) setproperty!(pd,:cov,cov) end
 
 # set key sample attributes in a run
 function setBWin!(pd::run;i::Union{Integer,AbstractVector{<:Integer}},bwin::Vector{window}) accesSample!(pd,i,setBwin!,bwin) end
@@ -105,6 +107,30 @@ function setA!(pd::run,A::Vector{Float64}) accessControl!(pd,setA!,A) end
 function setB!(pd::run,B::Vector{Float64}) accessControl!(pd,setB!,B) end
 function setIsotopes!(pd::run,isotopes::Vector{String}) accessControl!(pd,setIsotopes!,isotopes) end
 function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,setChannels!,channels) end
+
+# get fitPars attributes
+function getBlankPars(fp::fitPars) getproperty(fp,:blank) end
+function getDriftPars(fp::fitPars) getproperty(fp,:drift) end
+function getDownPars(fp::fitPars) getproperty(fp,:down) end
+function getMassPars(fp::fitPars) getproperty(fp,:mass) end
+
+# set fitPars attributes
+function setBlankPars!(fp::fitPars,blank::AbstractVector{<:AbstractFloat}) setproperty!(fp,:blank,blank) end
+function setDriftPars!(fp::fitPars,drift::AbstractVector{<:AbstractFloat}) setproperty!(fp,:drift,drift) end
+function setDownPars!(fp::fitPars,down::AbstractVector{<:AbstractFloat}) setproperty!(fp,:down,down) end
+function setMassPars!(fp::fitPars,mass::AbstractFloat) setproperty!(fp,:mass,mass) end
+
+# get fitPars attributes from a run
+function getBlankPars(pd::run) getBlankPars(getPar(pd)) end
+function getDriftPars(pd::run) getDriftPars(getPar(pd)) end
+function getDownPars(pd::run) getDownPars(getPar(pd)) end
+function getMassPars(pd::run) getMassPars(getPar(pd)) end
+
+# set fitPars attributes in a run
+function setBlankPars!(pd::run,blank::AbstractVector{<:AbstractFloat}) accessPar!(pd,setBlankPars!,blank) end
+function setDriftPars!(pd::run,drift::AbstractVector{<:AbstractFloat}) accessPar!(pd,setDriftPars!,drift) end
+function setDownPars!(pd::run,down::AbstractVector{<:AbstractFloat}) accessPar!(pd,setDownPars!,down) end
+function setMassPars!(pd::run,mass::AbstractFloat) accessPar!(pd,setMassPars!,mass) end
 
 length(pd::run) = size(getSamples(pd),1)
 

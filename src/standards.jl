@@ -9,16 +9,16 @@ export markStandards!
     
 function fitStandards!(pd::run;
                        refmat::Union{AbstractString,AbstractVector{<:AbstractString}},
-                       n=1,verbose=false)
+                       n=1,m=0,verbose=false)
     if isa(refmat,AbstractString) refmat = [refmat] end
     setAB!(pd,refmat=refmat)
     groups = groupStandards(pd)
 
     function misfit(par)
         out = 0
+        aft = par[1:n]
+        aFT = [0;par[n+1:n+m+1]]
         c = par[end]
-        aft = parseSPar(par,par="f")
-        aFT = parseSPar(par,par="F")
         for g in groups
             t = g.s[:,1]
             T = g.s[:,2]
@@ -34,19 +34,24 @@ function fitStandards!(pd::run;
         out
     end
 
-    init = fill(0.0,2*n)
+    init = fill(0.0,n+m+1)
     fit = Optim.optimize(misfit,init)
     if verbose println(fit) end
     sol = Optim.minimizer(fit)
-    setSPar!(pd,sol)
+    par = getPar(pd)
+    setDriftPars!(par,sol[1:n])
+    setDownPars!(par,sol[n+1:n+m+1])
+    setMassPars!(par,sol[end])
+    setPar!(pd,par)
 end
 export fitStandards!
 
 function groupStandards(pd::run)
-    bpar = getBPar(pd)
-    if isnothing(bpar) PTerror("missingBlank") end
+    par = getPar(pd)
+    if isnothing(par) PTerror("missingBlank") end
     A = getA(pd)
     B = getB(pd)
+    bpar = getBlankPars(pd)
     bx = parseBPar(bpar,par="bx")
     by = parseBPar(bpar,par="by")
     bz = parseBPar(bpar,par="bz")
@@ -68,25 +73,23 @@ end
 function predictStandard(pd::run;sname::Union{Nothing,AbstractString}=nothing,
                          prefix::Union{Nothing,AbstractString}=nothing,
                          i::Union{Nothing,Integer}=nothing)
-    bpar = getBPar(pd)
-    spar = getSPar(pd)
-    if isnothing(bpar) PTerror("missingBlank") end
-    if isnothing(spar) PTerror("missingStandard") end
+    fitable(pd,throw=true)
     i = findSamples(pd,i=i,prefix=prefix,snames=sname)[1]
     standard = getStandard(pd,i=i)
     if standard<1 return nothing end
-    s = signalData(pd,i=i)
 
+    s = signalData(pd,i=i)
     t = s[:,1]
     T = s[:,2]
     Xm = s[:,3]
     Ym = s[:,4]
     Zm = s[:,5]
     
-    c = parseSPar(spar,par="c")
-    ft = polyVal(p=parseSPar(spar,par="f"),t=t)
-    FT = polyVal(p=parseSPar(spar,par="F"),t=T)
-
+    c = getMassPars(pd)
+    ft = polyVal(p=getDriftPars(pd),t=t)
+    FT = polyVal(p=[0;getDownPars(pd)],t=T)
+    
+    bpar = getBlankPars(pd)
     bXt = polyVal(p=parseBPar(bpar,par="bx"),t=t)
     bYt = polyVal(p=parseBPar(bpar,par="by"),t=t)
     bZt = polyVal(p=parseBPar(bpar,par="bz"),t=t)
@@ -102,15 +105,4 @@ function predictStandard(pd::run;sname::Union{Nothing,AbstractString}=nothing,
     
     channels = getChannels(pd)
     DataFrame(hcat(t,T,Xp,Yp,Zp),[names(s)[1:2];channels])
-end
-
-function parseSPar(spar;par="c")
-    if isnothing(spar) PTerror("missingStandard") end
-    np = size(spar,1)
-    n = Int(np/2)
-    if (par=="c") return spar[end]
-    elseif (par=="f") return spar[1:n]
-    elseif (par=="F") return [0;spar[n+1:2*n-1]]
-    else return nothing
-    end
 end

@@ -57,7 +57,7 @@ function tree(key::T,pl::Dict) where T<:AbstractString
                 "b" => "allBlankWindows",
                 "w" => "allSignalWindows",
                 "p" => "setStandardPrefixes",
-                "n" => unsupported,
+                "n" => "polyFit",
                 "r" => unsupported,
                 "l" => unsupported,
                 "x" => "x"
@@ -249,6 +249,32 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             "Enter the prefixes of the reference material as"*
             "a comma-separated list of names:",
             actions = setStandardPrefixes!
+        ),
+        "polyFit" => (
+            message =
+            "Change the order of the polynomial fit describing:\n"*
+            "b. The blank\n"*
+            "d. Session drift\n"*
+            "h. Down-hole fractionation\n"*
+            "x. Exit",
+            actions = Dict(
+                "b" => "setNblank",
+                "d" => "setNdrift",
+                "h" => "setNdown",
+                "x" => "x"
+            )
+        ),
+        "setNblank" => (
+            message = setNblankMessage,
+            actions = setNblank!
+        ),
+        "setNdrift" => (
+            message = setNdriftMessage,
+            actions = setNdrift!
+        ),
+        "setNdown" => (
+            message = setNdownMessage,
+            actions = setNdown!
         ),
         "exportOneSample" => (
             message = "Enter the prefix of the sample to export:",

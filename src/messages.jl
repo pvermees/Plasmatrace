@@ -57,3 +57,16 @@ function chooseRefMatMessage(pd,pars)
                 "numbers matching the order in which you entered the prefixes.")
     end
 end
+
+function setNblankMessage(pd,pars)
+    println("Enter a positive (n>0) integer value (currently n="*
+            string(pars.n[1])*")")
+end
+function setNdriftMessage(pd,pars)
+    println("Enter a positive (n>0) integer value (currently n="*
+            string(pars.n[2])*")")
+end
+function setNdownMessage(pd,pars)
+    println("Enter a non-negative (n>=0) integer value (currently n="*
+            string(pars.n[3])*")")
+end

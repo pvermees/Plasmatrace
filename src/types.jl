@@ -17,16 +17,21 @@ mutable struct sample <: plasmaData
     dat::DataFrame
     bwin::Union{Nothing,Vector{window}}
     swin::Union{Nothing,Vector{window}}
-    standard::Integer
+    standard::Int
+end
+
+mutable struct fitPars
+    blank::Union{Nothing,Vector{Float64}}
+    drift::Union{Nothing,Vector{Float64}}
+    down::Union{Nothing,Vector{Float64}}
+    mass::Union{Nothing,Float64}
 end
 
 mutable struct run <: plasmaData
     samples::Union{Nothing,Vector{sample}}
     control::Union{Nothing,control}
-    bpar::Union{Nothing,Vector{Float64}}
-    spar::Union{Nothing,Vector{Float64}}
-    bcov::Union{Nothing,Matrix}
-    scov::Union{Nothing,Matrix}
+    par::fitPars
+    cov::Union{Nothing,Matrix}
 end
 
 mutable struct TUIpars
@@ -37,7 +42,7 @@ mutable struct TUIpars
     den::Union{Nothing,Vector{String}}
     prefixes::Union{Nothing,Vector{String}}
     refmats::Union{Nothing,Vector{String}}
-    n::Vector{Integer}
+    n::Vector{Int}
     prioritylist::Dict
 end
 
@@ -45,6 +50,8 @@ sample(sname,datetime,dat) = sample(sname,datetime,dat,nothing,nothing,0)
 
 control() = control(nothing,nothing,nothing,nothing,nothing,nothing)
 
-run(samples) = run(samples,control(),nothing,nothing,nothing,nothing)
+fitPars() = fitPars(nothing,nothing,nothing,0.0)
+
+run(samples) = run(samples,control(),fitPars(),nothing)
 
 run() = run(nothing)
