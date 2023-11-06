@@ -20,9 +20,14 @@ function load(dname::T;instrument="Agilent")::run where T<:AbstractString
     ext = getExt(instrument)
     for fname in fnames
         if occursin(ext,fname)
-            samp = readFile(dname*fname,instrument=instrument)
-            push!(samples,samp)
-            push!(datetimes,getDateTime(samp))
+            try
+                pname = joinpath(dname,fname)
+                samp = readFile(pname,instrument=instrument)
+                push!(samples,samp)
+                push!(datetimes,getDateTime(samp))
+            catch e
+                println("Failed to read "*fname)
+            end
         end
     end
     order = sortperm(datetimes)
