@@ -137,6 +137,7 @@ function TUItest()
     PT!("logs/singleWin.log")
     PT!("logs/BP.log")
     PT!("logs/hogsbo.log")
+    PT!("logs/polyN.log")
 end
 
 Plots.closeall()

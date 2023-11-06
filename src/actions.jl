@@ -168,11 +168,15 @@ end
 
 function listSamples(pd,pars,action)
     samples = getSamples(pd)
+    standards = getStandard(pd)
+    nstand = size(unique(standards),1)-1
     for i in eachindex(samples)
         str = string(i)*". "*getSname(samples[i])
-        std = getStandard(samples[i])
-        if i==pars.i str*=" [current plot]" end
-        if std>0 str*=" [standard "*string(std)*"]" end
+        std = standards[i]
+        if std>0
+            str *= " [standard"
+            str *= nstand>1 ? " "*string(std)*"]" : "]"
+        end
         println(str)
     end
     return nothing
@@ -186,8 +190,7 @@ function goto!(pd,pars,action)
 end
 
 function viewer(;pd,pars)
-    samp = getSamples(pd)[pars.i]
-    p = plot(samp,channels=pars.channels,den=pars.den)
+    p = plot(pd,i=pars.i,channels=pars.channels,den=pars.den)
     display(p)
 end
 
@@ -220,7 +223,7 @@ end
 
 function setStandardPrefixes!(pd,pars,action)
     prefixes = string.(split(action,","))
-    markStandards!(pd,standard=0) # reset
+    markStandards!(pd,standard=0)
     for i in eachindex(prefixes)
         markStandards!(pd,prefix=prefixes[i],standard=i)
     end
@@ -239,6 +242,27 @@ end
 function setNdown!(pd,pars,action)
     pars.n[3] = parse(Int,action)
     return "x"
+end
+
+function listStandards(pd,pars,action)
+    standards = getStandards(pd)
+    nstand = size(unique(standard),1)-1
+    samples = getSamples(pd)
+    for i in eachindex(samples)
+        sample = samples[i]
+        if getStandard(sample)>1
+            message = string(i)*". "*getSname(sample)
+            if nstand>1 message*=" [standard "*getStandard(sample)*"]" end
+            println(message)
+        end
+    end
+    return nothing
+end
+
+function removeStandards!(pd,pars,action)
+    i = parse.(Int,split(action,","))
+    setStandard!(pd,i=i,standard=0)
+    return nothing
 end
 
 function chooseRefMat!(pd,pars,action)

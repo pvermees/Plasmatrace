@@ -46,15 +46,23 @@ function chooseRefMatMessage(pd,pars)
         println("Now match this prefix with one of "*
                 "the following reference materials:")
     end
+    refMatMessageHelper(pd,pars)
+    if nst>2
+        println("Enter your choices as number or a comma-separated list of "*
+                "numbers matching the order in which you entered the prefixes.")
+    end
+end
+function chooseSingleRefMatMessage(pd,pars)
+    nst = size(unique(getStandard(pd)),1)
+    println("Match the sample with one of the following reference materials:")
+    refMatMessageHelper(pd,pars)
+end
+function refMatMessageHelper(pd,pars)
     method = getMethod(pd)
     if isnothing(method) PTerror("undefinedMethod") end
     refMats = collect(keys(referenceMaterials[method]))
     for i in eachindex(refMats)
         println(string(i)*". "*refMats[i])
-    end
-    if nst>2
-        println("Enter your choices as number or a comma-separated list of "*
-                "numbers matching the order in which you entered the prefixes.")
     end
 end
 

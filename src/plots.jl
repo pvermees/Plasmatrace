@@ -1,13 +1,18 @@
 function plot(pd::sample;channels=nothing,
               num=nothing,den=nothing,
-              transformation="sqrt",titlefontsize=10)
+              transformation="sqrt",
+              prefix="",nstand=1,titlefontsize=10)
     dat = getDat(pd)
     plotdat = getRawPlotDat(dat,channels=channels,num=num,den=den)
     ylab = !isnothing(den) ? "ratio" : "signal"
     p = plotHelper(plotdat,transformation=transformation,ix=2,ylab=ylab)
-    tit = getSname(pd)
+    tit = prefix*getSname(pd)
     stand = getStandard(pd)
-    tit *= stand>0 ? " [standard "*string(stand)*"]" : ""
+    if stand>0
+        tit *= " [standard"
+        if nstand>1 tit *= " "*string(stand) end
+        tit *= "]"
+    end
     Plots.title!(tit,titlefontsize=titlefontsize)
     dy = Plots.ylims(p)
     plotWindows!(p,pd=pd,blank=true,dy=dy,linecolor="blue")
@@ -26,10 +31,12 @@ function plot(pd::run;i::Union{Nothing,Integer}=nothing,
                        seriestype=:path,ix=1,ylab=ylab)
     else
         if isnothing(channels) & isnothing(den) channels = getChannels(pd) end
-        p = plot(getSamples(pd)[i],channels=channels,
-                 num=num,den=den,transformation=transformation,
-                 titlefontsize=titlefontsize)
-        if fitable(pd)
+        samp = getSamples(pd)[i]
+        nstand = size(unique(getStandard(pd)),1)-1
+        p = plot(samp,channels=channels,num=num,den=den,
+                 transformation=transformation,prefix=string(i)*". ",
+                 nstand=nstand,titlefontsize=titlefontsize)
+        if fitable(pd) && getStandard(samp)>0
             plotFitted!(p,pd=pd,i=i,channels=channels,num=num,den=den,
                         transformation=transformation)
         end

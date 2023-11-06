@@ -51,15 +51,15 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             "p. Add a standard by prefix"*check(pl,"prefixes")*"\n"*
             "n. Adjust the order of the polynomial fits\n"*
             "l. List all the standards\n"*
-            "r. Remove a standard\n"*
+            "r. Remove standards\n"*
             "x. Exit",
             actions = Dict(
                 "b" => "allBlankWindows",
                 "w" => "allSignalWindows",
                 "p" => "setStandardPrefixes",
                 "n" => "polyFit",
-                "l" => unsupported,
-                "r" => unsupported,
+                "l" => listStandards,
+                "r" => "removeStandards",
                 "x" => "x"
             )
         ),
@@ -73,7 +73,6 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             "r: Plot signals or ratios?\n"*
             "b: Select blank window(s)\n"*
             "w: Select signal window(s)\n"*
-            "s: (un)mark as standard\n"*
             "x: Exit",
             actions = Dict(
                 "n" => viewnext!,
@@ -84,7 +83,6 @@ function tree(key::T,pl::Dict) where T<:AbstractString
                 "r" => "setDen",
                 "b" => "oneBlankWindow",
                 "w" => "oneSignalWindow",
-                "s" => unsupported,
                 "x" => "x"
             )
         ),
@@ -275,6 +273,11 @@ function tree(key::T,pl::Dict) where T<:AbstractString
         "setNdown" => (
             message = setNdownMessage,
             actions = setNdown!
+        ),
+        "removeStandards" => (
+            message = "Mark the standard(s) that should be removed "*
+            "as a comma separated list of sample numbers",
+            actions = removeStandards!
         ),
         "exportOneSample" => (
             message = "Enter the prefix of the sample to export:",
