@@ -67,12 +67,12 @@ function string2windows(pd,pars,action;single=false)
     for i in 1:nw
         if stime[i]>t[end]
             stime[i] = t[end-1]
-            println("Warning: start point out of bounds and truncated to ")
+            print("Warning: start point out of bounds and truncated to ")
             print(string(stime[i]) * " seconds.")
         end
         if ftime[i]>t[end]
             ftime[i] = t[end]
-            println("Warning: end point out of bounds and truncated to ")
+            print("Warning: end point out of bounds and truncated to ")
             print(string(maxt) * " seconds.")
         end
         start = max(1,Int(round(nt*stime[i]/maxt)))
@@ -296,7 +296,7 @@ function export2csv(pd,pars,action)
     i = findSamples(pd,prefix=pars.prefixes)
     out = fitSamples(pd,i=i,snames=true)
     CSV.write(action,out)
-    return "xxxx"
+    return "xxx"
 end
 
 function savelog!(pd,pars,action)

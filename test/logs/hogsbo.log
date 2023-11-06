@@ -1,9 +1,10 @@
 task,action
 top,f
 load,i
+instrument,
 instrument,1
 load,r
-read,/home/pvermees/Documents/Plasmatrace/Garnet/
+read,/home/pvermees/Documents/Plasmatrace/Garnet
 load,x
 top,m
 method,1
@@ -13,8 +14,6 @@ bulk,b
 allBlankWindows,a
 bulk,w
 allSignalWindows,a
-bulk,x
-top,b
 bulk,p
 setStandardPrefixes,s
 setSingleStandardPrefix,BP
@@ -23,6 +22,5 @@ bulk,x
 top,p
 top,e
 samples,s
-exportOneSample,hogsbo
-export,c
-csv,/home/pvermees/Desktop/hogsbo.csv
+exportOneSample,/home/Desktop/hogsbo.csv
+export,x

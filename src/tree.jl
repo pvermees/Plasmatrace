@@ -186,14 +186,14 @@ function tree(key::T,pl::Dict) where T<:AbstractString
         "allSingleSignalWindows" => (
             message =
             "Enter the start and end point of the selection window (in seconds) "*
-            "as a comma-separated pair of numbers. For example: 30,60 marks a blank "*
+            "as a comma-separated pair of numbers. For example: 30,60 marks a signal "*
             "window from 30 to 60 seconds",
             actions = allSingleSignalWindows!
         ),
         "oneSingleSignalWindow" => (
             message =
             "Enter the start and end point of the selection window (in seconds) "*
-            "as a comma-separated pair of numbers. For example: 30,60 marks a blank "*
+            "as a comma-separated pair of numbers. For example: 30,60 marks a signal "*
             "window from 30 to 60 seconds",
             actions = oneSingleSignalWindow!
         ),
@@ -210,7 +210,7 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             "Enter the start and end points of the multi-part selection window "*
             "(in seconds) as a comma-separated list of bracketed pairs of numbers. "*
             "For example: (0,20),(25,30) marks a two-part selection window from "*
-            "blank 0 to 20s, and from 25 to 30s.",
+            "0 to 20s, and from 25 to 30s.",
             actions = oneMultiBlankWindow!
         ),
         "allMultiSignalWindows" => (
@@ -226,7 +226,7 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             "Enter the start and end points of the multi-part selection window "*
             "(in seconds) as a comma-separated list of bracketed pairs of numbers. "*
             "For example: (40,45),(50,60) marks a two-part selection window from "*
-            "blank 40 to 45s, and from 50 to 60s.",
+            "40 to 45s, and from 50 to 60s.",
             actions = oneMultiSignalWindow!
         ),
         "setStandardPrefixes" => (
