@@ -3,41 +3,41 @@ const window = Tuple{Int,Int}
 abstract type plasmaData end
 
 mutable struct control
-    instrument::Union{Nothing,AbstractString}
-    method::Union{Nothing,AbstractString}
-    A::Union{Nothing,AbstractVector{AbstractFloat}}
-    B::Union{Nothing,AbstractVector{AbstractFloat}}
-    isotopes::Union{Nothing,AbstractVector{AbstractString}}
-    channels::Union{Nothing,AbstractVector{AbstractString}}
+    instrument::Union{Nothing,String}
+    method::Union{Nothing,String}
+    A::Union{Nothing,Vector{Float64}}
+    B::Union{Nothing,Vector{Float64}}
+    isotopes::Union{Nothing,Vector{String}}
+    channels::Union{Nothing,Vector{String}}
 end
 
 mutable struct sample <: plasmaData
-    sname::AbstractString
+    sname::String
     datetime::DateTime
     dat::DataFrame
-    bwin::Union{Nothing,AbstractVector{window}}
-    swin::Union{Nothing,AbstractVector{window}}
+    bwin::Union{Nothing,Vector{window}}
+    swin::Union{Nothing,Vector{window}}
     standard::Integer
 end
 
 mutable struct run <: plasmaData
-    samples::Union{Nothing,AbstractVector{sample}}
+    samples::Union{Nothing,Vector{sample}}
     control::Union{Nothing,control}
-    bpar::Union{Nothing,AbstractVector}
-    spar::Union{Nothing,AbstractVector}
+    bpar::Union{Nothing,Vector{Float64}}
+    spar::Union{Nothing,Vector{Float64}}
     bcov::Union{Nothing,Matrix}
     scov::Union{Nothing,Matrix}
 end
 
 mutable struct TUIpars
-    chain::AbstractVector{AbstractString}
-    i::Integer
+    chain::Vector{String}
+    i::Int
     history::DataFrame
-    channels::Union{Nothing,AbstractVector{AbstractString}}
-    den::Union{Nothing,AbstractVector{AbstractString}}
-    prefixes::Union{Nothing,AbstractVector{AbstractString}}
-    refmats::Union{Nothing,AbstractVector{AbstractString}}
-    n::AbstractVector{Integer}
+    channels::Union{Nothing,Vector{String}}
+    den::Union{Nothing,Vector{String}}
+    prefixes::Union{Nothing,Vector{String}}
+    refmats::Union{Nothing,Vector{String}}
+    n::Vector{Integer}
     prioritylist::Dict
 end
 

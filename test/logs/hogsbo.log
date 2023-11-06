@@ -20,3 +20,9 @@ setStandardPrefixes,s
 setSingleStandardPrefix,BP
 refmat,2
 bulk,x
+top,p
+top,e
+samples,s
+exportOneSample,hogsbo
+export,c
+csv,/home/pvermees/Desktop/hogsbo.csv

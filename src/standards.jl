@@ -1,11 +1,14 @@
-function markStandards!(pd;i=nothing,prefix=nothing,snames=nothing,standard=0)
+function markStandards!(pd::run;i::Union{Nothing,Integer}=nothing,
+                        prefix::Union{Nothing,AbstractString}=nothing,
+                        snames::Union{Nothing,AbstractVector{>:AbstractString}}=nothing,
+                        standard::Integer=0)
     j = findSamples(pd,snames=snames,prefix=prefix,i=i)
     setStandard!(pd,i=j,standard=standard)
 end
 export markStandards!
     
 function fitStandards!(pd::run;
-                       refmat::Union{AbstractString,AbstractVector},
+                       refmat::Union{AbstractString,AbstractVector{<:AbstractString}},
                        n=1,verbose=false)
     if isa(refmat,AbstractString) refmat = [refmat] end
     setAB!(pd,refmat=refmat)
@@ -62,8 +65,7 @@ function groupStandards(pd::run)
     return groups
 end
 
-function predictStandard(pd::run;
-                         sname::Union{Nothing,AbstractString}=nothing,
+function predictStandard(pd::run;sname::Union{Nothing,AbstractString}=nothing,
                          prefix::Union{Nothing,AbstractString}=nothing,
                          i::Union{Nothing,Integer}=nothing)
     bpar = getBPar(pd)

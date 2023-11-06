@@ -28,7 +28,7 @@ function setWindows!(pd::run;blank=false,windows=nothing,i=nothing)
     setSamples!(pd,samples)
 end
 
-function autoWindow(pd::sample;blank=false)::AbstractVector
+function autoWindow(pd::sample;blank=false)
     dat = getDat(pd)[:,3:end]
     total = sum.(eachrow(dat))
     q = Statistics.quantile(total,[0.05,0.95])

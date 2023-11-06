@@ -1,4 +1,4 @@
-function readFile(fname::AbstractString;instrument="Agilent")::sample
+function readFile(fname::T;instrument="Agilent")::sample where T<:AbstractString
     if instrument=="Agilent"
         sname, datetime, dat = readAgilent(fname)
     else
@@ -7,13 +7,13 @@ function readFile(fname::AbstractString;instrument="Agilent")::sample
     sample(sname,datetime,dat)
 end
 
-function load!(pd::run;dname::AbstractString,instrument="Agilent")
+function load!(pd::run;dname::T,instrument="Agilent") where T<:AbstractString
     temp = load(dname,instrument=instrument)
     setSamples!(pd,getSamples(temp))
 end
 export load!
 
-function load(dname::AbstractString;instrument="Agilent")::run
+function load(dname::T;instrument="Agilent")::run where T<:AbstractString
     fnames = readdir(dname)
     samples = Vector{sample}(undef,0)
     datetimes = Vector{DateTime}(undef,0)
@@ -42,7 +42,7 @@ function load(dname::AbstractString;instrument="Agilent")::run
 end
 export load
 
-function readAgilent(fname::AbstractString)
+function readAgilent(fname::T) where T<:AbstractString
     f = open(fname,"r")
     strs = readlines(f)
 
@@ -57,9 +57,8 @@ function readAgilent(fname::AbstractString)
 
     # read signals
     nr = size(strs,1)
-    Float = Sys.WORD_SIZE==64 ? Float64 : Float32
     measurements = mapreduce(vcat, strs[5:(nr-3)]) do s
-        (parse.(Float, split(s, ",")))'
+        (parse.(Float64, split(s, ",")))'
     end
     labels = ["Run Time [hours]";labels]
     dat = DataFrame(hcat(measurements[:,1]./sph,measurements),labels)

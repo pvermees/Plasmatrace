@@ -9,7 +9,7 @@ lambda = Dict(
     "LuHf" => (1.867e-05,8e-08)
 )
 
-function getAB(;method::AbstractString,refmat::AbstractString)
+function getAB(;method::T,refmat::T) where T<:AbstractString
     L = lambda[method][1]
     t = referenceMaterials[method][refmat].t[1]
     y0 = referenceMaterials[method][refmat].y0[1]
@@ -20,7 +20,7 @@ function getAB(;method::AbstractString,refmat::AbstractString)
     return A, B
 end
 
-function setAB!(pd::run;refmat::Union{AbstractString,AbstractVector})
+function setAB!(pd::run;refmat::Union{T,AbstractVector{T}}) where T<:AbstractString
     method = getMethod(pd)
     if isnothing(method) PTerror("undefinedMethod") end
     if isa(refmat,String) refmat = [refmat] end

@@ -9,6 +9,7 @@ function check!(priority,key)
 end
 
 function unsupported(pd,pars,action)
+    if action=="x" return "x" end
     println("This feature is not available yet.")
     return nothing
 end
@@ -16,6 +17,8 @@ end
 function chooseMethod!(pd,pars,action)
     if action=="1"
         method = "LuHf"
+    elseif action=="x"
+        return action
     else
         return nothing
     end
@@ -25,6 +28,7 @@ function chooseMethod!(pd,pars,action)
 end
 
 function selectChannels!(pd,pars,action)
+    if action=="x" return "x" end
     samples = getSamples(pd)
     selected = parse.(Int,split(action,","))
     labels = names(getDat(samples[1]))[3:end]
@@ -149,6 +153,7 @@ end
 
 function loadInstrument!(pd,pars,action)
     if action=="1" instrument = "Agilent"
+    elseif action=="x" return "x" 
     else return nothing end
     check!(pars.prioritylist,"instrument")
     setInstrument!(pd,instrument)
@@ -162,12 +167,22 @@ function loader!(pd,pars,action)
 end
 
 function listSamples(pd,pars,action)
-    snames = getSnames(pd)
-    for i in eachindex(snames)
-        if i==pars.i println(snames[i]*" [current plot]")
-        else println(snames[i]) end
+    samples = getSamples(pd)
+    for i in eachindex(samples)
+        str = string(i)*". "*getSname(samples[i])
+        std = getStandard(samples[i])
+        if i==pars.i str*=" [current plot]" end
+        if std>0 str*=" [standard "*string(std)*"]" end
+        println(str)
     end
     return nothing
+end
+
+function goto!(pd,pars,action)
+    samples = getSamples(pd)
+    pars.i = parse(Int,action)
+    viewer(pd=pd,pars=pars)
+    return "x"
 end
 
 function viewer(;pd,pars)
@@ -184,12 +199,14 @@ function initialView(pd,pars,action)
 end
 
 function viewnext!(pd,pars,action)
+    if action=="x" return "x" end
     pars.i = pars.i<length(pd) ? pars.i+1 : 1
     viewer(pd=pd,pars=pars)
     return nothing
 end
 
 function viewprevious!(pd,pars,action)
+    if action=="x" return "x" end
     pars.i = pars.i>1 ? pars.i-1 : length(pd)
     viewer(pd=pd,pars=pars)
     return nothing
@@ -221,6 +238,7 @@ function chooseRefMat!(pd,pars,action)
 end
 
 function process!(pd,pars,action)
+    if action=="x" return "x" end
     println("Fitting blanks...")
     fitBlanks!(pd,n=pars.n[1])
     println("Fitting standards...")
@@ -233,12 +251,13 @@ function setSamplePrefixes!(pd,pars,action)
     return "export"
 end
 function clearSamplePrefixes!(pd,pars,action)
+    if action=="x" return "x" end
     pars.prefixes = nothing
     return "export"
 end
 
 function export2csv(pd,pars,action)
-    i = findSamples(pd,prefix=pars.prefixes)
+    i = findSamples(pd,prefix=pars.prefixes[1]) # TODO: extend to full vector
     out = fitSamples(pd,i=i)
     CSV.write(action,out)
     if isnothing(pars.prefixes) return "xx"

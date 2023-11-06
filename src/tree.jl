@@ -1,4 +1,4 @@
-function tree(key::AbstractString,pl::Dict)
+function tree(key::T,pl::Dict) where T<:AbstractString
     branches = Dict(
         "welcome" => 
         "===========\n"*
@@ -78,7 +78,7 @@ function tree(key::AbstractString,pl::Dict)
             actions = Dict(
                 "n" => viewnext!,
                 "p" => viewprevious!,
-                "g" => unsupported,
+                "g" => "goto",
                 "l" => listSamples,
                 "c" => "viewChannels",
                 "r" => "setDen",
@@ -268,6 +268,10 @@ function tree(key::AbstractString,pl::Dict)
         "channels" => (
             message = chooseChannelMessage,
             actions = chooseChannels!
+        ),
+        "goto" => (
+            message = "Enter the sample number:",
+            actions = goto!
         ),
         "viewChannels" => (
             message = viewChannelMessage,

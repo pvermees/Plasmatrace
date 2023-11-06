@@ -3,7 +3,7 @@ function PT()
 end
 export PT
 
-function PT!(fpath::AbstractString)
+function PT!(fpath::T) where T<:AbstractString
     logbook = CSV.read(fpath,DataFrame)
     myrun, pars = PT!(logbook)
     myrun
@@ -21,8 +21,7 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
         "swin" => true,
         "prefixes" => true
     )
-    pars = TUIpars(["top"],1,
-                   DataFrame(task=AbstractString[],action=AbstractString[]),
+    pars = TUIpars(["top"],1,DataFrame(task=String[],action=String[]),
                    nothing,nothing,nothing,nothing,[2,1],prioritylist)
     println(tree("welcome",pars.prioritylist))
     if isnothing(logbook)
@@ -45,7 +44,7 @@ export PT!
 
 function arbeid!(pd::run;pars::TUIpars,
                  task=nothing,action=nothing,verbatim=false)
-#    try
+    try
         if isempty(pars.chain) return "exit" end
         if isnothing(task) task = pars.chain[end] end
         out = dispatch!(pd,pars=pars,task=task,action=action,verbatim=verbatim)
@@ -70,9 +69,9 @@ function arbeid!(pd::run;pars::TUIpars,
             push!(pars.chain,out.next)
         end
         push!(pars.history,[task,action])
-#    catch e
-#        println(e)
-#    end
+    catch e
+        println(e)
+    end
     return nothing
 end
 

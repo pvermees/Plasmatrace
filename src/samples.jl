@@ -1,5 +1,7 @@
-function findSamples(pd::run;snames=nothing,
-                     prefix=nothing,i=nothing)::AbstractVector
+function findSamples(pd::run;
+                     snames::Union{Nothing,AbstractVector{<:AbstractString}}=nothing,
+                     prefix::Union{Nothing,AbstractString}=nothing,
+                     i::Union{Nothing,Integer,Vector{<:Integer}}=nothing)
     if isnothing(i)
         allsnames = getSnames(pd)
         if isnothing(prefix)
@@ -56,7 +58,7 @@ function fitRawSampleData(pd::run;i::Integer)
     DataFrame(mat,colnames)
 end
 
-function fitSamples(pd::run;i::AbstractVector,
+function fitSamples(pd::run;i::AbstractVector{<:Integer},
                     num=nothing,den=[getIsotopes(pd)[end]],
                     logratios=false)
     nr = size(i,1)
