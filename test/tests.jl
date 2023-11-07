@@ -59,14 +59,14 @@ function blanktest()
     b = Matrix(blankData(myrun))
     t = b[:,1]
     bpar = getBlankPars(myrun)
-    bx = parseBPar(bpar,par="bx")
-    by = parseBPar(bpar,par="by")
-    bz = parseBPar(bpar,par="bz")
-    bXt = polyVal(p=bx,t=t)
-    bYt = polyVal(p=by,t=t)
-    bZt = polyVal(p=bz,t=t)
+    bP = parseBPar(bpar,par="bP")
+    bD = parseBPar(bpar,par="bD")
+    bd = parseBPar(bpar,par="bd")
+    bPt = polyVal(p=bP,t=t)
+    bDt = polyVal(p=bD,t=t)
+    bdt = polyVal(p=bd,t=t)
     p = Plots.plot(t,b[:,3:5])
-    p = Plots.plot!(p,t,hcat(bXt,bYt,bZt),linecolor="black")
+    p = Plots.plot!(p,t,hcat(bPt,bdt,bDt),linecolor="black")
     @test display(p) != NaN
 end
 
@@ -128,7 +128,7 @@ function averagetest()
     fitStandards!(myrun,refmat=["BP"],n=1,m=0,verbose=true)
     i = findSamples(myrun,prefix="hogsbo")
     out = fitSamples(myrun,i=i)
-    CSV.write("hogsbo.csv",out)
+    CSV.write("/home/pvermees/Desktop/hogsbo.csv",out)
 end
 
 function TUItest()
@@ -142,7 +142,6 @@ end
 
 Plots.closeall()
 
-if false
 @testset "load" begin loaddat = loadtest() end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowout = windowtest() end
@@ -154,4 +153,3 @@ if false
 @testset "plot calibration" begin calibrationtest() end
 @testset "average results" begin averagetest() end
 @testset "TUI tests" begin TUItest() end
-end
