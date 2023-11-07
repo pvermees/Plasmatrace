@@ -245,12 +245,12 @@ function setNdown!(pd,pars,action)
 end
 
 function listStandards(pd,pars,action)
-    standards = getStandards(pd)
-    nstand = size(unique(standard),1)-1
+    standards = getStandard(pd)
+    nstand = size(unique(standards),1)-1
     samples = getSamples(pd)
     for i in eachindex(samples)
-        sample = samples[i]
-        if getStandard(sample)>1
+        if standards[i]>0
+            sample = samples[i]
             message = string(i)*". "*getSname(sample)
             if nstand>1 message*=" [standard "*getStandard(sample)*"]" end
             println(message)
