@@ -296,7 +296,7 @@ function export2csv(pd,pars,action)
     i = findSamples(pd,prefix=pars.prefixes)
     out = fitSamples(pd,i=i,snames=true)
     CSV.write(action,out)
-    return "xxx"
+    return "xxxx"
 end
 
 function savelog!(pd,pars,action)

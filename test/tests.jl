@@ -2,7 +2,7 @@ using Test, CSV
 import Plots
 
 function loadtest()
-    dname = "/home/pvermees/Documents/Plasmatrace/Garnet/"
+    dname = "data"
     out = run()
     DRS!(out,
          method="LuHf",

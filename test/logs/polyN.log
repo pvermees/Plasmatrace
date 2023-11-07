@@ -3,7 +3,7 @@ top,f
 load,i
 instrument,1
 load,r
-read,/home/pvermees/Documents/Plasmatrace/Garnet/
+read,data
 load,x
 top,m
 method,1
