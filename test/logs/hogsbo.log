@@ -1,7 +1,6 @@
 task,action
 top,f
 load,i
-instrument,
 instrument,1
 load,r
 read,data
@@ -14,6 +13,8 @@ bulk,b
 allBlankWindows,a
 bulk,w
 allSignalWindows,a
+bulk,x
+top,b
 bulk,p
 setStandardPrefixes,s
 setSingleStandardPrefix,BP
@@ -22,5 +23,6 @@ bulk,x
 top,p
 top,e
 samples,s
-exportOneSample,/home/Desktop/hogsbo.csv
-export,x
+exportOneSample,hogsbo
+export,c
+csv,/home/pvermees/Desktop/hogsbo.csv

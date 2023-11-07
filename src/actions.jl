@@ -279,6 +279,7 @@ function process!(pd,pars,action)
     fitBlanks!(pd,n=pars.n[1])
     println("Fitting standards...")
     fitStandards!(pd,refmat=pars.refmats,n=pars.n[2],m=pars.n[3])
+    check!(pars.prioritylist,"process")
     return nothing
 end
 

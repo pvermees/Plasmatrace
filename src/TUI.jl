@@ -19,7 +19,8 @@ function PT!(logbook::Union{Nothing,DataFrame}=nothing)
         "read" => true,
         "bwin" => true,
         "swin" => true,
-        "prefixes" => true
+        "prefixes" => true,
+        "process" => true
     )
     pars = TUIpars(["top"],1,DataFrame(task=String[],action=String[]),
                    nothing,nothing,nothing,nothing,Int[2,1,0],prioritylist)

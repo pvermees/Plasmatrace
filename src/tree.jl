@@ -10,7 +10,7 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             "m: Specify a method"*check(pl,"method")*"\n"*
             "b: Bulk settings"*check(pl,"bulk")*"\n"*
             "v: View and adjust each sample\n"*
-            "p: Process the data\n"*
+            "p: Process the data"*check(pl,"process")*"\n"*
             "e: Export the results\n"*
             "l: Import/export a session log\n"*
             "x: Exit",
