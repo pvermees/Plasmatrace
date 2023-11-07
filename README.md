@@ -8,7 +8,7 @@ you want to play around with the current functionality, then you can
 install the package from GitHub. At the Julia REPL:
 
 ```
-import Pkg; Pkg.add(url="https://github.com/pvermees/Plasmatrace.jl")
+import Pkg; Pkg.add(url="https://github.com/pvermees/Plasmatrace.jl.git")
 ```
 
 There are two ways to interact with Plasmatrace:

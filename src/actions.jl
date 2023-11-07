@@ -252,7 +252,7 @@ function listStandards(pd,pars,action)
         if standards[i]>0
             sample = samples[i]
             message = string(i)*". "*getSname(sample)
-            if nstand>1 message*=" [standard "*getStandard(sample)*"]" end
+            if nstand>1 message*=" [standard "*string(standards[i])*"]" end
             println(message)
         end
     end
