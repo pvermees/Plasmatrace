@@ -65,7 +65,7 @@ function fitRawSampleData(pd::run;i::Integer)
 end
 
 function fitSamples(pd::run;i::AbstractVector{<:Integer},
-                    num=nothing,den=[getIsotopes(pd)[end]],
+                    num=nothing,den=[getIsotopes(pd)[end-1]],
                     logratios=false,snames=false)
     nr = size(i,1)
     v = Vector{DataFrame}(undef,nr)
