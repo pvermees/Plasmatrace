@@ -1,9 +1,12 @@
 function tree(key::T,pl::Dict) where T<:AbstractString
+    version = "0.2.0" # string(pkgversion(@__MODULE__))
+    title = " Plasmatrace "*version*" \n"
+    width = Base.length(title)-1
     branches = Dict(
-        "welcome" => 
-        "===========\n"*
-        "Plasmatrace\n"*
-        "===========",
+        "welcome" =>
+        '-'^width*"\n"*
+        title*
+        '-'^width*"\n",
         "top" => (
             message =
             "f: Load the data files"*check(pl,"load")*"\n"*
