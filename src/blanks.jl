@@ -13,8 +13,8 @@ export fitBlanks!
 function parseBPar(bpar::Union{Nothing,AbstractVector{<:AbstractFloat}};par="bP")
     nbp = Integer(size(bpar,1)//3)
     if (par=="bP") return bpar[1:nbp]
-    elseif (par=="bd") return bpar[nbp+1:2*nbp]
-    elseif (par=="bD") return bpar[2*nbp+1:3*nbp]
+    elseif (par=="bD") return bpar[nbp+1:2*nbp]
+    elseif (par=="bd") return bpar[2*nbp+1:3*nbp]
     else return nothing
     end
 end

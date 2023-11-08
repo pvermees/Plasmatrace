@@ -95,33 +95,38 @@ function plotAtomic(pd::run;i::Integer,num=nothing,den=nothing,
 end
 export plotAtomic
 
-function plotCalibration(pd::run,ms=2,ma=0.5,xlim=nothing,ylim=nothing)
+function plotCalibration(pd::run;ms=2,ma=0.5,
+                         xlim::Union{Nothing,Tuple}=nothing,
+                         ylim::Union{Nothing,Tuple}=nothing)
     groups = groupStandards(pd)
     ng = size(groups,1)
     plotdat = Vector{DataFrame}(undef,ng)
     xm = Inf; xM = -Inf; ym = Inf; yM = -Inf
     par = getPar(pd)
     colnames = [names(groups[1].s)[1:2];getIsotopes(pd)]
+    Dcol = 4
+    PDcol = 3
+    dDcol = 4
     for i in 1:ng
         mat = atomic(s=groups[i].s,par=par)
         df = DataFrame(mat,colnames)
-        plotdat[i] = getRawPlotDat(df,den=[colnames[5]],brackets=false)
-        if !isnothing(xlim)
-            xm = minimum([xm,minimum(plotdat[i][:,3])])
-            xM = maximum([xM,maximum(plotdat[i][:,3])])
+        plotdat[i] = getRawPlotDat(df,den=[colnames[Dcol]],brackets=false)
+        if isnothing(xlim)
+            xm = minimum([xm,minimum(plotdat[i][:,PDcol])])
+            xM = maximum([xM,maximum(plotdat[i][:,PDcol])])
         end
-        if !isnothing(ylim)
-            ym = minimum([ym,minimum(plotdat[i][:,4])])
-            yM = maximum([yM,maximum(plotdat[i][:,4])])
+        if isnothing(ylim)
+            ym = minimum([ym,minimum(plotdat[i][:,dDcol])])
+            yM = maximum([yM,maximum(plotdat[i][:,dDcol])])
         end
     end
-    xlim = isnothing(xlim) ? :auto : (xm,xM)
-    ylim = isnothing(ylim) ? :auto : (ym,yM)
-    axislabels = names(plotdat[1])[3:4]
+    xlim = isnothing(xlim) ? (xm,xM) : xlim
+    ylim = isnothing(ylim) ? (ym,yM) : ylim
+    axislabels = names(plotdat[1])[PDcol:dDcol]
     p = Plots.plot(0,0,xlimits=xlim,ylimits=ylim,
                    xlab=axislabels[1],ylab=axislabels[2])
     for i in 1:ng
-        Plots.scatter!(p,plotdat[i][:,3],plotdat[i][:,4],ms=ms,ma=ma)
+        Plots.scatter!(p,plotdat[i][:,PDcol],plotdat[i][:,dDcol],ms=ms,ma=ma)
     end
     for i in 1:ng
         A = groups[i].A
@@ -129,7 +134,8 @@ function plotCalibration(pd::run,ms=2,ma=0.5,xlim=nothing,ylim=nothing)
         x0 = -A/B
         x = [0.,x0]
         y = A .+ B .* x
-        Plots.plot!(p,x,y)
+        col = p.series_list[i].plotattributes.explicit[:markercolor]
+        Plots.plot!(p,x,y,linecolor=col,label="")
     end
     return p
 end

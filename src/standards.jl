@@ -23,8 +23,8 @@ function fitStandards!(pd::run;
             t = g.s[:,1]
             T = g.s[:,2]
             Pm = g.s[:,3]
-            dm = g.s[:,4]
-            Dm = g.s[:,5]
+            Dm = g.s[:,4]
+            dm = g.s[:,5]
             ft = polyVal(p=aft,t=t)
             FT = polyVal(p=aFT,t=T)
             P = getP(Pm,Dm,dm,g.A,g.B,ft,FT,g.bPt,g.bDt,g.bdt,c)
@@ -80,8 +80,8 @@ function predictStandard(pd::run;sname::Union{Nothing,AbstractString}=nothing,
     t = s[:,1]
     T = s[:,2]
     Pm = s[:,3]
-    dm = s[:,4]
-    Dm = s[:,5]
+    Dm = s[:,4]
+    dm = s[:,5]
     
     ft = polyVal(p=getDriftPars(pd),t=t)
     FT = polyVal(p=[0.0;getDownPars(pd)],t=T)
@@ -102,5 +102,5 @@ function predictStandard(pd::run;sname::Union{Nothing,AbstractString}=nothing,
     dp = @. A*D + B*P + bdt
     
     channels = getChannels(pd)
-    DataFrame(hcat(t,T,Pp,dp,Dp),[names(s)[1:2];channels])
+    DataFrame(hcat(t,T,Pp,Dp,dp),[names(s)[1:2];channels])
 end

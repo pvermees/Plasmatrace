@@ -7,7 +7,7 @@ read,data
 load,x
 top,m
 method,1
-channels,"15,18,17"
+channels,"15,17,18"
 top,b
 bulk,b
 allBlankWindows,a

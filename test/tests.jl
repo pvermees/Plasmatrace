@@ -6,7 +6,7 @@ function loadtest()
     out = run()
     DRS!(out,
          method="LuHf",
-         channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
+         channels=["Lu175 -> 175","Hf176 -> 258","Hf178 -> 260"])
     load!(out,dname=dname,instrument="Agilent")
     out
 end
@@ -115,7 +115,7 @@ end
 
 function calibrationtest()
     myrun = standardtest(false)
-    p = plotCalibration(myrun)
+    p = plotCalibration(myrun,xlim=(0,80),ylim=(0,10))
     @test display(p) != NaN
 end
 

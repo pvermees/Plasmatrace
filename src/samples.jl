@@ -81,7 +81,7 @@ export fitSamples
 
 # s is a data frame with the output of signalData(...)
 function atomic(;s,par)
-    t = s[:,1]; T = s[:,2]; Pm = s[:,3]; dm = s[:,4]; Dm = s[:,5]
+    t = s[:,1]; T = s[:,2]; Pm = s[:,3]; Dm = s[:,4]; dm = s[:,5]
     c = getMassPars(par)
     ft = polyVal(p=getDriftPars(par),t=t)
     FT = polyVal(p=[0.0;getDownPars(par)],t=T)
@@ -92,5 +92,5 @@ function atomic(;s,par)
     P = @. (Pm-bPt)/(ft*FT)
     D = @. (Dm-bDt)*exp(-c)
     d = dm-bdt
-    hcat(t,T,P,d,D)
+    hcat(t,T,P,D,d)
 end

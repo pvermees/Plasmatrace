@@ -114,7 +114,7 @@ function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
             r,c = iuppert(i,nrat)
             irow = 2*nrat+i
             row[irow] = sigma[r,c]/sqrt(sigma[r,r]*sigma[c,c])
-            olabs[irow] = "r[".*ratlabs[r].*"/".*ratlabs[c].*"]"
+            olabs[irow] = "r[(".*ratlabs[r].*")/(".*ratlabs[c].*")]"
         end
         out = DataFrame(reshape(row,1,nout),olabs)
     end
