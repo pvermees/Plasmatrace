@@ -20,9 +20,10 @@ Here is an example of a menu-driven Plasmatrace session:
 ```
 julia> using Plasmatrace
 julia> PT()
-===========
-Plasmatrace
-===========
+-------------------
+ Plasmatrace 0.2.1
+-------------------
+
 f: Load the data files[*]
 m: Specify a method[*]
 b: Bulk settings[*]
@@ -88,7 +89,7 @@ Choose from the following list of channels:
 and select the channels corresponding to the following isotopes or their proxies: 
 Lu176,Hf177,Hf176
 Specify your selection as a comma-separated list of numbers:
-15,18,17
+15,17,18
 f: Load the data files
 m: Specify a method
 b: Bulk settings[*]

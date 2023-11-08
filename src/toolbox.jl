@@ -113,8 +113,8 @@ function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
         for i in 1:ncov
             r,c = iuppert(i,nrat)
             irow = 2*nrat+i
-            row[irow] = sigma[r,c]/sqrt(sigma[r,r]*sigma[c,c])
-            olabs[irow] = "r[(".*ratlabs[r].*")/(".*ratlabs[c].*")]"
+            row[irow] = E[r,c]/sqrt(E[r,r]*E[c,c])
+            olabs[irow] = "r[".*ratlabs[r].*",".*ratlabs[c].*"]"
         end
         out = DataFrame(reshape(row,1,nout),olabs)
     end

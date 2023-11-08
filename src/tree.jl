@@ -6,7 +6,7 @@ function tree(key::T,pl::Dict) where T<:AbstractString
         "welcome" =>
         '-'^width*"\n"*
         title*
-        '-'^width*"\n",
+        '-'^width,
         "top" => (
             message =
             "f: Load the data files"*check(pl,"load")*"\n"*
