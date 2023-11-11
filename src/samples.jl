@@ -39,7 +39,7 @@ function fitable(pd::run;throw=false)
     elseif isnothing(getDownPars(pd))
         if throw PTerror("missingStandard")
         else return false end
-    elseif isnothing(getMassPars(pd))
+    elseif isnothing(getGainPar(pd))
         if throw PTerror("missingStandard")
         else return false end
     elseif isnothing(getChannels(pd))
@@ -82,7 +82,7 @@ export fitSamples
 # s is a data frame with the output of signalData(...)
 function atomic(;s,par)
     t = s[:,1]; T = s[:,2]; Pm = s[:,3]; Dm = s[:,4]; dm = s[:,5]
-    c = getMassPars(par)
+    g = getGainPar(par)
     ft = polyVal(p=getDriftPars(par),t=t)
     FT = polyVal(p=[0.0;getDownPars(par)],t=T)
     bpar = getBlankPars(par)
@@ -90,7 +90,7 @@ function atomic(;s,par)
     bDt = polyVal(p=parseBPar(bpar,par="bD"),t=t)
     bdt = polyVal(p=parseBPar(bpar,par="bd"),t=t)
     P = @. (Pm-bPt)/(ft*FT)
-    D = @. (Dm-bDt)*exp(-c)
+    D = @. (Dm-bDt)*exp(-g)
     d = dm-bdt
     hcat(t,T,P,D,d)
 end

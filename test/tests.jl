@@ -79,7 +79,7 @@ function forwardtest()
     setStandard!(myrun,i=i[1],standard=1)
     setDriftPars!(myrun,Float64[4.0])
     setDownPars!(myrun,Float64[])
-    setMassPars!(myrun,-0.34)
+    setGainPar!(myrun,-0.34)
     setAB!(myrun,refmat="BP")
     p = plot(myrun,i=i[1],transformation="sqrt")
     @test display(p) != NaN
@@ -109,7 +109,7 @@ end
 function atomictest()
     myrun = standardtest(false)
     i = findSamples(myrun,prefix="BP -")
-    p = plotAtomic(myrun,i=i[1],scatter=true)
+    p = plotAtomic(myrun,i=i[1],scatter=true,den=["Hf176"])
     @test display(p) != NaN
 end
 
@@ -129,6 +129,7 @@ function averagetest()
     i = findSamples(myrun,prefix="hogsbo")
     out = fitSamples(myrun,i=i)
     CSV.write("/home/pvermees/Desktop/hogsbo.csv",out)
+    myrun
 end
 
 function TUItest()

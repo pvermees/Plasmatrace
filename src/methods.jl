@@ -112,25 +112,25 @@ function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,setCha
 function getBlankPars(fp::fitPars) getproperty(fp,:blank) end
 function getDriftPars(fp::fitPars) getproperty(fp,:drift) end
 function getDownPars(fp::fitPars) getproperty(fp,:down) end
-function getMassPars(fp::fitPars) getproperty(fp,:mass) end
+function getGainPar(fp::fitPars) getproperty(fp,:gain) end
 
 # set fitPars attributes
 function setBlankPars!(fp::fitPars,blank::AbstractVector{<:AbstractFloat}) setproperty!(fp,:blank,blank) end
 function setDriftPars!(fp::fitPars,drift::AbstractVector{<:AbstractFloat}) setproperty!(fp,:drift,drift) end
 function setDownPars!(fp::fitPars,down::AbstractVector{<:AbstractFloat}) setproperty!(fp,:down,down) end
-function setMassPars!(fp::fitPars,mass::AbstractFloat) setproperty!(fp,:mass,mass) end
+function setGainPar!(fp::fitPars,gain::AbstractFloat) setproperty!(fp,:gain,gain) end
 
 # get fitPars attributes from a run
 function getBlankPars(pd::run) getBlankPars(getPar(pd)) end
 function getDriftPars(pd::run) getDriftPars(getPar(pd)) end
 function getDownPars(pd::run) getDownPars(getPar(pd)) end
-function getMassPars(pd::run) getMassPars(getPar(pd)) end
+function getGainPar(pd::run) getGainPar(getPar(pd)) end
 
 # set fitPars attributes in a run
 function setBlankPars!(pd::run,blank::AbstractVector{<:AbstractFloat}) accessPar!(pd,setBlankPars!,blank) end
 function setDriftPars!(pd::run,drift::AbstractVector{<:AbstractFloat}) accessPar!(pd,setDriftPars!,drift) end
 function setDownPars!(pd::run,down::AbstractVector{<:AbstractFloat}) accessPar!(pd,setDownPars!,down) end
-function setMassPars!(pd::run,mass::AbstractFloat) accessPar!(pd,setMassPars!,mass) end
+function setGainPar!(pd::run,gain::AbstractFloat) accessPar!(pd,setGainPar!,gain) end
 
 length(pd::run) = size(getSamples(pd),1)
 

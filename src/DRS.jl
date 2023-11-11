@@ -7,11 +7,13 @@ export DRS!
 function DRSmethod!(pd::run;method::T) where {T<:AbstractString}
     if (method=="LuHf")
         isotopes = ["Lu176","Hf176","Hf177"]
+        gain = 0.682
     else
         PTerror("UnknownMethod")
     end
     setMethod!(pd,method)
     setIsotopes!(pd,isotopes)
+    setGainPar!(pd,gain)
 end
 
 function DRSchannels!(pd::run;channels::Vector{T}) where T<:AbstractString

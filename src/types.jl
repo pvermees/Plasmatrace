@@ -24,7 +24,7 @@ mutable struct fitPars
     blank::Union{Nothing,Vector{Float64}}
     drift::Union{Nothing,Vector{Float64}}
     down::Union{Nothing,Vector{Float64}}
-    mass::Union{Nothing,Float64}
+    gain::Union{Nothing,Float64}
 end
 
 mutable struct run <: plasmaData

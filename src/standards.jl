@@ -18,18 +18,18 @@ function fitStandards!(pd::run;
         out = 0
         aft = par[1:n]
         aFT = [0.0;par[n+1:n+m]]
-        c = par[end]
-        for g in groups
-            t = g.s[:,1]
-            T = g.s[:,2]
-            Pm = g.s[:,3]
-            Dm = g.s[:,4]
-            dm = g.s[:,5]
+        g = par[end]
+        for gr in groups
+            t = gr.s[:,1]
+            T = gr.s[:,2]
+            Pm = gr.s[:,3]
+            Dm = gr.s[:,4]
+            dm = gr.s[:,5]
             ft = polyVal(p=aft,t=t)
             FT = polyVal(p=aFT,t=T)
-            P = getP(Pm,Dm,dm,g.A,g.B,ft,FT,g.bPt,g.bDt,g.bdt,c)
-            D = getD(Pm,Dm,dm,g.A,g.B,ft,FT,g.bPt,g.bDt,g.bdt,c)
-            out += sum(getS(P,D,Pm,Dm,dm,g.A,g.B,ft,FT,g.bPt,g.bDt,g.bdt,c))
+            P = getP(Pm,Dm,dm,gr.A,gr.B,ft,FT,gr.bPt,gr.bDt,gr.bdt,g)
+            D = getD(Pm,Dm,dm,gr.A,gr.B,ft,FT,gr.bPt,gr.bDt,gr.bdt,g)
+            out += sum(getS(P,D,Pm,Dm,dm,gr.A,gr.B,ft,FT,gr.bPt,gr.bDt,gr.bdt,g))
         end
         out
     end
@@ -40,7 +40,7 @@ function fitStandards!(pd::run;
     sol = Optim.minimizer(fit)
     setDriftPars!(pd,sol[1:n])
     setDownPars!(pd,sol[n+1:n+m])
-    setMassPars!(pd,sol[end])
+    setGainPar!(pd,sol[end])
 end
 export fitStandards!
 
@@ -85,7 +85,7 @@ function predictStandard(pd::run;sname::Union{Nothing,AbstractString}=nothing,
     
     ft = polyVal(p=getDriftPars(pd),t=t)
     FT = polyVal(p=[0.0;getDownPars(pd)],t=T)
-    c = getMassPars(pd)
+    g = getGainPar(pd)
     
     bpar = getBlankPars(pd)
     bPt = polyVal(p=parseBPar(bpar,par="bP"),t=t)
@@ -94,11 +94,11 @@ function predictStandard(pd::run;sname::Union{Nothing,AbstractString}=nothing,
     
     A = getA(pd)[standard]
     B = getB(pd)[standard]
-    P = getP(Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,c)
-    D = getD(Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,c)
+    P = getP(Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,g)
+    D = getD(Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,g)
 
     Pp = @. P*ft*FT + bPt
-    Dp = @. D*exp(c) + bDt
+    Dp = @. D*exp(g) + bDt
     dp = @. A*D + B*P + bdt
     
     channels = getChannels(pd)
