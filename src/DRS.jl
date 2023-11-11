@@ -7,7 +7,7 @@ export DRS!
 function DRSmethod!(pd::run;method::T) where {T<:AbstractString}
     if (method=="LuHf")
         isotopes = ["Lu176","Hf176","Hf177"]
-        gain = 0.682
+        gain = log(0.682)
     else
         PTerror("UnknownMethod")
     end

@@ -13,12 +13,17 @@ function fitStandards!(pd::run;
     if isa(refmat,AbstractString) refmat = [refmat] end
     setAB!(pd,refmat=refmat)
     groups = groupStandards(pd)
-
+    changeGain = getGainOption(pd)==2
+    
     function misfit(par)
         out = 0
         aft = par[1:n]
         aFT = [0.0;par[n+1:n+m]]
-        g = par[end]
+        if changeGain
+            g = par[end]
+        else
+            g = getGainPar(pd)
+        end
         for gr in groups
             t = gr.s[:,1]
             T = gr.s[:,2]
@@ -34,13 +39,13 @@ function fitStandards!(pd::run;
         out
     end
 
-    init = fill(0.0,n+m+1)
+    init = changeGain ? fill(0.0,n+m+1) : fill(0.0,n+m)
     fit = Optim.optimize(misfit,init)
     if verbose println(fit) end
     sol = Optim.minimizer(fit)
     setDriftPars!(pd,sol[1:n])
     setDownPars!(pd,sol[n+1:n+m])
-    setGainPar!(pd,sol[end])
+    if changeGain setGainPar!(pd,sol[end]) end
 end
 export fitStandards!
 

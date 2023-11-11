@@ -64,6 +64,7 @@ function getA(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : g
 function getB(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:B) end
 function getIsotopes(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:isotopes) end
 function getChannels(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:channels) end
+function getGainOption(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:gainOption) end
 
 # get control attributes from a run
 function getMethod(pd::run) getMethod(getControl(pd)) end
@@ -71,6 +72,7 @@ function getA(pd::run) getA(getControl(pd)) end
 function getB(pd::run) getB(getControl(pd)) end
 function getIsotopes(pd::run) getIsotopes(getControl(pd)) end
 function getChannels(pd::run) getChannels(getControl(pd)) end
+function getGainOption(pd::run) getGainOption(getControl(pd)) end
 
 # set sample attributes
 function setSname!(pd::sample,sname::String) setproperty!(pd,:sname,sname) end
@@ -99,6 +101,7 @@ function setA!(ctrl::control,A::Vector{Float64}) setproperty!(ctrl,:A,A) end
 function setB!(ctrl::control,B::Vector{Float64}) setproperty!(ctrl,:B,B) end
 function setIsotopes!(ctrl::control,isotopes::Vector{String}) setproperty!(ctrl,:isotopes,isotopes) end
 function setChannels!(ctrl::control,channels::Vector{String}) setproperty!(ctrl,:channels,channels) end
+function setGainOption!(ctrl::control,gainOption::Integer) setproperty!(ctrl,:gainOption,gainOption) end
 
 # set control attributes in a run
 function setInstrument!(pd::run,instrument::String) accessControl!(pd,setInstrument!,instrument) end
@@ -107,6 +110,7 @@ function setA!(pd::run,A::Vector{Float64}) accessControl!(pd,setA!,A) end
 function setB!(pd::run,B::Vector{Float64}) accessControl!(pd,setB!,B) end
 function setIsotopes!(pd::run,isotopes::Vector{String}) accessControl!(pd,setIsotopes!,isotopes) end
 function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,setChannels!,channels) end
+function setGainOption!(pd::run,gainOption::Integer) accessControl!(pd,setGainOption!,gainOption) end
 
 # get fitPars attributes
 function getBlankPars(fp::fitPars) getproperty(fp,:blank) end
