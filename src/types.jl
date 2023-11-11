@@ -9,6 +9,7 @@ mutable struct control
     B::Union{Nothing,Vector{Float64}}
     isotopes::Union{Nothing,Vector{String}}
     channels::Union{Nothing,Vector{String}}
+    gainOption::Integer
 end
 
 mutable struct sample <: plasmaData
@@ -24,7 +25,7 @@ mutable struct fitPars
     blank::Union{Nothing,Vector{Float64}}
     drift::Union{Nothing,Vector{Float64}}
     down::Union{Nothing,Vector{Float64}}
-    mass::Union{Nothing,Float64}
+    gain::Union{Nothing,Float64}
 end
 
 mutable struct run <: plasmaData
@@ -48,7 +49,7 @@ end
 
 sample(sname,datetime,dat) = sample(sname,datetime,dat,nothing,nothing,0)
 
-control() = control(nothing,nothing,nothing,nothing,nothing,nothing)
+control() = control(nothing,nothing,nothing,nothing,nothing,nothing,1)
 
 fitPars() = fitPars(nothing,nothing,nothing,0.0)
 

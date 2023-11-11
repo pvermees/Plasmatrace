@@ -64,6 +64,7 @@ function getA(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : g
 function getB(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:B) end
 function getIsotopes(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:isotopes) end
 function getChannels(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:channels) end
+function getGainOption(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:gainOption) end
 
 # get control attributes from a run
 function getMethod(pd::run) getMethod(getControl(pd)) end
@@ -71,6 +72,7 @@ function getA(pd::run) getA(getControl(pd)) end
 function getB(pd::run) getB(getControl(pd)) end
 function getIsotopes(pd::run) getIsotopes(getControl(pd)) end
 function getChannels(pd::run) getChannels(getControl(pd)) end
+function getGainOption(pd::run) getGainOption(getControl(pd)) end
 
 # set sample attributes
 function setSname!(pd::sample,sname::String) setproperty!(pd,:sname,sname) end
@@ -99,6 +101,7 @@ function setA!(ctrl::control,A::Vector{Float64}) setproperty!(ctrl,:A,A) end
 function setB!(ctrl::control,B::Vector{Float64}) setproperty!(ctrl,:B,B) end
 function setIsotopes!(ctrl::control,isotopes::Vector{String}) setproperty!(ctrl,:isotopes,isotopes) end
 function setChannels!(ctrl::control,channels::Vector{String}) setproperty!(ctrl,:channels,channels) end
+function setGainOption!(ctrl::control,gainOption::Integer) setproperty!(ctrl,:gainOption,gainOption) end
 
 # set control attributes in a run
 function setInstrument!(pd::run,instrument::String) accessControl!(pd,setInstrument!,instrument) end
@@ -107,30 +110,31 @@ function setA!(pd::run,A::Vector{Float64}) accessControl!(pd,setA!,A) end
 function setB!(pd::run,B::Vector{Float64}) accessControl!(pd,setB!,B) end
 function setIsotopes!(pd::run,isotopes::Vector{String}) accessControl!(pd,setIsotopes!,isotopes) end
 function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,setChannels!,channels) end
+function setGainOption!(pd::run,gainOption::Integer) accessControl!(pd,setGainOption!,gainOption) end
 
 # get fitPars attributes
 function getBlankPars(fp::fitPars) getproperty(fp,:blank) end
 function getDriftPars(fp::fitPars) getproperty(fp,:drift) end
 function getDownPars(fp::fitPars) getproperty(fp,:down) end
-function getMassPars(fp::fitPars) getproperty(fp,:mass) end
+function getGainPar(fp::fitPars) getproperty(fp,:gain) end
 
 # set fitPars attributes
 function setBlankPars!(fp::fitPars,blank::AbstractVector{<:AbstractFloat}) setproperty!(fp,:blank,blank) end
 function setDriftPars!(fp::fitPars,drift::AbstractVector{<:AbstractFloat}) setproperty!(fp,:drift,drift) end
 function setDownPars!(fp::fitPars,down::AbstractVector{<:AbstractFloat}) setproperty!(fp,:down,down) end
-function setMassPars!(fp::fitPars,mass::AbstractFloat) setproperty!(fp,:mass,mass) end
+function setGainPar!(fp::fitPars,gain::AbstractFloat) setproperty!(fp,:gain,gain) end
 
 # get fitPars attributes from a run
 function getBlankPars(pd::run) getBlankPars(getPar(pd)) end
 function getDriftPars(pd::run) getDriftPars(getPar(pd)) end
 function getDownPars(pd::run) getDownPars(getPar(pd)) end
-function getMassPars(pd::run) getMassPars(getPar(pd)) end
+function getGainPar(pd::run) getGainPar(getPar(pd)) end
 
 # set fitPars attributes in a run
 function setBlankPars!(pd::run,blank::AbstractVector{<:AbstractFloat}) accessPar!(pd,setBlankPars!,blank) end
 function setDriftPars!(pd::run,drift::AbstractVector{<:AbstractFloat}) accessPar!(pd,setDriftPars!,drift) end
 function setDownPars!(pd::run,down::AbstractVector{<:AbstractFloat}) accessPar!(pd,setDownPars!,down) end
-function setMassPars!(pd::run,mass::AbstractFloat) accessPar!(pd,setMassPars!,mass) end
+function setGainPar!(pd::run,gain::AbstractFloat) accessPar!(pd,setGainPar!,gain) end
 
 length(pd::run) = size(getSamples(pd),1)
 
