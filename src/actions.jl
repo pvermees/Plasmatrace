@@ -37,18 +37,21 @@ function selectChannels!(pd,pars,action)
 end
 
 function chooseChannels!(pd,pars,action)
+    if action=="x" return "x" end
     selectChannels!(pd,pars,action)
     DRSchannels!(pd,channels=pars.channels)
     return "xx"
 end
 
 function viewChannels!(pd,pars,action)
+    if action=="x" return "x" end
     selectChannels!(pd,pars,action)
     viewer(pd=pd,pars=pars)
     return "x"
 end
 
 function string2windows(pd,pars,action;single=false)
+    if action=="x" return "x" end
     if single
         parts = split(action,',')
         stime = [parse(Float64,parts[1])]
@@ -103,48 +106,56 @@ function oneAutoSignalWindow!(pd,pars,action)
     return "x"
 end
 function allSingleBlankWindows!(pd,pars,action)
+    if action=="x" return "x" end
     windows = string2windows(pd,pars,action;single=true)
     setBlanks!(pd,windows=windows)
     check!(pars.prioritylist,"bwin")
     return "xx"
 end
 function oneSingleBlankWindow!(pd,pars,action)
+    if action=="x" return "x" end
     windows = string2windows(pd,pars,action;single=true)
     setBlanks!(pd,windows=windows,i=pars.i)
     viewer(pd=pd,pars=pars)
     return "xx"
 end
 function allSingleSignalWindows!(pd,pars,action)
+    if action=="x" return "x" end
     windows = string2windows(pd,pars,action;single=true)
     setSignals!(pd,windows=windows)
     check!(pars.prioritylist,"swin")
     return "xx"
 end
 function oneSingleSignalWindow!(pd,pars,action)
+    if action=="x" return "x" end
     windows = string2windows(pd,pars,action;single=true)
     setSignals!(pd,windows=windows,i=pars.i)
     viewer(pd=pd,pars=pars)
     return "xx"
 end
 function allMultiBlankWindows!(pd,pars,action)
+    if action=="x" return "x" end
     windows = string2windows(pd,pars,action)
     setBlanks!(pd,windows=windows)
     check!(pars.prioritylist,"bwin")
     return "xx"
 end
 function oneMultiBlankWindow!(pd,pars,action)
+    if action=="x" return "x" end
     windows = string2windows(pd,pars,action)
     setBlanks!(pd,windows=windows,i=pars.i)
     viewer(pd=pd,pars=pars)
     return "xx"
 end
 function allMultiSignalWindows!(pd,pars,action)
+    if action=="x" return "x" end
     windows = string2windows(pd,pars,action)
     setSignals!(pd,windows=windows)
     check!(pars.prioritylist,"swin")
     return "xx"
 end
 function oneMultiSignalWindow!(pd,pars,action)
+    if action=="x" return "x" end
     windows = string2windows(pd,pars,action)
     setSignals!(pd,windows=windows,i=pars.i)
     viewer(pd=pd,pars=pars)
@@ -161,6 +172,7 @@ function loadInstrument!(pd,pars,action)
 end
 
 function loader!(pd,pars,action)
+    if action=="x" return "x" end
     load!(pd,dname=action)
     check!(pars.prioritylist,"read")
     return "x"
@@ -183,6 +195,7 @@ function listSamples(pd,pars,action)
 end
 
 function goto!(pd,pars,action)
+    if action=="x" return "x" end
     samples = getSamples(pd)
     pars.i = parse(Int,action)
     viewer(pd=pd,pars=pars)
@@ -202,26 +215,26 @@ function initialView(pd,pars,action)
 end
 
 function viewnext!(pd,pars,action)
-    if action=="x" return "x" end
     pars.i = pars.i<length(pd) ? pars.i+1 : 1
     viewer(pd=pd,pars=pars)
     return nothing
 end
 
 function viewprevious!(pd,pars,action)
-    if action=="x" return "x" end
     pars.i = pars.i>1 ? pars.i-1 : length(pd)
     viewer(pd=pd,pars=pars)
     return nothing
 end
 
 function setDen!(pd,pars,action)
+    if action=="x" return "x" end
     pars.den = action=="r" ? nothing : [pars.channels[parse(Int,action)]]
     viewer(pd=pd,pars=pars)
     return "x"
 end
 
 function setStandardPrefixes!(pd,pars,action)
+    if action=="x" return "x" end
     prefixes = string.(split(action,","))
     markStandards!(pd,standard=0)
     for i in eachindex(prefixes)
@@ -232,14 +245,17 @@ function setStandardPrefixes!(pd,pars,action)
 end
 
 function setNblank!(pd,pars,action)
+    if action=="x" return "x" end
     pars.n[1] = parse(Int,action)
     return "x"
 end
 function setNdrift!(pd,pars,action)
+    if action=="x" return "x" end
     pars.n[2] = parse(Int,action)
     return "x"
 end
 function setNdown!(pd,pars,action)
+    if action=="x" return "x" end
     pars.n[3] = parse(Int,action)
     return "x"
 end
@@ -260,12 +276,14 @@ function listStandards(pd,pars,action)
 end
 
 function removeStandards!(pd,pars,action)
+    if action=="x" return "x" end
     i = parse.(Int,split(action,","))
     setStandard!(pd,i=i,standard=0)
     return nothing
 end
 
 function chooseRefMat!(pd,pars,action)
+    if action=="x" return "x" end
     method = getMethod(pd)
     refmats = collect(keys(referenceMaterials[method]))
     i = parse.(Int,split(action,","))
@@ -274,7 +292,6 @@ function chooseRefMat!(pd,pars,action)
 end
 
 function process!(pd,pars,action)
-    if action=="x" return "x" end
     println("Fitting blanks...")
     fitBlanks!(pd,n=pars.n[1])
     println("Fitting standards...")
@@ -284,23 +301,25 @@ function process!(pd,pars,action)
 end
 
 function setSamplePrefixes!(pd,pars,action)
+    if action=="x" return "x" end
     pars.prefixes = string.(split(action,','))
     return "export"
 end
 function clearSamplePrefixes!(pd,pars,action)
-    if action=="x" return "x" end
     pars.prefixes = nothing
     return "export"
 end
 
 function export2csv(pd,pars,action)
+    if action=="x" return "x" end
     i = findSamples(pd,prefix=pars.prefixes)
     out = fitSamples(pd,i=i,snames=true)
     CSV.write(action,out)
-    return "xxxx"
+    return "xxx"
 end
 
 function savelog!(pd,pars,action)
+    if action=="x" return "x" end
     println("Enter the path and name of the log file:")
     fpath = readline()
     pars.history = delete!(pars.history,nrow(pars.history))
@@ -309,6 +328,7 @@ function savelog!(pd,pars,action)
 end
 
 function restorelog!(pd,pars,action)
+    if action=="x" return "x" end
     println("Provide the path of the log file:")
     fpath = readline()
     hist = CSV.read(fpath,DataFrame)
