@@ -1,11 +1,11 @@
-function plot(pd::sample;channels=nothing,
-              num=nothing,den=nothing,
-              transformation="sqrt",
-              prefix="",nstand=1,titlefontsize=10)
+function plot(pd::sample;channels=nothing,num=nothing,den=nothing,
+              transformation="sqrt",prefix="",nstand=1,
+              titlefontsize=10,xlim=:auto,ylim=:auto)
     dat = getDat(pd)
     plotdat = getRawPlotDat(dat,channels=channels,num=num,den=den)
     ylab = !isnothing(den) ? "ratio" : "signal"
-    p = plotHelper(plotdat,transformation=transformation,ix=2,ylab=ylab)
+    p = plotHelper(plotdat,transformation=transformation,ix=2,
+                   ylab=ylab,xlim=xlim,ylim=ylim)
     tit = prefix*getSname(pd)
     stand = getStandard(pd)
     if stand>0
@@ -21,21 +21,22 @@ function plot(pd::sample;channels=nothing,
 end
 function plot(pd::run;i::Union{Nothing,Integer}=nothing,
               channels=nothing,num=nothing,den=nothing,
-              transformation="sqrt",titlefontsize=10,steps=1000)
+              transformation="sqrt",titlefontsize=10,steps=1000,
+              xlim=:auto,ylim=:auto)
     if isnothing(i)
         dat = poolRunDat(pd)
         step = Int(ceil(size(dat,1)/steps))
         plotdat = getRawPlotDat(dat[1:step:end,:],channels=channels,num=num,den=den)
         ylab = isnothing(channels) & !isnothing(den) ? "ratio" : "signal"
         p = plotHelper(plotdat,transformation=transformation,
-                       seriestype=:path,ix=1,ylab=ylab)
+                       seriestype=:path,ix=1,ylab=ylab,xlim=xlim,ylim=ylim)
     else
         if isnothing(channels) & isnothing(den) channels = getChannels(pd) end
         samp = getSamples(pd)[i]
         nstand = size(unique(getStandard(pd)),1)-1
         p = plot(samp,channels=channels,num=num,den=den,
                  transformation=transformation,prefix=string(i)*". ",
-                 nstand=nstand,titlefontsize=titlefontsize)
+                 nstand=nstand,titlefontsize=titlefontsize,xlim=xlim,ylim=ylim)
         if fitable(pd) && getStandard(samp)>0
             plotFitted!(p,pd=pd,i=i,channels=channels,num=num,den=den,
                         transformation=transformation)
@@ -47,14 +48,15 @@ export plot
 
 function plotHelper(plotdat::DataFrame;seriestype=:scatter,
                     ms=2,ma=0.5,transformation="sqrt",ix=1,
-                    ylab="signal")
+                    ylab="signal",xlim=:auto,ylim=:auto)
     xy = Matrix(plotdat)
     x = xy[:,ix]
     y = xy[:,3:end]
     plotlabels = names(plotdat)
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
     p = Plots.plot(x,ty,seriestype=seriestype,ms=ms,ma=ma,
-                   label=permutedims(plotlabels[3:end]),legend=:topleft)
+                   label=permutedims(plotlabels[3:end]),
+                   legend=:topleft,xlimits=xlim,ylimits=ylim)
     xlab = plotlabels[ix]
     ylab = transformation=="" ? ylab : transformation*"("*ylab*")"
     Plots.xlabel!(xlab)
@@ -95,9 +97,7 @@ function plotAtomic(pd::run;i::Integer,num=nothing,den=nothing,
 end
 export plotAtomic
 
-function plotCalibration(pd::run;ms=2,ma=0.5,
-                         xlim::Union{Nothing,Tuple}=nothing,
-                         ylim::Union{Nothing,Tuple}=nothing)
+function plotCalibration(pd::run;ms=2,ma=0.5,xlim=:auto,ylim=:auto)
     groups = groupStandards(pd)
     ng = size(groups,1)
     plotdat = Vector{DataFrame}(undef,ng)
@@ -111,17 +111,17 @@ function plotCalibration(pd::run;ms=2,ma=0.5,
         mat = atomic(s=groups[i].s,par=par)
         df = DataFrame(mat,colnames)
         plotdat[i] = getRawPlotDat(df,den=[colnames[Dcol]],brackets=false)
-        if isnothing(xlim)
+        if xlim!=:auto
             xm = minimum([xm,minimum(plotdat[i][:,PDcol])])
             xM = maximum([xM,maximum(plotdat[i][:,PDcol])])
         end
-        if isnothing(ylim)
+        if ylim!=:auto
             ym = minimum([ym,minimum(plotdat[i][:,dDcol])])
             yM = maximum([yM,maximum(plotdat[i][:,dDcol])])
         end
     end
-    xlim = isnothing(xlim) ? (xm,xM) : xlim
-    ylim = isnothing(ylim) ? (ym,yM) : ylim
+    xlim = xlim==:auto ? (xm,xM) : xlim
+    ylim = ylim==:auto ? (ym,yM) : ylim
     axislabels = names(plotdat[1])[PDcol:dDcol]
     p = Plots.plot(0,0,xlimits=xlim,ylimits=ylim,
                    xlab=axislabels[1],ylab=axislabels[2])
