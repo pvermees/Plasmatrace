@@ -60,16 +60,16 @@ function getStandard(pd::run;i=nothing) accesSample(pd,i,Integer,getStandard) en
 # get control attributes
 function getInstrument(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:instrument) end
 function getMethod(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:method) end
-function getA(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:A) end
-function getB(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:B) end
+function getx0(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:x0) end
+function gety0(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:y0) end
 function getIsotopes(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:isotopes) end
 function getChannels(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:channels) end
 function getGainOption(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:gainOption) end
 
 # get control attributes from a run
 function getMethod(pd::run) getMethod(getControl(pd)) end
-function getA(pd::run) getA(getControl(pd)) end
-function getB(pd::run) getB(getControl(pd)) end
+function getx0(pd::run) getx0(getControl(pd)) end
+function gety0(pd::run) gety0(getControl(pd)) end
 function getIsotopes(pd::run) getIsotopes(getControl(pd)) end
 function getChannels(pd::run) getChannels(getControl(pd)) end
 function getGainOption(pd::run) getGainOption(getControl(pd)) end
@@ -97,8 +97,8 @@ function setStandard!(pd::run;i::Union{Int,AbstractVector{<:Integer}},standard::
 # set control attributes
 function setInstrument!(ctrl::control,instrument::String) setproperty!(ctrl,:instrument,instrument) end
 function setMethod!(ctrl::control,method::String) setproperty!(ctrl,:method,method) end
-function setA!(ctrl::control,A::Vector{Float64}) setproperty!(ctrl,:A,A) end
-function setB!(ctrl::control,B::Vector{Float64}) setproperty!(ctrl,:B,B) end
+function setx0!(ctrl::control,x0::Vector{Float64}) setproperty!(ctrl,:x0,x0) end
+function sety0!(ctrl::control,y0::Vector{Float64}) setproperty!(ctrl,:y0,y0) end
 function setIsotopes!(ctrl::control,isotopes::Vector{String}) setproperty!(ctrl,:isotopes,isotopes) end
 function setChannels!(ctrl::control,channels::Vector{String}) setproperty!(ctrl,:channels,channels) end
 function setGainOption!(ctrl::control,gainOption::Integer) setproperty!(ctrl,:gainOption,gainOption) end
@@ -106,8 +106,8 @@ function setGainOption!(ctrl::control,gainOption::Integer) setproperty!(ctrl,:ga
 # set control attributes in a run
 function setInstrument!(pd::run,instrument::String) accessControl!(pd,setInstrument!,instrument) end
 function setMethod!(pd::run,method::String) accessControl!(pd,setMethod!,method) end
-function setA!(pd::run,A::Vector{Float64}) accessControl!(pd,setA!,A) end
-function setB!(pd::run,B::Vector{Float64}) accessControl!(pd,setB!,B) end
+function setx0!(pd::run,x0::Vector{Float64}) accessControl!(pd,setx0!,x0) end
+function sety0!(pd::run,y0::Vector{Float64}) accessControl!(pd,sety0!,y0) end
 function setIsotopes!(pd::run,isotopes::Vector{String}) accessControl!(pd,setIsotopes!,isotopes) end
 function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,setChannels!,channels) end
 function setGainOption!(pd::run,gainOption::Integer) accessControl!(pd,setGainOption!,gainOption) end

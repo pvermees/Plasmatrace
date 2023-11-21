@@ -131,11 +131,8 @@ function plotCalibration(pd::run;ms=2,ma=0.5,xlim=:auto,ylim=:auto)
         Plots.scatter!(p,plotdat[i][:,PDcol],plotdat[i][:,dDcol],ms=ms,ma=ma)
     end
     for i in 1:ng
-        A = groups[i].A
-        B = groups[i].B
-        x0 = -A/B
-        x = [0.,x0]
-        y = A .+ B .* x
+        x = [0.,groups[i].x0]
+        y = [groups[i].y0,0.]
         col = p.series_list[i].plotattributes.explicit[:markercolor]
         Plots.plot!(p,x,y,linecolor=col,label="")
     end
@@ -158,4 +155,14 @@ function getRawPlotDat(df::DataFrame;
         meas = formRatios(meas,num=num,den=den,brackets=brackets)
     end
     hcat(tT,meas)
+end
+
+function plotDrift(pd::run)
+    par = getPar(pd)
+    dat = poolRunDat(pd)
+    t = dat[:,1]
+    dp = getDriftPars(par)
+    println(dp)
+    ft = polyVal(p=dp,t=t)
+    Plots.plot(t,ft)
 end

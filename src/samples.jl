@@ -90,7 +90,7 @@ function atomic(;s,par)
     bDt = polyVal(p=parseBPar(bpar,par="bD"),t=t)
     bdt = polyVal(p=parseBPar(bpar,par="bd"),t=t)
     P = @. (Pm-bPt)/(ft*FT)
-    D = @. (Dm-bDt)*exp(-g)
-    d = dm-bdt
+    D = @. (Dm-bDt)
+    d = @. (dm-bdt)*exp(-g)
     hcat(t,T,P,D,d)
 end

@@ -11,7 +11,7 @@ function fitStandards!(pd::run;
                        refmat::Union{AbstractString,AbstractVector{<:AbstractString}},
                        n=1,m=0,verbose=false)
     if isa(refmat,AbstractString) refmat = [refmat] end
-    setAB!(pd,refmat=refmat)
+    setx0y0!(pd,refmat=refmat)
     groups = groupStandards(pd)
     changeGain = getGainOption(pd)==2
     
@@ -32,9 +32,8 @@ function fitStandards!(pd::run;
             dm = gr.s[:,5]
             ft = polyVal(p=aft,t=t)
             FT = polyVal(p=aFT,t=T)
-            P = getP(Pm,Dm,dm,gr.A,gr.B,ft,FT,gr.bPt,gr.bDt,gr.bdt,g)
-            D = getD(Pm,Dm,dm,gr.A,gr.B,ft,FT,gr.bPt,gr.bDt,gr.bdt,g)
-            out += sum(getS(P,D,Pm,Dm,dm,gr.A,gr.B,ft,FT,gr.bPt,gr.bDt,gr.bdt,g))
+            p = getp(gr.x0,gr.y0,ft,FT,g,gr.bPt,gr.bDt,gr.bdt,Pm,Dm,dm)
+            out += sum(getS(p,gr.x0,gr.y0,ft,FT,g,gr.bPt,gr.bDt,gr.bdt,Pm,Dm,dm))
         end
         out
     end
@@ -52,22 +51,22 @@ export fitStandards!
 function groupStandards(pd::run)
     par = getPar(pd)
     if isnothing(par) PTerror("missingBlank") end
-    A = getA(pd)
-    B = getB(pd)
+    x0 = getx0(pd)
+    y0 = gety0(pd)
     bpar = getBlankPars(pd)
     bP = parseBPar(bpar,par="bP")
     bD = parseBPar(bpar,par="bD")
     bd = parseBPar(bpar,par="bd")
     std = getStandard(pd)
     groups = Vector{NamedTuple}(undef,0)
-    for i in eachindex(A)
+    for i in eachindex(x0)
         j = findall(in(i),std)
         s = signalData(pd,channels=getChannels(pd),i=j)
         t = s[:,1]
         bPt = polyVal(p=bP,t=t)
         bDt = polyVal(p=bD,t=t)
         bdt = polyVal(p=bd,t=t)
-        dat = (A=A[i],B=B[i],s=s,bPt=bPt,bdt=bdt,bDt=bDt)
+        dat = (x0=x0[i],y0=y0[i],s=s,bPt=bPt,bdt=bdt,bDt=bDt)
         push!(groups,dat)
     end
     return groups
@@ -97,14 +96,13 @@ function predictStandard(pd::run;sname::Union{Nothing,AbstractString}=nothing,
     bDt = polyVal(p=parseBPar(bpar,par="bD"),t=t)
     bdt = polyVal(p=parseBPar(bpar,par="bd"),t=t)
     
-    A = getA(pd)[standard]
-    B = getB(pd)[standard]
-    P = getP(Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,g)
-    D = getD(Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,g)
+    x0 = getx0(pd)[standard]
+    y0 = gety0(pd)[standard]
+    p = getp(x0,y0,ft,FT,g,bPt,bDt,bdt,Pm,Dm,dm)
 
-    Pp = @. P*ft*FT + bPt
-    Dp = @. D*exp(g) + bDt
-    dp = @. A*D + B*P + bdt
+    Pp = @. getP(p,x0,y0,ft,FT,g,bPt,bDt,bdt,Pm,Dm,dm)
+    Dp = @. getD(p,x0,y0,ft,FT,g,bPt,bDt,bdt,Pm,Dm,dm)
+    dp = @. getd(p,x0,y0,ft,FT,g,bPt,bDt,bdt,Pm,Dm,dm)
     
     channels = getChannels(pd)
     DataFrame(hcat(t,T,Pp,Dp,dp),[names(s)[1:2];channels])

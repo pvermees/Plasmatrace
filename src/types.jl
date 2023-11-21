@@ -5,8 +5,8 @@ abstract type plasmaData end
 mutable struct control
     instrument::Union{Nothing,String}
     method::Union{Nothing,String}
-    A::Union{Nothing,Vector{Float64}}
-    B::Union{Nothing,Vector{Float64}}
+    x0::Union{Nothing,Vector{Float64}}
+    y0::Union{Nothing,Vector{Float64}}
     isotopes::Union{Nothing,Vector{String}}
     channels::Union{Nothing,Vector{String}}
     gainOption::Integer
