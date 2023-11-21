@@ -7,5 +7,5 @@ function getD(Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,g)
 end
 
 function getS(P,D,Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,g)
-    @. ((-FT*P*ft)-bPt+Pm)^2 + ((-bdt)-A*D+dm-B*P)^2 + ((-D*exp(g))-bDt+Dm)^2
+    @. (Pm-P*ft*FT-bPt)^2 + (dm-A*D-B*P-bdt)^2 + (Dm-D*exp(g)-bDt)^2
 end

@@ -27,13 +27,13 @@ end
 
 # average ratios
 function averat(df;num=nothing,den=nothing,logratios=false)
-    nin = ncol(df)
+    nc = ncol(df)
     nr = nrow(df)
     function misfit(mu,df,logratios)
         expected = logratios ? exp.(mu) : mu
     end
     muvec = Statistics.mean.(eachcol(df))
-    mumat = reshape(muvec,(1,nin))
+    mumat = reshape(muvec,(1,nc))
     mu = DataFrame(mumat,names(df))
     if logratios # TODO
         init = log.(mu)
@@ -118,5 +118,12 @@ function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
         end
         out = DataFrame(reshape(row,1,nout),olabs)
     end
+    out
+end
+
+function select(myrun;i::AbstractVector)
+    out = deepcopy(myrun)
+    samples = getSamples(out)
+    setSamples!(out,samples[i])
     out
 end

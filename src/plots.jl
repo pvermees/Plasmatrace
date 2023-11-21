@@ -19,6 +19,7 @@ function plot(pd::sample;channels=nothing,num=nothing,den=nothing,
     plotWindows!(p,pd=pd,blank=false,dy=dy,linecolor="red")
     return p
 end
+
 function plot(pd::run;i::Union{Nothing,Integer}=nothing,
               channels=nothing,num=nothing,den=nothing,
               transformation="sqrt",titlefontsize=10,steps=1000,
@@ -84,6 +85,7 @@ function plotFitted!(p;pd::run,i::Integer,channels=nothing,
     plotdat = getRawPlotDat(pred,channels=channels,num=num,den=den)
     x = pred[:,2]
     y = Matrix(plotdat[:,3:end])
+    y[y.<0] .= NaN
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
     Plots.plot!(p,x,ty,linecolor=linecolor,linestyle=linestyle,label="")
 end
