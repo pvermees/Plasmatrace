@@ -1,14 +1,14 @@
-# Plasmatrace.jl
+# Plasmatrace
 
 ## Julia package for LA-ICP-MS data reduction
 
-Plasmatrace.jl is in early development and has not yet been added to
+Plasmatrace is in early development and has not yet been added to
 the [Julia](https://julialang.org/) package repository. However, if
 you want to play around with the current functionality, then you can
 install the package from GitHub. At the Julia REPL:
 
 ```
-import Pkg; Pkg.add(url="https://github.com/pvermees/Plasmatrace.jl.git")
+import Pkg; Pkg.add(url="https://github.com/pvermees/Plasmatrace.git")
 ```
 
 There are two ways to interact with Plasmatrace:

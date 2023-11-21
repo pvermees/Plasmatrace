@@ -10,6 +10,7 @@ const findSamples = Plasmatrace.findSamples
 const setDriftPars! = Plasmatrace.setDriftPars!
 const setDownPars! = Plasmatrace.setDownPars!
 const setGainPar! = Plasmatrace.setGainPar!
+const setGainOption! = Plasmatrace.setGainOption!
 const getChannels = Plasmatrace.getChannels
 const findSamples = Plasmatrace.findSamples
 const run = Plasmatrace.run

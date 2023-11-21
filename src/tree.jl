@@ -93,11 +93,13 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             message =
             "s. Export one sample\n"*
             "m. Export multiple samples\n"*
-            "a. Export all samples",
+            "a. Export all samples\n"*
+            "x. Exit",
             actions = Dict(
                 "s" => "exportOneSample",
                 "m" => "exportMultipleSamples",
-                "a" => clearSamplePrefixes!
+                "a" => clearSamplePrefixes!,
+                "x" => "x"
             )
         ),
         "export" => (
@@ -108,7 +110,7 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             actions = Dict(
                 "j" => "json",
                 "c" => "csv",
-                "x" => "xxx"
+                "x" => "xx"
             )
         ),
         "log" => (
@@ -132,44 +134,52 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             message =
             "a: automatic\n"*
             "s: set a one-part window\n"*
-            "m: set a multi-part window",
+            "m: set a multi-part window"*
+            "x. Exit",
             actions = Dict(
                 "a" => allAutoBlankWindows!,
                 "s" => "allSingleBlankWindows",
-                "m" => "allMultiBlankWindows"
+                "m" => "allMultiBlankWindows",
+                "x" => "x"
             )
         ),
         "oneBlankWindow" => (
             message =
             "a: automatic\n"*
             "s: set a one-part window\n"*
-            "m: set a multi-part window",
+            "m: set a multi-part window"*
+            "x: Exit",
             actions = Dict(
                 "a" => oneAutoBlankWindow!,
                 "s" => "oneSingleBlankWindow",
-                "m" => "oneMultiBlankWindow"
+                "m" => "oneMultiBlankWindow",
+                "x" => "x"
             )
         ),
         "allSignalWindows" => (
             message =
             "a: automatic\n"*
             "s: set a one-part window\n"*
-            "m: set a multi-part window",
+            "m: set a multi-part window"*
+            "x: Exit",
             actions = Dict(
                 "a" => allAutoSignalWindows!,
                 "s" => "allSingleSignalWindows",
-                "m" => "allMultiSignalWindows"
+                "m" => "allMultiSignalWindows",
+                "x" => "x"
             )
         ),
         "oneSignalWindow" => (
             message =
             "a: automatic\n"*
             "s: set a one-part window\n"*
-            "m: set a multi-part window",
+            "m: set a multi-part window"*
+            "x: Exit",
             actions = Dict(
                 "a" => oneAutoSignalWindow!,
                 "s" => "oneSingleSignalWindow",
-                "m" => "oneMultiSignalWindow"
+                "m" => "oneMultiSignalWindow",
+                "x" => "x"
             )
         ),
         "allSingleBlankWindows" => (
@@ -235,20 +245,23 @@ function tree(key::T,pl::Dict) where T<:AbstractString
         "setStandardPrefixes" => (
             message =
             "s: Use a single primary reference material\n"*
-            "m: Use multiple primary reference materials",
+            "m: Use multiple primary reference materials"*
+            "x: Exit",
             actions = Dict(
                 "s" => "setSingleStandardPrefix",
-                "m" => "setMultipleStandardPrefixes"
+                "m" => "setMultipleStandardPrefixes",
+                "x" => "x"
             )
         ),
         "setSingleStandardPrefix" => (
-            message = "Enter the prefix of the reference material:",
+            message =
+            "Enter the prefix of the reference material, or x to exit",
             actions = setStandardPrefixes!
         ),
         "setMultipleStandardPrefixes" => (
             message =
             "Enter the prefixes of the reference material as"*
-            "a comma-separated list of names:",
+            "a comma-separated list of names, or x to exit:",
             actions = setStandardPrefixes!
         ),
         "polyFit" => (
@@ -279,22 +292,22 @@ function tree(key::T,pl::Dict) where T<:AbstractString
         ),
         "removeStandards" => (
             message = "Mark the standard(s) that should be removed "*
-            "as a comma separated list of sample numbers",
+            "as a comma separated list of sample numbers, or enter x to exit",
             actions = removeStandards!
         ),
         "exportOneSample" => (
-            message = "Enter the prefix of the sample to export:",
+            message = "Enter the prefix of the sample to export, or x to exit:",
             actions = setSamplePrefixes!
         ),
         "exportMultipleSamples" => (
             message =
             "Enter the prefixes of the samples to export as a "*
-            "comma-separated list of names:",
+            "comma-separated list of names, or x to exit:",
             actions = setSamplePrefixes!
         ),
         "read" => (
             message =
-            "Enter the full path of the data directory:",
+            "Enter the full path of the data directory, or x to exit:",
             actions = loader!
         ),
         "channels" => (
@@ -302,7 +315,7 @@ function tree(key::T,pl::Dict) where T<:AbstractString
             actions = chooseChannels!
         ),
         "goto" => (
-            message = "Enter the sample number:",
+            message = "Enter the sample number, or x to exit:",
             actions = goto!
         ),
         "viewChannels" => (
@@ -319,12 +332,12 @@ function tree(key::T,pl::Dict) where T<:AbstractString
         ),
         "json" => (
             message = 
-            "Enter the path and name of the .json file:",
+            "Enter the path and name of the .json file, or x to exit:",
             actions = unsupported
         ),  
         "csv" => (
             message = 
-            "Enter the path and name of the .csv file:",
+            "Enter the path and name of the .csv file, or x to exit:",
             actions = export2csv
         )
     )
