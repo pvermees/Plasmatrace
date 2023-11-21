@@ -99,7 +99,7 @@ function standardtest(doplot=true)
         p = plot(myrun,i=i[1])
         @test display(p) != NaN
         p = plot(myrun,i=i[1],
-                 num=["Lu175 -> 175","Hf178 -> 260"],
+                 num=["Hf178 -> 260","Lu175 -> 175"],
                  den=["Hf176 -> 258"])
         @test display(p) != NaN
     end
