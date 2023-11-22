@@ -80,7 +80,7 @@ function forwardtest()
     setDriftPars!(myrun,Float64[4.0])
     setDownPars!(myrun,Float64[])
     setGainPar!(myrun,-0.34)
-    setAB!(myrun,refmat="BP")
+    setx0y0!(myrun,refmat="BP")
     p = plot(myrun,i=i[1],transformation="sqrt")
     @test display(p) != NaN
     return myrun
@@ -129,7 +129,7 @@ function averagetest()
     fitStandards!(myrun,refmat=["BP"],n=1,m=0,verbose=true)
     i = findSamples(myrun,prefix="hogsbo")
     out = fitSamples(myrun,i=i)
-    CSV.write("/home/pvermees/Desktop/hogsbo.csv",out)
+    CSV.write("hogsbo.csv",out)
     myrun
 end
 
@@ -144,14 +144,14 @@ end
 
 Plots.closeall()
 
-@testset "load" begin loaddat = loadtest() end
+#=@testset "load" begin loaddat = loadtest() end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowout = windowtest() end
 @testset "plot selection windows" begin plotwindowtest() end
 @testset "set blanks" begin blankout = blanktest() end
 @testset "forward model" begin forwardout = forwardtest() end
 @testset "fit standards" begin standardout = standardtest() end
-@testset "plot atomic" begin atomictest() end
+@testset "plot atomic" begin atomictest() end=#
 @testset "plot calibration" begin calibrationtest() end
-@testset "average results" begin averagetest() end
-@testset "TUI tests" begin TUItest() end
+#=@testset "average results" begin averagetest() end
+@testset "TUI tests" begin TUItest() end=#

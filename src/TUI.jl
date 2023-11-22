@@ -76,8 +76,7 @@ function arbeid!(pd::run;pars::TUIpars,
     return nothing
 end
 
-function dispatch!(pd::Union{Nothing,run};
-                   pars::TUIpars,task,action=nothing,verbatim=false)
+function dispatch!(pd::run;pars::TUIpars,task,action=nothing,verbatim=false)
     if verbatim
         println(pars.chain)
         println(pars.history)

@@ -1,23 +1,17 @@
 # get sample attributes from a run:
-function accesSample(pd::run,
-                     i::Union{Nothing,Integer,AbstractVector{<:Integer}},
-                     T::Type,
-                     fun::Function)
-    if isnothing(i) i = 1:length(pd) end
-    samples = getSamples(pd)[i]
-    if isa(i,Integer)
-        out = fun(samples)
-    else
-        out = Vector{T}(undef,size(i,1))
-        for j in eachindex(samples)
-            out[j] = fun(samples[j])
-        end
-    end
-    out
+function accesSample(pd::run,i::Integer,fun::Function)
+    sample = getSamples(pd)[i]
+    return fun(sample)
 end
-function accesSample!(pd::run,
-                      i::Union{Integer,AbstractVector{<:Integer}},
-                      fun::Function,val::Any)
+function accesSample(pd::run,i::AbstractVector{<:Integer},fun::Function)
+    samples = getSamples(pd)[i]
+    return fun.(samples)
+end
+function accesSample(pd::run,i::Nothing,fun::Function)
+    return accesSample(pd,1:length(pd),fun)
+end
+
+function accesSample!(pd::run,i,fun::Function,val::Any)
     samples = getSamples(pd)
     for j in i fun(samples[j],val) end
     setSamples!(pd,samples)
@@ -50,12 +44,12 @@ function getPar(pd::run) getproperty(pd,:par) end
 function getCov(pd::run) getproperty(pd,:cov) end
 
 # get sample attributes from a run
-function getSnames(pd::run;i=nothing) accesSample(pd,i,AbstractString,getSname) end
-function getDateTimes(pd::run;i=nothing) accesSample(pd,i,DateTime,getDateTime) end
-function getDat(pd::run;i=nothing) accesSample(pd,i,DataFrame,getDat) end
-function getBWin(pd::run;i=nothing) accesSample(pd,i,AbstractVector{window},getBWin) end
-function getSWin(pd::run;i=nothing) accesSample(pd,i,AbstractVector{window},getSWin) end
-function getStandard(pd::run;i=nothing) accesSample(pd,i,Integer,getStandard) end
+function getSnames(pd::run;i=nothing) accesSample(pd,i,getSname) end
+function getDateTimes(pd::run;i=nothing) accesSample(pd,i,getDateTime) end
+function getDat(pd::run;i=nothing) accesSample(pd,i,getDat) end
+function getBWin(pd::run;i=nothing) accesSample(pd,i,getBWin) end
+function getSWin(pd::run;i=nothing) accesSample(pd,i,getSWin) end
+function getStandard(pd::run;i=nothing) accesSample(pd,i,getStandard) end
 
 # get control attributes
 function getInstrument(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:instrument) end
