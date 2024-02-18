@@ -2,13 +2,8 @@ using Test, CSV
 import Plots
 
 function loadtest()
-    dname = "data"
-    out = run()
-    DRS!(out,
-         method="LuHf",
-         channels=["Lu175 -> 175","Hf176 -> 258","Hf178 -> 260"])
-    load!(out,dname=dname,instrument="Agilent")
-    out
+    dat = Plasmatrace.load("data",instrument="Agilent")
+    println(dump(dat.samples[1].datetime))
 end
 
 function plottest(option=0)
@@ -144,14 +139,17 @@ end
 
 Plots.closeall()
 
-#=@testset "load" begin loaddat = loadtest() end
+
+@testset "load" begin loaddat = loadtest() end
+#=
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowout = windowtest() end
 @testset "plot selection windows" begin plotwindowtest() end
 @testset "set blanks" begin blankout = blanktest() end
 @testset "forward model" begin forwardout = forwardtest() end
 @testset "fit standards" begin standardout = standardtest() end
-@testset "plot atomic" begin atomictest() end=#
+@testset "plot atomic" begin atomictest() end
 @testset "plot calibration" begin calibrationtest() end
-#=@testset "average results" begin averagetest() end
-@testset "TUI tests" begin TUItest() end=#
+@testset "average results" begin averagetest() end
+@testset "TUI tests" begin TUItest() end
+=#

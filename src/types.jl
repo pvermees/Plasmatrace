@@ -1,58 +1,68 @@
 const sph = 3.6e6 # seconds per hour
-const window = Tuple{Int,Int}
-abstract type plasmaData end
+const Window = Tuple{Int,Int}
 
-mutable struct control
-    instrument::Union{Nothing,String}
-    method::Union{Nothing,String}
-    x0::Union{Nothing,Vector{Float64}}
-    y0::Union{Nothing,Vector{Float64}}
-    isotopes::Union{Nothing,Vector{String}}
-    channels::Union{Nothing,Vector{String}}
-    gainOption::Integer
-end
+abstract type abstractSample end
+abstract type hasWindows <: abstractSample end
+abstract type hasStandards <: hasWindows end
 
-mutable struct sample <: plasmaData
+abstract type plasmaData{T<:abstractSample} end
+abstract type hasControl{T} <: plasmaData{T} end
+abstract type hasPars{T} <: hasControl{T} end
+
+mutable struct Sample <: abstractSample
     sname::String
     datetime::DateTime
     dat::DataFrame
-    bwin::Union{Nothing,Vector{window}}
-    swin::Union{Nothing,Vector{window}}
+end
+
+mutable struct Control
+    method::String
+    x0::Vector{Float64}
+    y0::Vector{Float64}
+    isotopes::Vector{String}
+    channels::Vector{String}
+    gainOption::Integer
+end
+
+mutable struct Pars
+    blank::Vector{Float64}
+    drift::Vector{Float64}
+    down::Vector{Float64}
+    gain::Float64
+end
+
+mutable struct Wsample <: hasWindows
+    sample::Sample
+    bwin::Vector{Window}
+    swin::Vector{Window}
+end
+mutable struct Ssample <: hasStandards
+    sample::Wsample
     standard::Int
 end
 
-mutable struct fitPars
-    blank::Union{Nothing,Vector{Float64}}
-    drift::Union{Nothing,Vector{Float64}}
-    down::Union{Nothing,Vector{Float64}}
-    gain::Union{Nothing,Float64}
+mutable struct Run{T} <: plasmaData{T}
+    samples::Vector{T}
+    instrument::String
+end
+mutable struct Crun{T} <: hasControl{T}
+    samples::Vector{T}
+    control::Control
+end
+mutable struct Prun{T} <: hasPars{T}
+    samples::Vector{T}
+    control::Control
+    pars::Pars
 end
 
-mutable struct run <: plasmaData
-    samples::Union{Nothing,Vector{sample}}
-    control::Union{Nothing,control}
-    par::fitPars
-    cov::Union{Nothing,Matrix}
-end
-
-mutable struct TUIpars
+struct TUIpars
     chain::Vector{String}
     i::Int
     history::DataFrame
-    channels::Union{Nothing,Vector{String}}
-    den::Union{Nothing,Vector{String}}
-    prefixes::Union{Nothing,Vector{String}}
-    refmats::Union{Nothing,Vector{String}}
+    channels::Vector{String}
+    den::Vector{String}
+    prefixes::Vector{String}
+    refmats::Vector{String}
     n::Vector{Int}
     prioritylist::Dict
 end
-
-sample(sname,datetime,dat) = sample(sname,datetime,dat,nothing,nothing,0)
-
-control() = control(nothing,nothing,nothing,nothing,nothing,nothing,1)
-
-fitPars() = fitPars(nothing,nothing,nothing,0.0)
-
-run(samples) = run(samples,control(),fitPars(),nothing)
-
-run() = run(nothing)

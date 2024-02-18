@@ -24,11 +24,3 @@ function DRSchannels!(pd::run;channels::Vector{T}) where T<:AbstractString
         PTerror("isochanmismatch")
     end
 end
-
-function getExt(instrument)
-    if instrument == "Agilent"
-        return ".csv"
-    else
-        PTerror("unknownInstrument")
-    end
-end

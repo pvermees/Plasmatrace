@@ -4,6 +4,7 @@ import Plots, Statistics, Optim, LinearAlgebra, CSV
 include("types.jl")
 include("methods.jl")
 include("io.jl")
+#=
 include("windows.jl")
 include("blanks.jl")
 include("errors.jl")
@@ -18,3 +19,4 @@ include("messages.jl")
 include("actions.jl")
 include("tree.jl")
 include("TUI.jl")
+=#

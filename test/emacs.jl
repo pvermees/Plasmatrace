@@ -1,7 +1,7 @@
 odir = pwd()
 cd(@__DIR__)
 
-include("../src/include.jl")
+include("../src/Plasmatrace.jl")
 include("tests.jl")
 
 #PT()
