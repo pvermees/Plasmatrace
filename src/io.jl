@@ -1,10 +1,12 @@
 function readFile(fname::AbstractString;instrument="Agilent")
     if instrument=="Agilent"
         sname, datetime, dat = readAgilent(fname)
+        bwin = autoWindow(dat[:,2:end],blank=true)
+        swin = autoWindow(dat[:,2:end],blank=false)
     else
         PTerror("unknownInstrument")
     end
-    Sample(sname,datetime,dat)
+    Sample(sname,datetime,dat,bwin,swin,0)
 end
 
 function load(dname::AbstractString;instrument="Agilent")
@@ -33,7 +35,7 @@ function load(dname::AbstractString;instrument="Agilent")
         samp = sortedsamples[i]
         samp.dat[:,1] = samp.dat[:,2]./sph .+ runtime[i]
     end
-    Run(sortedsamples,instrument)
+    Run(sortedsamples)
 end
 export load
 
