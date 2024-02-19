@@ -1,18 +1,5 @@
 using Plasmatrace
 
 # aliases to access non-exported functions
-const blankData = Plasmatrace.blankData
-const getBlankPars = Plasmatrace.getBlankPars
-const parseBPar = Plasmatrace.parseBPar
-const polyVal = Plasmatrace.polyVal
-const setx0y0! = Plasmatrace.setx0y0!
-const findSamples = Plasmatrace.findSamples
-const setDriftPars! = Plasmatrace.setDriftPars!
-const setDownPars! = Plasmatrace.setDownPars!
-const setGainPar! = Plasmatrace.setGainPar!
-const setGainOption! = Plasmatrace.setGainOption!
-const getChannels = Plasmatrace.getChannels
-const findSamples = Plasmatrace.findSamples
-const run = Plasmatrace.run
 
 include("tests.jl")

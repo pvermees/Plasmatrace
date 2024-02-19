@@ -7,10 +7,6 @@ function readFile(fname::AbstractString;instrument="Agilent")
     Sample(sname,datetime,dat)
 end
 
-function foo()
-    println("foo")
-end
-
 function load(dname::AbstractString;instrument="Agilent")
     fnames = readdir(dname)
     samples = Vector{Sample}(undef,0)

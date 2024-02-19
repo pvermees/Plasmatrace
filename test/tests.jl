@@ -1,31 +1,20 @@
+#=====================
+pkg > activate .
+pkg > add Test
+pkg > test Plasmatrace
+======================#
+
 using Test, CSV
 import Plots
 
 function loadtest()
-    dat = Plasmatrace.load("data",instrument="Agilent")
-    println(dump(dat.samples[1].datetime))
+    run = load("data",instrument="Agilent")
 end
 
 function plottest(option=0)
     myrun = loadtest()
-    if option==0 || option==1
-        p = plot(myrun,i=1,channels=["Hf176 -> 258","Hf178 -> 260"])
-        @test display(p) != NaN
-    end
-    if option==0 || option==2
-        p = plot(myrun,i=1)
-        @test display(p) != NaN
-    end
-    if option==0 || option==3
-        p = plot(myrun)
-        @test display(p) != NaN
-    end
-    if option==0 || option==4
-        p = plot(myrun,i=3,
-                 num=["Lu175 -> 175","Hf178 -> 260"],
-                 den=["Hf176 -> 258"])
-        @test display(p) != NaN
-    end
+    p = plot(myrun.samples[1],channels=["Hf176 -> 258","Hf178 -> 260"])
+    @test display(p) != NaN
 end
 
 function windowtest()
@@ -75,7 +64,7 @@ function forwardtest()
     setDriftPars!(myrun,Float64[4.0])
     setDownPars!(myrun,Float64[])
     setGainPar!(myrun,-0.34)
-    setx0y0!(myrun,refmat="BP")
+    setAB!(myrun,refmat="BP")
     p = plot(myrun,i=i[1],transformation="sqrt")
     @test display(p) != NaN
     return myrun
@@ -124,7 +113,7 @@ function averagetest()
     fitStandards!(myrun,refmat=["BP"],n=1,m=0,verbose=true)
     i = findSamples(myrun,prefix="hogsbo")
     out = fitSamples(myrun,i=i)
-    CSV.write("hogsbo.csv",out)
+    CSV.write("/home/pvermees/Desktop/hogsbo.csv",out)
     myrun
 end
 
@@ -139,10 +128,9 @@ end
 
 Plots.closeall()
 
-
 @testset "load" begin loaddat = loadtest() end
-#=
 @testset "plot raw data" begin plottest() end
+#=
 @testset "set selection window" begin windowout = windowtest() end
 @testset "plot selection windows" begin plotwindowtest() end
 @testset "set blanks" begin blankout = blanktest() end
