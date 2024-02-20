@@ -1,4 +1,4 @@
-function fitBlanks!(pd::run;n=2)
+function fitBlanks!(run::plasmaData;n=2)
     channels = getChannels(pd)
     b = blankData(pd,channels=channels)
     nc = size(channels,1)

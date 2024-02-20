@@ -1,10 +1,6 @@
 const sph = 3.6e6 # seconds per hour
 const Window = Tuple{Int,Int}
 
-abstract type plasmaData end
-abstract type hasControl <: plasmaData end
-abstract type hasPars <: hasControl end
-
 mutable struct Sample
     sname::String
     datetime::DateTime
@@ -14,33 +10,12 @@ mutable struct Sample
     standard::Int
 end
 
-mutable struct Control
-    method::String
-    x0::Vector{Float64}
-    y0::Vector{Float64}
-    isotopes::Vector{String}
-    channels::Vector{String}
-    gainOption::Integer
-end
-
-mutable struct Pars
-    blank::Vector{Float64}
-    drift::Vector{Float64}
-    down::Vector{Float64}
-    gain::Float64
-end
-
-mutable struct Run <: plasmaData
-    samples::Vector{Sample}
-end
-mutable struct Crun <: hasControl
-    samples::Vector{Sample}
-    control::Control
-end
-mutable struct Prun <: hasPars
-    samples::Vector{Sample}
-    control::Control
-    pars::Pars
+struct Standard
+    x0::Float64
+    y0::Float64
+    d::String
+    D::String
+    P::String
 end
 
 struct TUIpars

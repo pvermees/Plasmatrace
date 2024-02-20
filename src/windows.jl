@@ -2,25 +2,11 @@ function setBwin!(samp::Sample,bwin=nothing)
     if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
     samp.bwin = bwin
 end
-function setBwin!(run::plasmaData,bwin=nothing;i=nothing)
-    if isnothing(i) i = 1:length(run.samples) end
-    if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
-    for j in i
-        setBwin!(run.samples[j],bwin)
-    end
-end
 export setBwin!
 
 function setSwin!(samp::Sample,swin=nothing)
     if isnothing(swin) swin=autoWindow(samp,blank=false) end
     samp.swin = swin
-end
-function setSwin!(run::plasmaData,swin=nothing;i=nothing)
-    if isnothing(i) i = 1:length(run.samples) end
-    if isnothing(swin) swin=autoWindow(samp,blank=false) end
-    for j in i
-        setSwin!(run.samples[j],swin)
-    end
 end
 export setSwin!
 

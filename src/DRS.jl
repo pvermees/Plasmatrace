@@ -1,4 +1,4 @@
-function DRS!(pd::run;method::T,channels::Vector{T}) where T<:AbstractString
+function DRS(pd::plasmaData;method::AbstractString,channels::Vector{AbstractString})
     DRSmethod!(pd,method=method)
     DRSchannels!(pd,channels=channels)
 end

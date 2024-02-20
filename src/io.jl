@@ -35,7 +35,7 @@ function load(dname::AbstractString;instrument="Agilent")
         samp = sortedsamples[i]
         samp.dat[:,1] = samp.dat[:,2]./sph .+ runtime[i]
     end
-    Run(sortedsamples)
+    return sortedsamples
 end
 export load
 
