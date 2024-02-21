@@ -1,3 +1,27 @@
+function pool(run::Vector{Sample};blank=false,signal=false)
+    ns = size(run)
+    dats = Vector{DataFrame}(undef,ns)
+    for i in eachindex(run)
+        dats[i] = windowData(run[i],blank=blank,signal=signal)
+    end
+    return reduce(vcat,dats)
+end
+
+function windowData(samp::Sample;blank=false,signal=false)
+    if blank
+        windows = samp.bwin
+    elseif signal
+        windows = samp.swin
+    else
+        windows = [(1,size(samp,1))]
+    end
+    selection = Integer[]
+    for w in windows
+        append!(selection, w[1]:w[2])
+    end
+    return samp.dat[selection,:]
+end
+
 function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
     labels = names(df)
     nc = size(labels,1)

@@ -1,4 +1,5 @@
 const sph = 3.6e6 # seconds per hour
+
 const Window = Tuple{Int,Int}
 
 mutable struct Sample
@@ -10,12 +11,14 @@ mutable struct Sample
     standard::Int
 end
 
-struct Standard
+struct Pairing
+    name::String
+    pairs::NamedTuple{(:d,:D,:P),Tuple{String,String,String}}
+end
+
+struct Reference
     x0::Float64
     y0::Float64
-    d::String
-    D::String
-    P::String
 end
 
 struct TUIpars
