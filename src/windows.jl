@@ -1,15 +1,3 @@
-function setBwin!(samp::Sample,bwin=nothing)
-    if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
-    samp.bwin = bwin
-end
-export setBwin!
-
-function setSwin!(samp::Sample,swin=nothing)
-    if isnothing(swin) swin=autoWindow(samp,blank=false) end
-    samp.swin = swin
-end
-export setSwin!
-
 function autoWindow(signals::AbstractDataFrame;blank=false)
     total = sum.(eachrow(signals))
     q = Statistics.quantile(total,[0.05,0.95])
@@ -32,4 +20,19 @@ function autoWindow(signals::AbstractDataFrame;blank=false)
 end
 function autoWindow(samp::Sample;blank=false)
     autoWindow(samp.dat[:,3:end],blank=blank)
+end
+
+function windowData(samp::Sample;blank=false,signal=false)
+    if blank
+        windows = samp.bwin
+    elseif signal
+        windows = samp.swin
+    else
+        windows = [(1,size(samp,1))]
+    end
+    selection = Integer[]
+    for w in windows
+        append!(selection, w[1]:w[2])
+    end
+    return samp.dat[selection,:]
 end

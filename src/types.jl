@@ -1,5 +1,7 @@
 const sph = 3.6e6 # seconds per hour
+
 const Window = Tuple{Int,Int}
+export Window
 
 mutable struct Sample
     sname::String
@@ -9,14 +11,19 @@ mutable struct Sample
     swin::Vector{Window}
     standard::Int
 end
+export Sample
+
+struct Pairing
+    name::String
+    pairs::NamedTuple{(:d,:D,:P),Tuple{String,String,String}}
+end
+export Pairing
 
 struct Standard
     x0::Float64
     y0::Float64
-    d::String
-    D::String
-    P::String
 end
+export Standard
 
 struct TUIpars
     chain::Vector{String}
