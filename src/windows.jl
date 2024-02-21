@@ -1,3 +1,15 @@
+function setBwin!(samp::Sample,bwin=nothing)
+    if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
+    samp.bwin = bwin
+end
+export setBwin!
+
+function setSwin!(samp::Sample,swin=nothing)
+    if isnothing(swin) swin=autoWindow(samp,blank=false) end
+    samp.swin = swin
+end
+export setSwin!
+
 function autoWindow(signals::AbstractDataFrame;blank=false)
     total = sum.(eachrow(signals))
     q = Statistics.quantile(total,[0.05,0.95])

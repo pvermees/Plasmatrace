@@ -19,7 +19,7 @@ struct Pairing
 end
 export Pairing
 
-struct Standard
+struct Reference
     x0::Float64
     y0::Float64
 end

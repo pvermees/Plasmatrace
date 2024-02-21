@@ -4,7 +4,7 @@ pkg > add Test
 pkg > test Plasmatrace
 ======================#
 
-using Test, CSV
+using Test, CSV, DataFrames
 import Plots
 
 function loadtest()
@@ -53,10 +53,9 @@ end
 
 Plots.closeall()
 
-#@testset "load" begin loadtest() end
-#@testset "plot raw data" begin plottest() end
-#@testset "set selection window" begin windowtest() end
-#@testset "set method and blanks" begin blanktest() end
+@testset "load" begin loadtest() end
+@testset "plot raw data" begin plottest() end
+@testset "set selection window" begin windowtest() end
+@testset "set method and blanks" begin blanktest() end
 @testset "assign standards" begin standardtest() end
 #@testset "fit fractionation" begin fractionationtest() end
-
