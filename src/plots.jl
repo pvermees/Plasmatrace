@@ -7,12 +7,12 @@ seriestype = :scatter or :path
 titlefontsize, ms, xlim, ylim = see the generic Plot.plot function
 cumt = logical value indicating if the x-axis shows cumulative time in hours
 """
-function plot(samp::Sample;channels=nothing,num=nothing,den=nothing,
+function plot(samp::Sample,channels::Vector{String};num=nothing,den=nothing,
               transformation="sqrt",seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
     xlab = cumt ? names(samp.dat)[1] : names(samp.dat)[2]
     x = samp.dat[:,xlab]
-    meas = isnothing(channels) ? samp.dat[:,3:end] : samp.dat[:,channels]
+    meas = samp.dat[:,channels]
     y = isnothing(den) ? meas : formRatios(meas,num=num,den=den,
                                            brackets=!isnothing(den))
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
@@ -34,5 +34,19 @@ function plot(samp::Sample;channels=nothing,num=nothing,den=nothing,
         end
     end
     return p
+end
+function plot(samp::Sample;num=nothing,den=nothing,
+              transformation="sqrt",seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
+    plot(samp,channels=getChannels(samp),num=num,den=den,
+         transformation=transformation,seriestype=seriestype,
+         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=lim,ylim=ylim,cumt=cumt)
+end
+function plot(samp::Sample,channels::Dict,num=nothing,den=nothing,
+              transformation="sqrt",seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
+    plot(samp,channels=collect(values(channels)),num=num,den=den,
+         transformation=transformation,seriestype=seriestype,
+         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=lim,ylim=ylim,cumt=cumt)
 end
 export plot

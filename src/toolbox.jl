@@ -1,8 +1,14 @@
-function pool(run::Vector{Sample};blank=false,signal=false)
-    ns = size(run)
+function pool(run::Vector{Sample};blank=false,signal=false,group=nothing)
+    if isnothing(group)
+        selection = 1:length(run)
+    else
+        groups = getGroups(run)
+        selection = findall(contains(group),groups)
+    end
+    ns = length(selection)
     dats = Vector{DataFrame}(undef,ns)
-    for i in eachindex(run)
-        dats[i] = windowData(run[i],blank=blank,signal=signal)
+    for i in eachindex(selection)
+        dats[i] = windowData(run[selection[i]],blank=blank,signal=signal)
     end
     return reduce(vcat,dats)
 end
