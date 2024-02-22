@@ -1,109 +1,52 @@
-function markStandards!(pd::run;i::Union{Nothing,Integer}=nothing,
-                        prefix::Union{Nothing,AbstractString}=nothing,
-                        snames::Union{Nothing,AbstractVector{>:AbstractString}}=nothing,
-                        standard::Integer=0)
-    j = findSamples(pd,snames=snames,prefix=prefix,i=i)
-    setStandard!(pd,i=j,standard=standard)
-end
-export markStandards!
-    
-function fitStandards!(pd::run;
-                       refmat::Union{AbstractString,AbstractVector{<:AbstractString}},
-                       n=1,m=0,verbose=false)
-    if isa(refmat,AbstractString) refmat = [refmat] end
-    setx0y0!(pd,refmat=refmat)
-    groups = groupStandards(pd)
-    changeGain = getGainOption(pd)==2
-    
-    function misfit(par)
-        out = 0
-        aft = par[1:n]
-        aFT = [0.0;par[n+1:n+m]]
-        if changeGain
-            g = par[end]
-        else
-            g = getGainPar(pd)
-        end
-        for gr in groups
-            t = gr.s[:,1]
-            T = gr.s[:,2]
-            Pm = gr.s[:,3]
-            Dm = gr.s[:,4]
-            dm = gr.s[:,5]
-            ft = polyVal(p=aft,t=t)
-            FT = polyVal(p=aFT,t=T)
-            p = getp(gr.x0,gr.y0,ft,FT,g,gr.bPt,gr.bDt,gr.bdt,Pm,Dm,dm)
-            out += sum(getS(p,gr.x0,gr.y0,ft,FT,g,gr.bPt,gr.bDt,gr.bdt,Pm,Dm,dm))
-        end
-        out
+referenceMaterials = Dict(
+    "LuHf" => Dict(
+        "Hogsbo" => (t=(1029,1.7),y0=(3.55,0.05)),
+        "BP" => (t=(1745,5),y0=(3.55,0.05))
+    )
+)
+
+lambda = Dict(
+    "LuHf" => (1.867e-05,8e-08)
+)
+
+function setStandards!(run::Vector{Sample},prefix::AbstractString,refmat::AbstractString)
+    snames = getSnames(run)
+    selection = findall(contains(prefix),snames)
+    for i in selection
+        run[i].group = refmat
     end
-
-    init = changeGain ? fill(0.0,n+m+1) : fill(0.0,n+m)
-    fit = Optim.optimize(misfit,init)
-    if verbose println(fit) end
-    sol = Optim.minimizer(fit)
-    setDriftPars!(pd,sol[1:n])
-    setDownPars!(pd,sol[n+1:n+m])
-    if changeGain setGainPar!(pd,sol[end]) end
 end
-export fitStandards!
-
-function groupStandards(pd::run)
-    par = getPar(pd)
-    if isnothing(par) PTerror("missingBlank") end
-    x0 = getx0(pd)
-    y0 = gety0(pd)
-    bpar = getBlankPars(pd)
-    bP = parseBPar(bpar,par="bP")
-    bD = parseBPar(bpar,par="bD")
-    bd = parseBPar(bpar,par="bd")
-    std = getStandard(pd)
-    groups = Vector{NamedTuple}(undef,0)
-    for i in eachindex(x0)
-        j = findall(in(i),std)
-        s = signalData(pd,channels=getChannels(pd),i=j)
-        t = s[:,1]
-        bPt = polyVal(p=bP,t=t)
-        bDt = polyVal(p=bD,t=t)
-        bdt = polyVal(p=bd,t=t)
-        dat = (x0=x0[i],y0=y0[i],s=s,bPt=bPt,bdt=bdt,bDt=bDt)
-        push!(groups,dat)
+function setStandards!(run::Vector{Sample},standards::Dict)
+    for (refmat,prefix) in standards
+        setStandards!(run,prefix,refmat)
     end
-    return groups
+end
+function setStandards!(run::Vector{Sample})
+    for sample in run
+        sample.group = "sample" # reset
+    end
+end
+export setStandards!
+
+function getx0y0(method::AbstractString,refmat::AbstractString)
+    L = lambda[method][1]
+    t = referenceMaterials[method][refmat].t[1]
+    x0 = 1/(exp(L*t)-1)
+    y0 = referenceMaterials[method][refmat].y0[1]
+    return (x0=x0, y0=y0)
 end
 
-function predictStandard(pd::run;sname::Union{Nothing,AbstractString}=nothing,
-                         prefix::Union{Nothing,AbstractString}=nothing,
-                         i::Union{Nothing,Integer}=nothing)
-    fitable(pd,throw=true)
-    i = findSamples(pd,i=i,prefix=prefix,snames=sname)[1]
-    standard = getStandard(pd,i=i)
-    if standard<1 return nothing end
-
-    s = signalData(pd,i=i)
-    t = s[:,1]
-    T = s[:,2]
-    Pm = s[:,3]
-    Dm = s[:,4]
-    dm = s[:,5]
-    
-    ft = polyVal(p=getDriftPars(pd),t=t)
-    FT = polyVal(p=[0.0;getDownPars(pd)],t=T)
-    g = getGainPar(pd)
-    
-    bpar = getBlankPars(pd)
-    bPt = polyVal(p=parseBPar(bpar,par="bP"),t=t)
-    bDt = polyVal(p=parseBPar(bpar,par="bD"),t=t)
-    bdt = polyVal(p=parseBPar(bpar,par="bd"),t=t)
-    
-    x0 = getx0(pd)[standard]
-    y0 = gety0(pd)[standard]
-    p = getp(x0,y0,ft,FT,g,bPt,bDt,bdt,Pm,Dm,dm)
-
-    Pp = @. getP(p,x0,y0,ft,FT,g,bPt,bDt,bdt,Pm,Dm,dm)
-    Dp = @. getD(p,x0,y0,ft,FT,g,bPt,bDt,bdt,Pm,Dm,dm)
-    dp = @. getd(p,x0,y0,ft,FT,g,bPt,bDt,bdt,Pm,Dm,dm)
-    
-    channels = getChannels(pd)
-    DataFrame(hcat(t,T,Pp,Dp,dp),[names(s)[1:2];channels])
+function getAnchor(method::String,refmat::String)
+    if method=="LuHf"
+        return getx0y0(method,refmat)
+    end
 end
+function getAnchor(method::AbstractString,standards::Dict)
+    nr = length(standards)
+    out = Dict{String, NamedTuple}()
+    for (refmat,prefix) in standards
+        out[refmat] = getAnchor(method,refmat)
+    end
+    return out
+end
+export getAnchor

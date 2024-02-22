@@ -7,8 +7,9 @@ pkg > test Plasmatrace
 using Test, CSV, DataFrames
 import Plots
 
-function loadtest()
+function loadtest(verbatim=false)
     run = load("data",instrument="Agilent")
+    if verbatim summarise(run) end
     return run
 end
 
@@ -31,18 +32,25 @@ end
 function blanktest()
     myrun = loadtest()
     blk = fitBlanks(myrun,n=3)
-    pairing = Pairing("LuHf",
-                      (d="Hf178 -> 260",D="Hf176 -> 258",P="Lu175 -> 175"))
-    return myrun, pairing, blk[:,getChannels(pairing)]
+    channels = Dict("d" => "Hf178 -> 260", "D" => "Hf176 -> 258", "P" => "Lu175 -> 175")
+    blk[:,collect(values(channels))]
 end
 
-function standardtest()
+function standardtest(verbatim=false)
     myrun = loadtest()
-    println(DataFrame(snames=getSnames(myrun)))
+    standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
+    setStandards!(myrun,standards)
+    if verbatim summarise(myrun) end
 end
 
 function fractionationtest()
-    myrun, pairing, blk = blanktest()
+    myrun = loadtest()
+    method = "LuHf"
+    channels = Dict("d" => "Hf178 -> 260", "D" => "Hf176 -> 258", "P" => "Lu175 -> 175")
+    standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
+    setStandards!(myrun,standards)
+    anchors = getAnchor(method,standards)
+    println(anchors)
 end
 
 function averagetest()
@@ -57,5 +65,5 @@ Plots.closeall()
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
-@testset "assign standards" begin standardtest() end
-#@testset "fit fractionation" begin fractionationtest() end
+@testset "assign standards" begin standardtest(true) end
+@testset "fit fractionation" begin fractionationtest() end

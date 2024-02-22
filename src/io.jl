@@ -6,7 +6,7 @@ function readFile(fname::AbstractString;instrument="Agilent")
     else
         PTerror("unknownInstrument")
     end
-    Sample(sname,datetime,dat,bwin,swin,0)
+    Sample(sname,datetime,dat,bwin,swin,"sample")
 end
 
 function load(dname::AbstractString;instrument="Agilent")

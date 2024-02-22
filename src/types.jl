@@ -9,21 +9,9 @@ mutable struct Sample
     dat::DataFrame
     bwin::Vector{Window}
     swin::Vector{Window}
-    standard::Int
+    group::String
 end
 export Sample
-
-struct Pairing
-    name::String
-    pairs::NamedTuple{(:d,:D,:P),Tuple{String,String,String}}
-end
-export Pairing
-
-struct Reference
-    x0::Float64
-    y0::Float64
-end
-export Standard
 
 struct TUIpars
     chain::Vector{String}
