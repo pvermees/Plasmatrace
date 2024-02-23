@@ -52,7 +52,8 @@ function fractionationtest()
     standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
     setStandards!(myrun,standards)
     anchors = getAnchor("LuHf",standards)
-    par = fit(myrun,blank=blk,channels=channels,anchors=anchors)
+    par = fractionation(myrun,blank=blk,channels=channels,anchors=anchors,verbose=true)
+    println(par)
 end
 
 function averagetest()
