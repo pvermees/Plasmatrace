@@ -1,5 +1,6 @@
 function PTerror(key)
     errormessages = Dict(
+        "notStandard" => "The sample has not been marked as a standard",
         "missingAttribute" => "Missing attribute",
         "missingWindows" => "Missing selection windows. Run setBlank!(...) or setSignal!(...) first.",
         "missingBlank" => "No blank model fitted. Run fitBlanks!(...) first.",

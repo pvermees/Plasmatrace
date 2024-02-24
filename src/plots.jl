@@ -7,9 +7,9 @@ seriestype = :scatter or :path
 titlefontsize, ms, xlim, ylim = see the generic Plot.plot function
 cumt = logical value indicating if the x-axis shows cumulative time in hours
 """
-function plot(samp::Sample,channels::Vector{String};num=nothing,den=nothing,
-              transformation="sqrt",seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
+function plot(samp::Sample,channels::Vector{String};
+              num=nothing,den=nothing,transformation="sqrt",seriestype=:scatter,
+              titlefontsize=10,ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
     xlab = cumt ? names(samp.dat)[1] : names(samp.dat)[2]
     x = samp.dat[:,xlab]
     meas = samp.dat[:,channels]
@@ -35,18 +35,28 @@ function plot(samp::Sample,channels::Vector{String};num=nothing,den=nothing,
     end
     return p
 end
-function plot(samp::Sample;num=nothing,den=nothing,
-              transformation="sqrt",seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
-    plot(samp,channels=getChannels(samp),num=num,den=den,
+function plot(samp::Sample;
+              num=nothing,den=nothing,transformation="sqrt",seriestype=:scatter,
+              titlefontsize=10,ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
+    plot(samp,getChannels(samp),num=num,den=den,
          transformation=transformation,seriestype=seriestype,
          titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=lim,ylim=ylim,cumt=cumt)
 end
-function plot(samp::Sample,channels::Dict,num=nothing,den=nothing,
-              transformation="sqrt",seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
-    plot(samp,channels=collect(values(channels)),num=num,den=den,
+function plot(samp::Sample,channels::Dict;
+              num=nothing,den=nothing,transformation="sqrt",seriestype=:scatter,
+              titlefontsize=10,ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
+    plot(samp,collect(values(channels)),num=num,den=den,
          transformation=transformation,seriestype=seriestype,
-         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=lim,ylim=ylim,cumt=cumt)
+         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=xlim,ylim=ylim,cumt=cumt)
 end
-export plot
+
+function plotFitted!(p;samp::Sample,pars::Pars,blank::AbstractDataFrame,
+                     channels::AbstractDict,anchors::AbstractDict,
+                     cumt=false,transformation="sqrt",
+                     linecolor="black",linestyle=:solid)
+    t, T, Pf, Df, df = predict(samp,pars,blank,channels,anchors)
+    for y in [Pf,Df,df]
+        ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
+        Plots.plot!(p,T,ty,linecolor=linecolor,linestyle=linestyle,label="")
+    end
+end

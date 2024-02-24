@@ -6,34 +6,30 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
     for (refmat,anchor) in anchors
         dats[refmat] = pool(run,signal=true,group=refmat)
     end
+
+    bD = blank[:,channels["D"]]
+    bd = blank[:,channels["d"]]
+    bP = blank[:,channels["P"]]
     
     function misfit(par)
-        af = nf>0 ? vcat(0.0,par[1:nf]) : 0.0
-        aF = nF>0 ? vcat(0.0,par[nf+1:nf+nF]) : 0.0
-        eg = mf ? exp(par[end]) : 1.0
+        drift = vcat(0.0,par[1:nf])
+        down = vcat(0.0,par[nf+1:nf+nF])
+        mfrac = mf ? par[end] : 0.0
         out = 0
         for (refmat,dat) in dats
             t = dat[:,1]
             T = dat[:,2]
-            dm = dat[:,channels["d"]]
-            Dm = dat[:,channels["D"]]
             Pm = dat[:,channels["P"]]
-            bd = blank[:,channels["d"]]
-            bD = blank[:,channels["D"]]
-            bP = blank[:,channels["P"]]
-            bdt = polyVal(p=bd,t=t)
-            bDt = polyVal(p=bD,t=t)
-            bPt = polyVal(p=bP,t=t)
-            ft = polyVal(p=af,t=t)
-            FT = polyVal(p=aF,t=T)
+            Dm = dat[:,channels["D"]]
+            dm = dat[:,channels["d"]]
             (x0,y0) = anchors[refmat]
-            out = out + SS(dm,Dm,Pm,x0,y0,ft,FT,eg,bdt,bDt,bPt)
+            out += SS(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
         end
         return out
     end
 
     init = fill(-10.0,nf+nF)
-    if mf init = vcat(init,0.0) end # gain
+    if mf init = vcat(init,0.0) end
     
     fit = Optim.optimize(misfit,init)
     if verbose println(fit) end

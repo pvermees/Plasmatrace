@@ -31,7 +31,7 @@ end
 
 function blanktest()
     myrun = loadtest()
-    blk = fitBlanks(myrun,n=3)
+    blk = fitBlanks(myrun,n=2)
     return myrun, blk
 end
 
@@ -54,7 +54,11 @@ function fractionationtest()
     anchors = getAnchor("LuHf",standards)
     fit = fractionation(myrun,blank=blk,channels=channels,
                         anchors=anchors,mf=false,verbose=true)
-    println(fit)
+    t, T, Pf, Df, df = predict(myrun[1],fit,blk,channels,anchors)
+    samp = myrun[1]
+    p = plot(samp,channels)
+    plotFitted!(p,samp=samp,pars=fit,blank=blk,channels=channels,anchors=anchors)
+    @test display(p) != NaN
 end
 
 function averagetest()
