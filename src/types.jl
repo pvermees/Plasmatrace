@@ -13,6 +13,13 @@ mutable struct Sample
 end
 export Sample
 
+mutable struct Pars
+    drift::Vector{Float64}
+    down::Vector{Float64}
+    mfrac::Float64
+end
+export Pars
+
 struct TUIpars
     chain::Vector{String}
     i::Int

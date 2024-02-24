@@ -1,6 +1,6 @@
 function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
                        channels::AbstractDict,anchors::AbstractDict,
-                       nft=2,nFT=1,g=nothing,verbose=false)
+                       nf=1,nF=1,mf=false,verbose=false)
 
     dats = Dict()
     for (refmat,anchor) in anchors
@@ -8,15 +8,10 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
     end
     
     function misfit(par)
+        af = nf>0 ? vcat(0.0,par[1:nf]) : 0.0
+        aF = nF>0 ? vcat(0.0,par[nf+1:nf+nF]) : 0.0
+        eg = mf ? exp(par[end]) : 1.0
         out = 0
-        aft = par[1:nft]
-        if isnothing(g)
-            aFT = par[nft+1:end-1]
-            gain = exp(par[end])
-        else
-            aFT = par[nft+1:end]
-            gain = exp(g)
-        end
         for (refmat,dat) in dats
             t = dat[:,1]
             T = dat[:,2]
@@ -29,22 +24,26 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
             bdt = polyVal(p=bd,t=t)
             bDt = polyVal(p=bD,t=t)
             bPt = polyVal(p=bP,t=t)
-            ft = polyVal(p=aft,t=t)
-            FT = polyVal(p=aFT,t=T)
+            ft = polyVal(p=af,t=t)
+            FT = polyVal(p=aF,t=T)
             (x0,y0) = anchors[refmat]
-            out = out + SS(dm,Dm,Pm,x0,y0,ft,FT,gain,bdt,bDt,bPt)
+            out = out + SS(dm,Dm,Pm,x0,y0,ft,FT,eg,bdt,bDt,bPt)
         end
         return out
     end
 
-    fti = vcat(0.0,fill(-10.0,nft-1))
-    FTi = vcat(0.0,fill(-10.0,nFT-1))
-    init = vcat(fti,FTi)
-    if isnothing(g) init = vcat(init,0.0) end
+    init = fill(-10.0,nf+nF)
+    if mf init = vcat(init,0.0) end # gain
     
     fit = Optim.optimize(misfit,init)
     if verbose println(fit) end
-    return Optim.minimizer(fit)
+    
+    pars = Optim.minimizer(fit)
+    drift = vcat(0.0,pars[1:nf])
+    down = vcat(0.0,pars[nf+1:nf+nF])
+    mfrac = mf ? pars[end] : 0.0
+
+    return Pars(drift,down,mfrac)
     
 end
 export fractionation

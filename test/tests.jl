@@ -49,11 +49,12 @@ end
 function fractionationtest()
     myrun, blk = blanktest()
     channels = Dict("d" => "Hf178 -> 260", "D" => "Hf176 -> 258", "P" => "Lu175 -> 175")
-    standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
+    standards = Dict("BP" => "BP")#, "Hogsbo" => "hogsbo_ana")
     setStandards!(myrun,standards)
     anchors = getAnchor("LuHf",standards)
-    par = fractionation(myrun,blank=blk,channels=channels,anchors=anchors,verbose=true)
-    println(par)
+    fit = fractionation(myrun,blank=blk,channels=channels,
+                        anchors=anchors,mf=false,verbose=true)
+    println(fit)
 end
 
 function averagetest()

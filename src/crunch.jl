@@ -8,3 +8,11 @@ function SS(dm,Dm,Pm,x0,y0,ft,FT,gain,bdt,bDt,bPt)
     
     return sum(s)
 end
+
+function predict(pars::Pars,t,T)
+    ft = polyVal(p=pars.drift,t=t)
+    FT = polyVal(p=pars.down,t=T)
+    D*x0*(1-p)*ft*FT + bPt 
+    D*y0*p*gain + bdt
+    D + bDt
+end
