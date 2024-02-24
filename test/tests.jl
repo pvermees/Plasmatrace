@@ -53,7 +53,7 @@ function fractionationtest()
     setStandards!(myrun,standards)
     anchors = getAnchor("LuHf",standards)
     fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,mf=log(0.682),verbose=true)
+                        anchors=anchors,mf=log(1.466),verbose=true)
     return myrun, blk, fit, channels, anchors
 end
 
