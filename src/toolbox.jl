@@ -1,18 +1,3 @@
-function pool(run::Vector{Sample};blank=false,signal=false,group=nothing)
-    if isnothing(group)
-        selection = 1:length(run)
-    else
-        groups = getGroups(run)
-        selection = findall(contains(group),groups)
-    end
-    ns = length(selection)
-    dats = Vector{DataFrame}(undef,ns)
-    for i in eachindex(selection)
-        dats[i] = windowData(run[selection[i]],blank=blank,signal=signal)
-    end
-    return reduce(vcat,dats)
-end
-
 function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
     labels = names(df)
     nc = size(labels,1)
@@ -105,40 +90,5 @@ function polyVal(;p,t)
             out .+= exp(p[i]).*t.^(i-1)
         end
     end
-    out
-end
-
-# average ratios
-function averat(df;num=nothing,den=nothing,logratios=false)
-    nc = ncol(df)
-    nr = nrow(df)
-    function misfit(mu,df,logratios)
-        expected = logratios ? exp.(mu) : mu
-    end
-    muvec = Statistics.mean.(eachcol(df))
-    mumat = reshape(muvec,(1,nc))
-    mu = DataFrame(mumat,names(df))
-    if logratios # TODO
-        init = log.(mu)
-        out = nothing
-        # optimise
-    else
-        sigma = Statistics.cov(Matrix(df))/nr
-        out = formRatios(mu,sigma=sigma,num=num,den=den)
-    end
-    out
-end
-
-# gets k-th linear index (i,j) of n x n matrix
-function iuppert(k::Integer,n::Integer)
-  i = n - 1 - floor(Int,sqrt(-8*k + 4*n*(n-1) + 1)/2 - 0.5)
-  j = k + i + div( (n-i+1)*(n-i) - n*(n-1) , 2)
-  return i, j
-end
-
-function select(myrun;i::AbstractVector)
-    out = deepcopy(myrun)
-    samples = getSamples(out)
-    setSamples!(out,samples[i])
     out
 end
