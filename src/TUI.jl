@@ -1,7 +1,7 @@
 function PT(debug=false)
     welcome()
     control = Dict(
-        "priority" => ["load","standards","process","instrument","read"],
+        "priority" => Dict("load" => true, "standards" => true, "process" => true),
         "history" => DataFrame(task=String[],action=String[]),
         "chain" => ["top"]
     )
@@ -10,18 +10,19 @@ function PT(debug=false)
         (message,action) = tree(key,control)
         println(message)
         response = readline()
-        next = action[response]
-        if next=="x"
+        next! = action[response]
+        if next! == "x"
             pop!(control["chain"])
-        elseif isa(next,Tuple)
-            next[1](next[2],control)
-        elseif isa(next,AbstractString)
-            push!(control["chain"],next)
+        elseif isa(next!,Function)
+            next!(control)
+        elseif isa(next!,AbstractString)
+            push!(control["chain"],next!)
         end
         push!(control["history"],[key,response])
         if debug
             println(control["history"])
             println(control["chain"])
+            println(keys(control))
         end
         if length(control["chain"])==0 return end
     end
@@ -32,16 +33,16 @@ function tree(key::AbstractString,ctrl::AbstractDict)
     branches = Dict(
         "top" => (
             message =
-            "r: Read the data files"*check(ctrl["priority"],"load")*"\n"*
-            "s: Mark the standards"*check(ctrl["priority"],"standards")*"\n"*
+            "r: Read data files"*check(ctrl,"load")*"\n"*
+            "s: Mark standards"*check(ctrl,"standards")*"\n"*
             "b: Bulk settings\n"*
             "v: View and adjust each sample\n"*
-            "p: Process the data"*check(ctrl["priority"],"process")*"\n"*
+            "p: Process the data"*check(ctrl,"process")*"\n"*
             "e: Export the results\n"*
             "l: Import/export a session log\n"*
             "x: Exit",
             action = Dict(
-                "r" => (dispatch!,"load"),
+                "r" => TUIread!,
                 "s" => "standards",
                 "b" => "bulk",
                 "v" => "view",
@@ -50,6 +51,18 @@ function tree(key::AbstractString,ctrl::AbstractDict)
                 "l" => "log",
                 "x" => "x"
             )
+        ),
+        "instrument" => (
+            message = "Choose a file format:\n"*
+            "1. Agilent\n"*
+            "x. Exit",
+            action = Dict(
+                "1" => TUIinstrument!
+            )
+        ),
+        "load" => (
+            message = "Enter the full path of the data directory, or x to exit:",
+            action = TUIload!
         )
     )
     return branches[key]
@@ -62,11 +75,32 @@ function welcome()
     println('-'^width*"\n"*title*'-'^width)
 end
 
-function check(pl::AbstractVector,action::AbstractString)
-    return action in pl ? "[*]" : ""
+function check(ctrl::AbstractDict,action::AbstractString)
+    return ctrl["priority"][action] ? "[*]" : ""
 end
 
-function dispatch!(task::AbstractString,ctrl::AbstractDict)
-    println("TODO: "*task)
-    pop!(ctrl["chain"])
+function TUIread!(ctrl::AbstractDict)
+    println("Choose a file format:\n"*
+            "1. Agilent\n"*
+            "x. Exit")
+    response = readline()
+    if response=="1"
+        instrument = "Agilent"
+    else
+        return
+    end
+    println("Enter the full path of the data directory, or x to exit:")
+    response = readline()
+    if response=="x"
+        return
+    else
+        ctrl["run"] = load(response,instrument=instrument)
+    end
+    ctrl["priority"]["load"] = false
+end
+
+function TUIinstrument!(ctrl::AbstractDict)
+end
+
+function TUIload!(ctrl::AbstractDict)
 end
