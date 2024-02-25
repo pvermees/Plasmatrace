@@ -53,7 +53,7 @@ function fractionationtest()
     setStandards!(myrun,standards)
     anchors = getAnchor("LuHf",standards)
     fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,mf=log(1.466),verbose=true)
+                        anchors=anchors,mf=1.4671,verbose=true)
     return myrun, blk, fit, channels, anchors
 end
 
@@ -74,6 +74,7 @@ function sampletest()
 end
 
 function TUItest()
+    PT(true)
 end
 
 Plots.closeall()
@@ -85,4 +86,5 @@ Plots.closeall()
 #@testset "assign standards" begin standardtest(true) end
 #@testset "fit fractionation" begin fractionationtest() end
 #@testset "plot fit" begin predicttest() end
-@testset "process sample" begin sampletest() end
+#@testset "process sample" begin sampletest() end
+@testset "TUI" begin TUItest() end

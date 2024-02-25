@@ -26,8 +26,8 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
     function misfit(par)
         drift = vcat(0.0,par[1:nf])
         down = vcat(0.0,par[nf+1:nf+nF])
-        mfrac = isnothing(mf) ? exp(par[end]) : mf
-        out = 0
+        mfrac = isnothing(mf) ? par[end] : log(mf)
+        out = 0.0
         for (refmat,dat) in dats
             t = dat[:,1]
             T = dat[:,2]
@@ -49,7 +49,7 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
     pars = Optim.minimizer(fit)
     drift = vcat(0.0,pars[1:nf])
     down = vcat(0.0,pars[nf+1:nf+nF])
-    mfrac = isnothing(mf) ? pars[end] : mf
+    mfrac = isnothing(mf) ? pars[end] : log(mf)
 
     return Pars(drift,down,mfrac)
     
@@ -85,8 +85,8 @@ function averat(samp::Sample; channels::AbstractDict,pars::Pars,blank::AbstractD
     E = Statistics.cov(hcat(P,D,d))*nr
     x = sumP/sumD
     y = sumd/sumD
-    J = [1/sumD 1/sumD^2 0;
-         0 1/sumD^2 1/sumD]
+    J = [1/sumD -sumP/sumD^2 0;
+         0 -sumd/sumD^2 1/sumD]
     covmat = J * E * transpose(J)
     sx = sqrt(covmat[1,1])
     sy = sqrt(covmat[2,2])
