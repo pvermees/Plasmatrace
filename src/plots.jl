@@ -23,6 +23,8 @@ function plot(samp::Sample,channels::Vector{String};
                    legend=:topleft,xlimits=xlim,ylimits=ylim)
     Plots.xlabel!(xlab)
     Plots.ylabel!(ylab)
+    title = samp.sname*" ["*samp.group*"]"
+    Plots.title!(title,titlefontsize=titlefontsize)
     # plot selection windows:
     dy = Plots.ylims(p)
     for win in [samp.bwin,samp.swin]

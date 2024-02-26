@@ -96,11 +96,21 @@ function setBwin!(samp::Sample,bwin=nothing)
     if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
     samp.bwin = bwin
 end
+function setBwin!(run::Vector{Sample},bwin=nothing)
+    for i in eachindex(run)
+        setBwin!(run[i],bwin)
+    end
+end
 export setBwin!
 
 function setSwin!(samp::Sample,swin=nothing)
     if isnothing(swin) swin=autoWindow(samp,blank=false) end
     samp.swin = swin
+end
+function setSwin!(run::Vector{Sample},swin=nothing)
+    for i in eachindex(run)
+        setSwin!(run[i],swin)
+    end
 end
 export setSwin!
 
