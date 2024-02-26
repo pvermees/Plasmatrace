@@ -74,7 +74,7 @@ function sampletest()
 end
 
 function TUItest()
-    PT(logbook="/home/pvermees/git/Plasmatrace/test/logs/test.log",debug=true)
+    PT(logbook="logs/test.log",debug=true)
 end
 
 Plots.closeall()

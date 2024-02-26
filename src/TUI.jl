@@ -1,8 +1,8 @@
 function PT(;logbook="",debug=false)
     welcome()
     ctrl = Dict(
-        "priority" => Dict("load" => true, "standards" => true,
-                           "process" => true, "method" => true),
+        "priority" => Dict("load" => true, "method" => true,
+                           "standards" => true, "process" => true),
         "history" => DataFrame(task=String[],action=String[]),
         "chain" => ["top"]
     )
@@ -97,6 +97,39 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             message = TUIcolumnMessage,
             action = TUIcolumns!
         ),
+        "standards" => (
+            message = "Choose and option:\n"*
+            "p. Add a standard by prefix\n"*
+            "n. Add a standard by number\n"*
+            "N. Remove a standard by number\n"*
+            "r. Remove all standards\n"*
+            "t. Tabulate all the samples\n"*
+            "x. Exit",
+            action = Dict(
+                "p" => "addStandardsByPrefix",
+                "n" => "addStandardsByNumber",
+                "N" => "removeStandardsByNumber",
+                "r" => TUIresetStandards!,
+                "t" => TUItabulate,
+                "x" => "x"
+            )
+        ),
+        "addStandardsByPrefix" => (
+            message = "Specify the prefix of the standard:",
+            action = TUIaddStandardsByPrefix!
+        ),
+        "addStandardsByNumber" => (
+            message = "Select the standards as a comma-separated list of numbers:",
+            action = TUIaddStandardsByNumber!
+        ),
+        "removeStandardsByNumber" => (
+            message = "Select the standards as a comma-separated list of numbers:",
+            action = TUIremoveStandardsByNumber!
+        ),
+        "refmat" => (
+            message = TUIshowRefmats,
+            action = TUIsetStandards!
+        ),
         "log" => (
             message = "Choose an option:\n"*
             "i. Import a session log\n"*
@@ -184,6 +217,49 @@ end
 
 function TUItabulate(ctrl::AbstractDict)
     summarise(ctrl["run"])
+end
+
+function TUIaddStandardsByPrefix!(ctrl::AbstractDict,response::AbstractString)
+    snames = getSnames(ctrl["run"])
+    ctrl["selection"] = findall(contains(response),snames)
+    return "refmat"
+end
+
+function TUIaddStandardsByNumber!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["selection"] = parse.(Int,split(response,","))
+    return "refmat"    
+end
+
+function TUIremoveStandardsByNumber!(ctrl::AbstractDict,response::AbstractString)
+    selection = parse.(Int,split(response,","))
+    resetStandards!(ctrl["run"],selection)
+    return "x"
+end
+
+function TUIresetStandards!(ctrl::AbstractDict)
+    setStandards!(ctrl["run"])
+    return "x"
+end
+
+function TUIshowRefmats(ctrl::AbstractDict)
+    if ctrl["method"]=="Lu-Hf"
+        msg = "Which of the following standards did you select?\n"*
+        "1. Hogsbo\n"*
+        "2. BP"
+    end
+    return msg
+end
+
+function TUIsetStandards!(ctrl::AbstractDict,response::AbstractString)
+    if ctrl["method"]=="Lu-Hf"
+        if response=="1"
+            setStandards!(ctrl["run"],ctrl["selection"],"Hogsbo")
+        elseif response=="2"
+            setStandards!(ctrl["run"],ctrl["selection"],"BP")
+        end
+    end
+    ctrl["priority"]["standards"] = false
+    return "xx"
 end
 
 function TUIimport!(ctrl::AbstractDict,response::AbstractString)

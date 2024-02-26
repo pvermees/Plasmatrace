@@ -24,12 +24,15 @@ function getAttr(run::Vector{Sample},attr::Symbol)
     return out
 end
 
-function setStandards!(run::Vector{Sample},prefix::AbstractString,refmat::AbstractString)
-    snames = getSnames(run)
-    selection = findall(contains(prefix),snames)
+function setStandards!(run::Vector{Sample},selection::Vector{Int},refmat::AbstractString)
     for i in selection
         run[i].group = refmat
     end
+end
+function setStandards!(run::Vector{Sample},prefix::AbstractString,refmat::AbstractString)
+    snames = getSnames(run)
+    selection = findall(contains(prefix),snames)
+    setStandards!(run::Vector{Sample},selection,refmat)
 end
 function setStandards!(run::Vector{Sample},standards::Dict)
     for (refmat,prefix) in standards
@@ -42,6 +45,11 @@ function setStandards!(run::Vector{Sample})
     end
 end
 export setStandards!
+function resetStandards!(run::Vector{Sample},selection::Vector{Int})
+    for i in selection
+        run[i].group = "sample"
+    end
+end
 
 function summarise(run::Vector{Sample},verbatim=true)
     ns = length(run)
