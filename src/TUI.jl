@@ -4,7 +4,9 @@ function PT(;logbook="",debug=false)
         "priority" => Dict("load" => true, "method" => true,
                            "standards" => true, "process" => true),
         "history" => DataFrame(task=String[],action=String[]),
-        "chain" => ["top"]
+        "chain" => ["top"],
+        "i" => 1,
+        "den" => nothing
     )
     if logbook != ""
         TUIimport!(ctrl,logbook)
@@ -42,7 +44,7 @@ function dispatch!(ctrl::AbstractDict;key=nothing,response=nothing)
     elseif next == "xx"
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
-    elseif next == "restored"
+    elseif isnothing(next)
         # do nothing
     else
         push!(ctrl["chain"],next)
@@ -70,7 +72,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
                 "m" => "method",
                 "t" => TUItabulate,
                 "s" => "standards",
-                "v" => "view",
+                "v" => TUIviewer!,
                 "p" => "process",
                 "e" => "export",
                 "l" => "log",
@@ -78,7 +80,8 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             )
         ),
         "instrument" => (
-            message = "Choose a file format:\n"*
+            message =
+            "Choose a file format:\n"*
             "1. Agilent\n"*
             "x. Exit",
             action = TUIinstrument!
@@ -88,7 +91,8 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             action = TUIload!,
         ),
         "method" => (
-            message = "Choose a method:\n"*
+            message =
+            "Choose a method:\n"*
             "1. Lu-Hf\n"*
             "x. Exit",
             action = TUImethod!
@@ -98,7 +102,8 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             action = TUIcolumns!
         ),
         "standards" => (
-            message = "Choose and option:\n"*
+            message =
+            "Choose an option:\n"*
             "p. Add a standard by prefix\n"*
             "n. Add a standard by number\n"*
             "N. Remove a standard by number\n"*
@@ -130,8 +135,40 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             message = TUIshowRefmats,
             action = TUIsetStandards!
         ),
+        "view" => (
+            message = 
+            "n: Next\n"*
+            "p: Previous\n"*
+            "g: Go to\n"*
+            "t: Tabulate all the samples in the session\n"*
+            "c: Choose which channels to show\n"*
+            "r: Plot signals or ratios?\n"*
+            "b: Select blank window(s)\n"*
+            "w: Select signal window(s)\n"*
+            "x: Exit",
+            action = Dict(
+                "n" => TUInext!,
+                "p" => TUIprevious!,
+                "g" => "goto",
+                "t" => TUItabulate,
+                "c" => "viewChannels",
+                "r" => "setDen",
+                "b" => "oneBlankWindow",
+                "w" => "oneSignalWindow",
+                "x" => "x"
+            )
+        ),
+        "goto" => (
+            message = "Enter the number of the sample to plot:",
+            action = TUIgoto!
+        ),
+        "setDen" => (
+            message = TUIratioMessage,
+            action = TUIratios!
+        ),
         "log" => (
-            message = "Choose an option:\n"*
+            message =
+            "Choose an option:\n"*
             "i. Import a session log\n"*
             "e. Export the session log\n"*
             "x. Exit",
@@ -209,7 +246,7 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
     if ctrl["method"]=="Lu-Hf"
-        ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[3])
+        ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
         ctrl["priority"]["method"] = false
     end
     return "xx"
@@ -262,6 +299,58 @@ function TUIsetStandards!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
+function TUIviewer!(ctrl::AbstractDict)
+    TUIplotter(ctrl)
+    push!(ctrl["chain"],"view")
+end
+
+function TUInext!(ctrl::AbstractDict)
+    ctrl["i"] += 1
+    if ctrl["i"]>length(ctrl["run"]) ctrl["i"] = 1 end
+    TUIplotter(ctrl)
+end
+
+function TUIprevious!(ctrl::AbstractDict)
+    ctrl["i"] -= 1
+    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
+    TUIplotter(ctrl)
+end
+
+function TUIgoto!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["i"] = parse(Int,response)
+    if ctrl["i"]>length(ctrl["run"]) ctrl["i"] = 1 end
+    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
+    TUIplotter(ctrl)
+    return "x"
+end
+
+function TUIplotter(ctrl::AbstractDict)
+    p = plot(ctrl["run"][ctrl["i"]],ctrl["channels"],den=ctrl["den"])
+    display(p)
+end
+
+function TUIratioMessage(ctrl::AbstractDict)
+    channels = collect(values(ctrl["channels"]))
+    msg = "Choose one of the following denominators:\n"
+    for i in 1:length(channels)
+        msg *= string(i)*". "*channels[i]*"\n"
+    end
+    msg *= "or\n"
+    msg *= "n. No denominator. Plot the raw signals"
+end
+
+function TUIratios!(ctrl::AbstractDict,response::AbstractString)
+    if response=="n"
+        ctrl["den"] = nothing
+    else
+        i = parse(Int,response)
+        channels = collect(values(ctrl["channels"]))
+        ctrl["den"] = [channels[i]]
+    end
+    TUIplotter(ctrl)
+    return "x"
+end
+
 function TUIimport!(ctrl::AbstractDict,response::AbstractString)
     history = CSV.read(response,DataFrame)
     ctrl["history"] = DataFrame(task=String[],action=String[])
@@ -270,7 +359,7 @@ function TUIimport!(ctrl::AbstractDict,response::AbstractString)
         dispatch!(ctrl,key=row[1],response=row[2])
     end
     ctrl["chain"] = ["top"]
-    return "restored"
+    return nothing
 end
 
 function TUIexport(ctrl::AbstractDict,response::AbstractString)

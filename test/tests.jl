@@ -17,7 +17,7 @@ function plottest()
     myrun = loadtest()
     p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"])
     @test display(p) != NaN
-    p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"],den=["Hf178 -> 260"])
+    p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"], den=["Hf178 -> 260"])
     @test display(p) != NaN
 end
 
@@ -48,7 +48,9 @@ end
 
 function fractionationtest()
     myrun, blk = blanktest()
-    channels = Dict("d" => "Hf178 -> 260", "D" => "Hf176 -> 258", "P" => "Lu175 -> 175")
+    channels = Dict("d" => "Hf178 -> 260",
+                    "D" => "Hf176 -> 258",
+                    "P" => "Lu175 -> 175")
     standards = Dict("BP" => "BP")#, "Hogsbo" => "hogsbo_ana")
     setStandards!(myrun,standards)
     anchors = getAnchor("LuHf",standards)

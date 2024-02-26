@@ -5,3 +5,8 @@ load,/home/pvermees/git/Plasmatrace/test/data
 top,m
 method,1
 columns,"16,17,18"
+top,s
+standards,p
+addStandardsByPrefix,BP
+refmat,2
+standards,x

@@ -40,14 +40,17 @@ function plot(samp::Sample;
               titlefontsize=10,ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
     plot(samp,getChannels(samp),num=num,den=den,
          transformation=transformation,seriestype=seriestype,
-         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=lim,ylim=ylim,cumt=cumt)
+         titlefontsize=titlefontsize,ms=ms,ma=ma,
+         xlim=lim,ylim=ylim,cumt=cumt)
 end
 function plot(samp::Sample,channels::Dict;
-              num=nothing,den=nothing,transformation="sqrt",seriestype=:scatter,
-              titlefontsize=10,ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
+              num=nothing,den=nothing,transformation="sqrt",
+              seriestype=:scatter,titlefontsize=10,ms=2,ma=0.5,
+              xlim=:auto,ylim=:auto,cumt=false,display=true)
     plot(samp,collect(values(channels)),num=num,den=den,
          transformation=transformation,seriestype=seriestype,
-         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=xlim,ylim=ylim,cumt=cumt)
+         titlefontsize=titlefontsize,ms=ms,ma=ma,
+         xlim=xlim,ylim=ylim,cumt=cumt)
 end
 
 function plotFitted!(p;samp::Sample,pars::Pars,blank::AbstractDataFrame,

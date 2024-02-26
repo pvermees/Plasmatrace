@@ -1,4 +1,4 @@
-odir = pwd()
+dir = pwd()
 cd(@__DIR__)
 
 include("../src/include.jl")
