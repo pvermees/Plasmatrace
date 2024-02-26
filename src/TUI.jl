@@ -6,19 +6,7 @@ function PT(debug=false)
         "chain" => ["top"]
     )
     while true
-        key = control["chain"][end]
-        (message,action) = tree(key,control)
-        println(message)
-        response = readline()
-        next! = action[response]
-        if next! == "x"
-            pop!(control["chain"])
-        elseif isa(next!,Function)
-            next!(control)
-        elseif isa(next!,AbstractString)
-            push!(control["chain"],next!)
-        end
-        push!(control["history"],[key,response])
+        dispatch!(control)
         if debug
             println(control["history"])
             println(control["chain"])
@@ -28,6 +16,27 @@ function PT(debug=false)
     end
 end
 export PT
+
+function dispatch!(ctrl::AbstractDict)
+    key = ctrl["chain"][end]
+    (message,action) = tree(key,ctrl)
+    println(message)
+    response = readline()
+    if isa(action,Function)
+        next = action(ctrl,response)
+    else
+        next = action[response]
+    end
+    if next == "x"
+        pop!(ctrl["chain"])
+    elseif next == "xx"
+        pop!(ctrl["chain"])
+        pop!(ctrl["chain"])
+    else
+        push!(ctrl["chain"],next)
+    end
+    push!(ctrl["history"],[key,response])
+end
 
 function tree(key::AbstractString,ctrl::AbstractDict)
     branches = Dict(
@@ -42,7 +51,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             "l: Import/export a session log\n"*
             "x: Exit",
             action = Dict(
-                "r" => TUIread!,
+                "r" => "instrument",
                 "s" => "standards",
                 "b" => "bulk",
                 "v" => "view",
@@ -56,13 +65,11 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             message = "Choose a file format:\n"*
             "1. Agilent\n"*
             "x. Exit",
-            action = Dict(
-                "1" => TUIinstrument!
-            )
+            action = TUIinstrument!
         ),
         "load" => (
             message = "Enter the full path of the data directory, or x to exit:",
-            action = TUIload!
+            action = TUIload!,
         )
     )
     return branches[key]
@@ -79,28 +86,20 @@ function check(ctrl::AbstractDict,action::AbstractString)
     return ctrl["priority"][action] ? "[*]" : ""
 end
 
-function TUIread!(ctrl::AbstractDict)
-    println("Choose a file format:\n"*
-            "1. Agilent\n"*
-            "x. Exit")
-    response = readline()
+function TUIinstrument!(ctrl::AbstractDict,response::AbstractString)
     if response=="1"
-        instrument = "Agilent"
+        ctrl["instrument"] = "Agilent"
     else
-        return
+        return "x"
     end
-    println("Enter the full path of the data directory, or x to exit:")
-    response = readline()
+    return "load"
+end
+
+function TUIload!(ctrl::AbstractDict,response::AbstractString)
     if response=="x"
-        return
+        # do nothing
     else
-        ctrl["run"] = load(response,instrument=instrument)
+        ctrl["run"] = load(response,instrument=ctrl["instrument"])
     end
-    ctrl["priority"]["load"] = false
-end
-
-function TUIinstrument!(ctrl::AbstractDict)
-end
-
-function TUIload!(ctrl::AbstractDict)
+    return "xx"
 end
