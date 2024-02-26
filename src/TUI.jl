@@ -1,32 +1,35 @@
-function PT(debug=false)
+function PT(;logbook="",debug=false)
     welcome()
-    control = Dict(
+    ctrl = Dict(
         "priority" => Dict("load" => true, "standards" => true,
                            "process" => true, "method" => true),
         "history" => DataFrame(task=String[],action=String[]),
         "chain" => ["top"]
     )
+    if logbook != ""
+        TUIimport!(ctrl,logbook)
+    end
     while true
-        dispatch!(control)
+        dispatch!(ctrl)
         if debug
-            println(control["history"])
-            println(control["chain"])
-            println(keys(control))
+            println(ctrl["history"])
+            println(ctrl["chain"])
+            println(keys(ctrl))
         end
-        if length(control["chain"])==0 return end
+        if length(ctrl["chain"])==0 return end
     end
 end
 export PT
 
-function dispatch!(ctrl::AbstractDict)
-    key = ctrl["chain"][end]
+function dispatch!(ctrl::AbstractDict;key=nothing,response=nothing)
+    if isnothing(key) key = ctrl["chain"][end] end
     (message,action) = tree(key,ctrl)
     if isa(message,Function)
         println(message(ctrl))
     else
         println(message)
     end
-    response = readline()
+    if isnothing(response) response = readline() end
     if isa(action,Function)
         next = action(ctrl,response)
     else
@@ -39,10 +42,14 @@ function dispatch!(ctrl::AbstractDict)
     elseif next == "xx"
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
+    elseif next == "restored"
+        # do nothing
     else
         push!(ctrl["chain"],next)
     end
-    push!(ctrl["history"],[key,response])
+    if key != "import"
+        push!(ctrl["history"],[key,response])
+    end
 end
 
 function tree(key::AbstractString,ctrl::AbstractDict)
@@ -50,13 +57,12 @@ function tree(key::AbstractString,ctrl::AbstractDict)
         "top" => (
             message =
             "r: Read data files"*check(ctrl,"load")*"\n"*
-            "m: Specify the method"*check(ctrl,"load")*"\n"*
+            "m: Specify the method"*check(ctrl,"method")*"\n"*
             "t: Tabulate the samples\n"*
             "s: Mark standards"*check(ctrl,"standards")*"\n"*
-            "b: Bulk settings\n"*
             "v: View and adjust each sample\n"*
             "p: Process the data"*check(ctrl,"process")*"\n"*
-            "e: Export the results\n"*
+            "e: Export the isotope ratios\n"*
             "l: Import/export a session log\n"*
             "x: Exit",
             action = Dict(
@@ -64,7 +70,6 @@ function tree(key::AbstractString,ctrl::AbstractDict)
                 "m" => "method",
                 "t" => TUItabulate,
                 "s" => "standards",
-                "b" => "bulk",
                 "v" => "view",
                 "p" => "process",
                 "e" => "export",
@@ -79,7 +84,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             action = TUIinstrument!
         ),
         "load" => (
-            message = "Enter the full path of the data directory, or x to exit:",
+            message = "Enter the full path of the data directory:",
             action = TUIload!,
         ),
         "method" => (
@@ -91,6 +96,25 @@ function tree(key::AbstractString,ctrl::AbstractDict)
         "columns" => (
             message = TUIcolumnMessage,
             action = TUIcolumns!
+        ),
+        "log" => (
+            message = "Choose an option:\n"*
+            "i. Import a session log\n"*
+            "e. Export the session log\n"*
+            "x. Exit",
+            action = Dict(
+                "i" => "import",
+                "e" => "export",
+                "x" => "x"
+            )
+        ),
+        "import" => (
+            message = "Enter the path and name of the log file:",
+            action = TUIimport!
+        ),
+        "export" => (
+            message = "Enter the path and name of the log file:",
+            action = TUIexport
         )
     )
     return branches[key]
@@ -116,14 +140,9 @@ function TUIinstrument!(ctrl::AbstractDict,response::AbstractString)
     return "load"
 end
 
-# /home/pvermees/git/Plasmatrace/test/data
 function TUIload!(ctrl::AbstractDict,response::AbstractString)
-    if response=="x"
-        # do nothing
-    else
-        ctrl["run"] = load(response,instrument=ctrl["instrument"])
-        ctrl["priority"]["load"] = false
-    end
+    ctrl["run"] = load(response,instrument=ctrl["instrument"])
+    ctrl["priority"]["load"] = false
     return "xx"
 end
 
@@ -158,10 +177,29 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
     PDd = labels[selected]
     if ctrl["method"]=="Lu-Hf"
         ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[3])
+        ctrl["priority"]["method"] = false
     end
     return "xx"
 end
 
 function TUItabulate(ctrl::AbstractDict)
     summarise(ctrl["run"])
+end
+
+function TUIimport!(ctrl::AbstractDict,response::AbstractString)
+    history = CSV.read(response,DataFrame)
+    ctrl["history"] = DataFrame(task=String[],action=String[])
+    ctrl["chain"] = String[]
+    for row in eachrow(history)
+        dispatch!(ctrl,key=row[1],response=row[2])
+    end
+    ctrl["chain"] = ["top"]
+    return "restored"
+end
+
+function TUIexport(ctrl::AbstractDict,response::AbstractString)
+    pop!(ctrl["history"])
+    pop!(ctrl["history"])
+    CSV.write(response,ctrl["history"])
+    return "xx"
 end

@@ -1,0 +1,7 @@
+task,action
+top,r
+instrument,1
+load,/home/pvermees/git/Plasmatrace/test/data
+top,m
+method,1
+columns,"16,17,18"
