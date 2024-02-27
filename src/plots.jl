@@ -54,6 +54,7 @@ function plot(samp::Sample,channels::Dict;
          titlefontsize=titlefontsize,ms=ms,ma=ma,
          xlim=xlim,ylim=ylim,cumt=cumt)
 end
+export plot
 
 function plotFitted!(p;samp::Sample,pars::Pars,blank::AbstractDataFrame,
                      channels::AbstractDict,anchors::AbstractDict,
@@ -65,3 +66,4 @@ function plotFitted!(p;samp::Sample,pars::Pars,blank::AbstractDataFrame,
         Plots.plot!(p,T,ty,linecolor=linecolor,linestyle=linestyle,label="")
     end
 end
+export plotFitted!

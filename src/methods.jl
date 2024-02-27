@@ -167,3 +167,39 @@ function windowData(samp::Sample;blank=false,signal=false)
     end
     return samp.dat[selection,:]
 end
+
+function string2windows(samp::Sample;text::AbstractString,single=false)
+    if single
+        parts = split(text,',')
+        stime = [parse(Float64,parts[1])]
+        ftime = [parse(Float64,parts[2])]
+        nw = 1
+    else
+        parts = split(text,['(',')',','])
+        stime = parse.(Float64,parts[2:4:end])
+        ftime = parse.(Float64,parts[3:4:end])
+        nw = Int(round(size(parts,1)/4))
+    end
+    windows = Vector{Window}(undef,nw)
+    t = samp.dat[:,2]
+    nt = size(t,1)
+    maxt = t[end]
+    println(stime)
+    println(ftime)
+    for i in 1:nw
+        if stime[i]>t[end]
+            stime[i] = t[end-1]
+            print("Warning: start point out of bounds and truncated to ")
+            print(string(stime[i]) * " seconds.")
+        end
+        if ftime[i]>t[end]
+            ftime[i] = t[end]
+            print("Warning: end point out of bounds and truncated to ")
+            print(string(maxt) * " seconds.")
+        end
+        start = max(1,Int(round(nt*stime[i]/maxt)))
+        finish = min(nt,Int(round(nt*ftime[i]/maxt)))
+        windows[i] = (start,finish)
+    end
+    return windows
+end

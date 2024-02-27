@@ -1,4 +1,4 @@
-function PT(;logbook="",debug=false)
+function PT(logbook="",debug=false)
     welcome()
     ctrl = Dict(
         "priority" => Dict("load" => true, "method" => true,
@@ -12,13 +12,13 @@ function PT(;logbook="",debug=false)
         TUIimport!(ctrl,logbook)
     end
     while true
+        if length(ctrl["chain"])<1 return end
         dispatch!(ctrl)
         if debug
             println(ctrl["history"])
             println(ctrl["chain"])
             println(keys(ctrl))
         end
-        if length(ctrl["chain"])==0 return end
     end
 end
 export PT
@@ -40,12 +40,14 @@ function dispatch!(ctrl::AbstractDict;key=nothing,response=nothing)
     if isa(next,Function)
         next(ctrl)
     elseif next == "x"
+        if length(ctrl["chain"])<1 return end
         pop!(ctrl["chain"])
     elseif next == "xx"
+        if length(ctrl["chain"])<2 return end
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
     elseif isnothing(next)
-        # do nothing
+        if length(ctrl["chain"])<1 return end
     else
         push!(ctrl["chain"],next)
     end
@@ -546,11 +548,9 @@ end
 function TUIimport!(ctrl::AbstractDict,response::AbstractString)
     history = CSV.read(response,DataFrame)
     ctrl["history"] = DataFrame(task=String[],action=String[])
-    ctrl["chain"] = String[]
     for row in eachrow(history)
         dispatch!(ctrl,key=row[1],response=row[2])
     end
-    ctrl["chain"] = ["top"]
     return nothing
 end
 
@@ -559,40 +559,4 @@ function TUIexport(ctrl::AbstractDict,response::AbstractString)
     pop!(ctrl["history"])
     CSV.write(response,ctrl["history"])
     return "xx"
-end
-
-function string2windows(samp::Sample;text::AbstractString,single=false)
-    if single
-        parts = split(text,',')
-        stime = [parse(Float64,parts[1])]
-        ftime = [parse(Float64,parts[2])]
-        nw = 1
-    else
-        parts = split(text,['(',')',','])
-        stime = parse.(Float64,parts[2:4:end])
-        ftime = parse.(Float64,parts[3:4:end])
-        nw = Int(round(size(parts,1)/4))
-    end
-    windows = Vector{Window}(undef,nw)
-    t = samp.dat[:,2]
-    nt = size(t,1)
-    maxt = t[end]
-    println(stime)
-    println(ftime)
-    for i in 1:nw
-        if stime[i]>t[end]
-            stime[i] = t[end-1]
-            print("Warning: start point out of bounds and truncated to ")
-            print(string(stime[i]) * " seconds.")
-        end
-        if ftime[i]>t[end]
-            ftime[i] = t[end]
-            print("Warning: end point out of bounds and truncated to ")
-            print(string(maxt) * " seconds.")
-        end
-        start = max(1,Int(round(nt*stime[i]/maxt)))
-        finish = min(nt,Int(round(nt*ftime[i]/maxt)))
-        windows[i] = (start,finish)
-    end
-    return windows
 end
