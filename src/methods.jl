@@ -184,8 +184,6 @@ function string2windows(samp::Sample;text::AbstractString,single=false)
     t = samp.dat[:,2]
     nt = size(t,1)
     maxt = t[end]
-    println(stime)
-    println(ftime)
     for i in 1:nw
         if stime[i]>t[end]
             stime[i] = t[end-1]

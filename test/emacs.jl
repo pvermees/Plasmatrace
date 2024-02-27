@@ -4,6 +4,6 @@ cd(@__DIR__)
 include("../src/include.jl")
 #include("tests.jl")
 
-PT("logs/emacs.log",true)
+PT("logs/emacs.log",false)
 
 cd(odir)

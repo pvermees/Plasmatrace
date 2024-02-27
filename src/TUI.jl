@@ -27,9 +27,9 @@ function dispatch!(ctrl::AbstractDict;key=nothing,response=nothing)
     if isnothing(key) key = ctrl["chain"][end] end
     (message,action) = tree(key,ctrl)
     if isa(message,Function)
-        println(message(ctrl))
+        println("\n"*message(ctrl))
     else
-        println(message)
+        println("\n"*message)
     end
     if isnothing(response) response = readline() end
     if isa(action,Function)
@@ -143,7 +143,6 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             "p: Previous\n"*
             "g: Go to\n"*
             "t: Tabulate all the samples in the session\n"*
-            "c: Choose which channels to show\n"*
             "r: Plot signals or ratios?\n"*
             "b: Select blank window(s)\n"*
             "s: Select signal window(s)\n"*
@@ -153,7 +152,6 @@ function tree(key::AbstractString,ctrl::AbstractDict)
                 "p" => TUIprevious!,
                 "g" => "goto",
                 "t" => TUItabulate,
-                "c" => "viewChannels",
                 "r" => "setDen",
                 "b" => "Bwin",
                 "s" => "Swin",
@@ -210,62 +208,54 @@ function tree(key::AbstractString,ctrl::AbstractDict)
         ),
         "oneSingleBlankWindow" => (
             message =
-            "Enter the start and end point of the selection window (in seconds) "*
-            "as a comma-separated pair of numbers. For example: 0,20 marks "*
-            "a blank window from 0 to 20 seconds",
+            "Enter the start and end point of the selection window (in seconds)\n"*
+            "Type 'h' for help.",
             action = oneSingleBlankWindow!
         ),
         "oneMultiBlankWindow" => (
             message =
-            "Enter the start and end points of the multi-part selection window "*
-            "(in seconds) as a comma-separated list of bracketed pairs "*
-            " of numbers. For example: (0,20),(25,30) marks a two-part "*
-            "selection window from 0 to 20s, and from 25 to 30s.",
+            "Enter the start and end points of the multi-part "*
+            "selection window (in seconds)\n"*
+            "Type 'h' for help.",
             action = oneMultiBlankWindow!
         ),
         "allSingleBlankWindow" => (
             message =
-            "Enter the start and end point of the selection window (in seconds) "*
-            "as a comma-separated pair of numbers. For example: 0,20 marks "*
-            "a blank window from 0 to 20 seconds",
+            "Enter the start and end point of the selection window (in seconds)\n"*
+            "Type 'h' for help.",
             action = allSingleBlankWindow!
         ),
         "allMultiBlankWindow" => (
             message =
-            "Enter the start and end points of the multi-part selection window "*
-            "(in seconds) as a comma-separated list of bracketed pairs "*
-            "of numbers. For example: (0,20),(25,30) marks a two-part "*
-            "blank window from 0 to 20s, and from 25 to 30s.",
+            "Enter the start and end points of the multi-part "*
+            "selection window (in seconds)\n"*
+            "Type 'h' for help.",
             action = allMultiBlankWindow!
         ),
         "oneSingleSignalWindow" => (
             message =
-            "Enter the start and end point of the selection window (in seconds) "*
-            "as a comma-separated pair of numbers. For example: 30,60 marks "*
-            "a signal window from 30 to 60 seconds",
+            "Enter the start and end point of the selection window (in seconds)\n"*
+            "Type 'h' for help.",
             action = oneSingleSignalWindow!
         ),
         "oneMultiSignalWindow" => (
             message =
-            "Enter the start and end points of the multi-part selection window "*
-            "(in seconds) as a comma-separated list of bracketed pairs "*
-            "of numbers. For example: (40,45),(50,60) marks a two-part "*
-            "signal window from 40 to 45s, and from 50 to 60s",
+            "Enter the start and end points of the multi-part "*
+            "selection window (in seconds)\n"*
+            "Type 'h' or help.",
             action = oneMultiSignalWindow!
         ),
         "allSingleSignalWindow" => (
             message =
-            "Enter the start and end point of the selection window (in seconds) "*
-            "as a comma-separated pair of numbers. For example: 30,60 marks "*
-            "a signal window from 30 to 60 seconds",
+            "Enter the start and end point of the selection windows (in seconds)\n"*
+            "Type 'h' for help.",
             action = allSingleSignalWindow!
         ),
         "allMultiSignalWindow" => (
             message =
-            "Enter the start and end points of the multi-part selection window "*
-            "(in seconds) as a comma-separated list of bracketed pairs "*
-            "of numbers. For example: 30,60 marks a signal window from "*
-            "30 to 60 seconds.",
+            "Enter the start and end points of the multi-part "*
+            "selection windows (in seconds)\n"*
+            "Type 'h' for help.",
             action = allMultiSignalWindow!
         ),
         "log" => (
@@ -459,6 +449,12 @@ function oneAutoBlankWindow!(ctrl::AbstractDict)
 end
 
 function oneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+    if response=="h"
+        println("Specify the start and end point of the blank window "*
+                "as a comma-separated pair of numbers. For example: 0,20 marks "*
+                "a blank window from 0 to 20 seconds.")
+        response = readline()
+    end
     samp = ctrl["run"][ctrl["i"]]
     bwin = string2windows(samp,text=response,single=true)
     setBwin!(samp,bwin)
@@ -467,6 +463,13 @@ function oneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function oneMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+    if response=="h"
+        println("Specify the start and end points of the blank window "*
+                "as a comma-separated list of bracketed pairs "*
+                " of numbers. For example: (0,20),(25,30) marks a two-part "*
+                "selection window from 0 to 20s, and from 25 to 30s.")
+        response = readline()
+    end
     samp = ctrl["run"][ctrl["i"]]
     bwin = string2windows(samp,text=response,single=false)
     setBwin!(samp,bwin)
@@ -480,6 +483,12 @@ function allAutoBlankWindow!(ctrl::AbstractDict)
 end
 
 function allSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+    if response=="h"
+        println("Specify the start and end point of the blank windows "*
+                "as a comma-separated pair of numbers. For example: 0,20 marks "*
+                "a blank window from 0 to 20 seconds.")
+        response = readline()
+    end
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         bwin = string2windows(samp,text=response,single=true)
@@ -490,6 +499,13 @@ function allSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function allMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+    if response=="h"
+        println("Specify the start and end points of the blank windows "*
+                "as a comma-separated list of bracketed pairs "*
+                " of numbers. For example: (0,20),(25,30) marks a two-part "*
+                "selection window from 0 to 20s, and from 25 to 30s.")
+        response = readline()
+    end
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         bwin = string2windows(samp,text=response,single=false)
@@ -505,6 +521,12 @@ function oneAutoSignalWindow!(ctrl::AbstractDict)
 end
 
 function oneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+    if response=="h"
+        println("Specify the start and end points of the signal window "*
+                "as a comma-separated pair of numbers. For example: 30,60 marks "*
+                "a signal window from 30 to 60 seconds.")
+        response = readline()
+    end
     samp = ctrl["run"][ctrl["i"]]
     swin = string2windows(samp,text=response,single=true)
     setSwin!(samp,swin)
@@ -513,6 +535,13 @@ function oneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function oneMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+    if response=="h"
+        println("Specify the start and end points of the signal window "*
+                "as a comma-separated list of bracketed pairs "*
+                "of numbers. For example: (40,45),(50,60) marks a two-part "*
+                "signal window from 40 to 45s, and from 50 to 60s.")
+        response = readline()
+    end
     samp = ctrl["run"][ctrl["i"]]
     swin = string2windows(samp,text=response,single=false)
     setSwin!(samp,swin)
@@ -526,6 +555,12 @@ function allAutoSignalWindow!(ctrl::AbstractDict)
 end
 
 function allSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+    if response=="h"
+        println("Specify the start and end points of the signal windows "*
+                "as a comma-separated pair of numbers. For example: 30,60 marks "*
+                "a signal window from 30 to 60 seconds.")
+        response = readline()
+    end
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         swin = string2windows(samp,text=response,single=true)
@@ -536,6 +571,13 @@ function allSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function allMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+    if response=="h"
+        println("Specify the start and end points of the signal windows "*
+                "as a comma-separated list of bracketed pairs "*
+                "of numbers. For example: (40,45),(50,60) marks a two-part "*
+                "signal window from 40 to 45s, and from 50 to 60s.")
+        response = readline()
+    end
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         swin = string2windows(samp,text=response,single=false)
