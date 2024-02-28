@@ -15,7 +15,11 @@ function PT(logbook="",debug=false)
     end
     while true
         if length(ctrl["chain"])<1 return end
-        dispatch!(ctrl)
+        try
+            dispatch!(ctrl)
+        catch e
+            println(e)
+        end
         if debug
             println(ctrl["history"])
             println(ctrl["chain"])
@@ -265,14 +269,10 @@ function tree(key::AbstractString,ctrl::AbstractDict)
         "options" => (
             message =
             "Set one of the following parameters:\n"*
-            "b. Polynomial order of the blank correction (current value = "*
-            string(ctrl["options"]["blank"])*")\n"*
-            "d. Polynomial order of the drift correction (current value = "*
-            string(ctrl["options"]["drift"])*")\n"*
-            "h. Polynomial order of the down hole fractionation correction "*
-            "(current value = "*string(ctrl["options"]["drift"])*")\n"*
-            "f. Fix or fit the fractionation factor (currently "*
-            (isnothing(ctrl["mf"]) ? "fitted" : "fixed at "*string(ctrl["mf"]))*")\n"*
+            "b. Polynomial order of the blank correction\n"*
+            "d. Polynomial order of the drift correction\n"*
+            "h. Polynomial order of the down hole fractionation correction\n"*
+            "f. Fix or fit the fractionation factor\n"*
             "x. Exit",
             action = Dict(
                 "b" => "setNblank",
@@ -281,6 +281,27 @@ function tree(key::AbstractString,ctrl::AbstractDict)
                 "f" => "setmf",
                 "x" => "x"
             )
+        ),
+        "setNblank" => (
+            message = "Enter a non-negative integer (current value = "*
+            string(ctrl["options"]["blank"])*"):",
+            action = TUIsetNblank!
+        ),
+        "setNdrift" => (
+            message = "Enter a non-negative integer (current value = "*
+            string(ctrl["options"]["drift"])*")",
+            action = TUIsetNdrift!
+        ),
+        "setNdown" => (
+            message = "Enter a non-negative integer (current value = "*
+            string(ctrl["options"]["down"])*")",
+            action = TUIsetNdown!
+        ),
+        "setmf" => (
+            message = "Click [Enter] to treat the mass fractionation as a free "*
+            "parameter, or enter a decimal number (currently "*
+            (isnothing(ctrl["mf"]) ? "fitted" : ("fixed at "*string(ctrl["mf"])))*")",
+            action = TUIsetmf!
         ),
         "log" => (
             message =
@@ -474,12 +495,7 @@ function TUIoneAutoBlankWindow!(ctrl::AbstractDict)
 end
 
 function TUIoneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
-    if response=="h"
-        println("Specify the start and end point of the blank window "*
-                "as a comma-separated pair of numbers. For example: 0,20 marks "*
-                "a blank window from 0 to 20 seconds.")
-        response = readline()
-    end
+    response = TUIhelp("TUIoneSingleBlankWindow!",response)
     samp = ctrl["run"][ctrl["i"]]
     bwin = string2windows(samp,text=response,single=true)
     setBwin!(samp,bwin)
@@ -488,13 +504,7 @@ function TUIoneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIoneMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
-    if response=="h"
-        println("Specify the start and end points of the blank window "*
-                "as a comma-separated list of bracketed pairs "*
-                " of numbers. For example: (0,20),(25,30) marks a two-part "*
-                "selection window from 0 to 20s, and from 25 to 30s.")
-        response = readline()
-    end
+    response = TUIhelp("TUIoneMultiBlankWindow!",response)
     samp = ctrl["run"][ctrl["i"]]
     bwin = string2windows(samp,text=response,single=false)
     setBwin!(samp,bwin)
@@ -508,12 +518,7 @@ function TUIallAutoBlankWindow!(ctrl::AbstractDict)
 end
 
 function TUIallSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
-    if response=="h"
-        println("Specify the start and end point of the blank windows "*
-                "as a comma-separated pair of numbers. For example: 0,20 marks "*
-                "a blank window from 0 to 20 seconds.")
-        response = readline()
-    end
+    response = TUIhelp("TUIallSingleBlankWindow!",response)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         bwin = string2windows(samp,text=response,single=true)
@@ -524,13 +529,7 @@ function TUIallSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIallMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
-    if response=="h"
-        println("Specify the start and end points of the blank windows "*
-                "as a comma-separated list of bracketed pairs "*
-                " of numbers. For example: (0,20),(25,30) marks a two-part "*
-                "selection window from 0 to 20s, and from 25 to 30s.")
-        response = readline()
-    end
+    response = TUIhelp("TUIallMultiBlankWindow!",response)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         bwin = string2windows(samp,text=response,single=false)
@@ -546,12 +545,7 @@ function TUIoneAutoSignalWindow!(ctrl::AbstractDict)
 end
 
 function TUIoneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
-    if response=="h"
-        println("Specify the start and end points of the signal window "*
-                "as a comma-separated pair of numbers. For example: 30,60 marks "*
-                "a signal window from 30 to 60 seconds.")
-        response = readline()
-    end
+    response = TUIhelp("TUIoneSingleSignalWindow!",response)
     samp = ctrl["run"][ctrl["i"]]
     swin = string2windows(samp,text=response,single=true)
     setSwin!(samp,swin)
@@ -560,13 +554,7 @@ function TUIoneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIoneMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
-    if response=="h"
-        println("Specify the start and end points of the signal window "*
-                "as a comma-separated list of bracketed pairs "*
-                "of numbers. For example: (40,45),(50,60) marks a two-part "*
-                "signal window from 40 to 45s, and from 50 to 60s.")
-        response = readline()
-    end
+    response = TUIhelp("TUIoneMultiSignalWindow!",response)
     samp = ctrl["run"][ctrl["i"]]
     swin = string2windows(samp,text=response,single=false)
     setSwin!(samp,swin)
@@ -580,12 +568,7 @@ function TUIallAutoSignalWindow!(ctrl::AbstractDict)
 end
 
 function TUIallSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
-    if response=="h"
-        println("Specify the start and end points of the signal windows "*
-                "as a comma-separated pair of numbers. For example: 30,60 marks "*
-                "a signal window from 30 to 60 seconds.")
-        response = readline()
-    end
+    response = TUIhelp("TUIallSingleSignalWindow!",response)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         swin = string2windows(samp,text=response,single=true)
@@ -596,13 +579,7 @@ function TUIallSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIallMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
-    if response=="h"
-        println("Specify the start and end points of the signal windows "*
-                "as a comma-separated list of bracketed pairs "*
-                "of numbers. For example: (40,45),(50,60) marks a two-part "*
-                "signal window from 40 to 45s, and from 50 to 60s.")
-        response = readline()
-    end
+    response = TUIhelp("TUIallMultiSignalWindow!",response)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         swin = string2windows(samp,text=response,single=false)
@@ -612,11 +589,35 @@ function TUIallMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
+function TUIsetNblank!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["options"]["blank"] = parse(Int,response)
+    return "x"
+end
+
+function TUIsetNdrift!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["options"]["drift"] = parse(Int,response)
+    return "x"    
+end
+
+function TUIsetNdown!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["options"]["down"] = parse(Int,response)
+    return "x"    
+end
+
+function TUIsetmf!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["mf"] = response=="" ? nothing : parse(Float64,response)
+    return "x"
+end
+
 function TUIimport!(ctrl::AbstractDict,response::AbstractString)
     history = CSV.read(response,DataFrame)
     ctrl["history"] = DataFrame(task=String[],action=String[])
     for row in eachrow(history)
-        dispatch!(ctrl,key=row[1],response=row[2])
+        try
+            dispatch!(ctrl,key=row[1],response=row[2])
+        catch e
+            println(e)
+        end
     end
     return nothing
 end
@@ -626,4 +627,50 @@ function TUIexport(ctrl::AbstractDict,response::AbstractString)
     pop!(ctrl["history"])
     CSV.write(response,ctrl["history"])
     return "xx"
+end
+
+function TUIhelp(fun::AbstractString,response::AbstractString)
+    prompt = Dict(
+        "TUIoneSingleBlankWindow!" =>
+        "Specify the start and end point of the blank window "*
+        "as a comma-separated pair of numbers. For example: 0,20 marks "*
+        "a blank window from 0 to 20 seconds.",
+        "TUIoneMultiBlankWindow!" =>
+        "Specify the start and end points of the blank window "*
+        "as a comma-separated list of bracketed pairs "*
+        " of numbers. For example: (0,20),(25,30) marks a two-part "*
+        "selection window from 0 to 20s, and from 25 to 30s.",
+        "TUIallSingleBlankWindow!" =>
+        "Specify the start and end point of the blank windows "*
+        "as a comma-separated pair of numbers. For example: 0,20 marks "*
+        "a blank window from 0 to 20 seconds.",
+        "TUIallMultiBlankWindow!" =>
+        "Specify the start and end points of the blank windows "*
+        "as a comma-separated list of bracketed pairs "*
+        " of numbers. For example: (0,20),(25,30) marks a two-part "*
+        "selection window from 0 to 20s, and from 25 to 30s.",
+        "TUIoneSingleSignalWindow!" =>
+        "Specify the start and end points of the signal window "*
+        "as a comma-separated pair of numbers. For example: 30,60 marks "*
+        "a signal window from 30 to 60 seconds.",
+        "TUIoneMultiSignalWindow!" =>
+        "Specify the start and end points of the signal window "*
+        "as a comma-separated list of bracketed pairs "*
+        "of numbers. For example: (40,45),(50,60) marks a two-part "*
+        "signal window from 40 to 45s, and from 50 to 60s.",
+        "TUIallSingleSignalWindow!" =>
+        "Specify the start and end points of the signal windows "*
+        "as a comma-separated pair of numbers. For example: 30,60 marks "*
+        "a signal window from 30 to 60 seconds.",
+        "TUIallMultiSignalWindow!" =>
+        "Specify the start and end points of the signal windows "*
+        "as a comma-separated list of bracketed pairs "*
+        "of numbers. For example: (40,45),(50,60) marks a two-part "*
+        "signal window from 40 to 45s, and from 50 to 60s."
+    )
+    if response == "h"
+        println(prompt[fun])
+        response = readline()
+    end
+    return response
 end
