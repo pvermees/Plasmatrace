@@ -6,7 +6,9 @@ function PT(logbook="",debug=false)
         "history" => DataFrame(task=String[],action=String[]),
         "chain" => ["top"],
         "i" => 1,
-        "den" => nothing
+        "den" => nothing,
+        "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
+        "mf" => nothing
     )
     if logbook != ""
         TUIimport!(ctrl,logbook)
@@ -68,6 +70,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             "p: Process the data"*check(ctrl,"process")*"\n"*
             "e: Export the isotope ratios\n"*
             "l: Import/export a session log\n"*
+            "o: Options\n"*
             "x: Exit",
             action = Dict(
                 "r" => "instrument",
@@ -78,6 +81,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
                 "p" => "process",
                 "e" => "export",
                 "l" => "log",
+                "o" => "options",
                 "x" => "x"
             )
         ),
@@ -177,10 +181,10 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             "M: Manually set a multi-part window (all samples)\n"*
             "x: Exit",
             action = Dict(
-                "a" => oneAutoBlankWindow!,
+                "a" => TUIoneAutoBlankWindow!,
                 "s" => "oneSingleBlankWindow",
                 "m" => "oneMultiBlankWindow",
-                "A" => allAutoBlankWindow!,
+                "A" => TUIallAutoBlankWindow!,
                 "S" => "allSingleBlankWindow",
                 "M" => "allMultiBlankWindow",
                 "x" => "x"
@@ -197,10 +201,10 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             "M: Manually set a multi-part window (all samples)\n"*
             "x: Exit",
             action = Dict(
-                "a" => oneAutoSignalWindow!,
+                "a" => TUIoneAutoSignalWindow!,
                 "s" => "oneSingleSignalWindow",
                 "m" => "oneMultiSignalWindow",
-                "A" => allAutoSignalWindow!,
+                "A" => TUIallAutoSignalWindow!,
                 "S" => "allSingleSignalWindow",
                 "M" => "allMultiSignalWindow",
                 "x" => "x"
@@ -210,53 +214,73 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             message =
             "Enter the start and end point of the selection window (in seconds)\n"*
             "Type 'h' for help.",
-            action = oneSingleBlankWindow!
+            action = TUIoneSingleBlankWindow!
         ),
         "oneMultiBlankWindow" => (
             message =
             "Enter the start and end points of the multi-part "*
             "selection window (in seconds)\n"*
             "Type 'h' for help.",
-            action = oneMultiBlankWindow!
+            action = TUIoneMultiBlankWindow!
         ),
         "allSingleBlankWindow" => (
             message =
             "Enter the start and end point of the selection window (in seconds)\n"*
             "Type 'h' for help.",
-            action = allSingleBlankWindow!
+            action = TUIallSingleBlankWindow!
         ),
         "allMultiBlankWindow" => (
             message =
             "Enter the start and end points of the multi-part "*
             "selection window (in seconds)\n"*
             "Type 'h' for help.",
-            action = allMultiBlankWindow!
+            action = TUIallMultiBlankWindow!
         ),
         "oneSingleSignalWindow" => (
             message =
             "Enter the start and end point of the selection window (in seconds)\n"*
             "Type 'h' for help.",
-            action = oneSingleSignalWindow!
+            action = TUIoneSingleSignalWindow!
         ),
         "oneMultiSignalWindow" => (
             message =
             "Enter the start and end points of the multi-part "*
             "selection window (in seconds)\n"*
             "Type 'h' or help.",
-            action = oneMultiSignalWindow!
+            action = TUIoneMultiSignalWindow!
         ),
         "allSingleSignalWindow" => (
             message =
             "Enter the start and end point of the selection windows (in seconds)\n"*
             "Type 'h' for help.",
-            action = allSingleSignalWindow!
+            action = TUIallSingleSignalWindow!
         ),
         "allMultiSignalWindow" => (
             message =
             "Enter the start and end points of the multi-part "*
             "selection windows (in seconds)\n"*
             "Type 'h' for help.",
-            action = allMultiSignalWindow!
+            action = TUIallMultiSignalWindow!
+        ),
+        "options" => (
+            message =
+            "Set one of the following parameters:\n"*
+            "b. Polynomial order of the blank correction (current value = "*
+            string(ctrl["options"]["blank"])*")\n"*
+            "d. Polynomial order of the drift correction (current value = "*
+            string(ctrl["options"]["drift"])*")\n"*
+            "h. Polynomial order of the down hole fractionation correction "*
+            "(current value = "*string(ctrl["options"]["drift"])*")\n"*
+            "f. Fix or fit the fractionation factor (currently "*
+            (isnothing(ctrl["mf"]) ? "fitted" : "fixed at "*string(ctrl["mf"]))*")\n"*
+            "x. Exit",
+            action = Dict(
+                "b" => "setNblank",
+                "d" => "setNdrift",
+                "h" => "setNdown",
+                "f" => "setmf",
+                "x" => "x"
+            )
         ),
         "log" => (
             message =
@@ -311,6 +335,7 @@ end
 function TUImethod!(ctrl::AbstractDict,response::AbstractString)
     if response=="1"
         ctrl["method"] = "Lu-Hf"
+        ctrl["mf"] = 1.4671
     else
         return "x"
     end
@@ -443,12 +468,12 @@ function TUIratios!(ctrl::AbstractDict,response::AbstractString)
     return "x"
 end
 
-function oneAutoBlankWindow!(ctrl::AbstractDict)
+function TUIoneAutoBlankWindow!(ctrl::AbstractDict)
     setBwin!(ctrl["run"][ctrl["i"]])
     TUIplotter(ctrl)
 end
 
-function oneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIoneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     if response=="h"
         println("Specify the start and end point of the blank window "*
                 "as a comma-separated pair of numbers. For example: 0,20 marks "*
@@ -462,7 +487,7 @@ function oneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function oneMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIoneMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     if response=="h"
         println("Specify the start and end points of the blank window "*
                 "as a comma-separated list of bracketed pairs "*
@@ -477,12 +502,12 @@ function oneMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function allAutoBlankWindow!(ctrl::AbstractDict)
+function TUIallAutoBlankWindow!(ctrl::AbstractDict)
     setBwin!(ctrl["run"])
     TUIplotter(ctrl)
 end
 
-function allSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIallSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     if response=="h"
         println("Specify the start and end point of the blank windows "*
                 "as a comma-separated pair of numbers. For example: 0,20 marks "*
@@ -498,7 +523,7 @@ function allSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function allMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIallMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     if response=="h"
         println("Specify the start and end points of the blank windows "*
                 "as a comma-separated list of bracketed pairs "*
@@ -515,12 +540,12 @@ function allMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function oneAutoSignalWindow!(ctrl::AbstractDict)
+function TUIoneAutoSignalWindow!(ctrl::AbstractDict)
     setSwin!(ctrl["run"][ctrl["i"]])
     TUIplotter(ctrl)
 end
 
-function oneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIoneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     if response=="h"
         println("Specify the start and end points of the signal window "*
                 "as a comma-separated pair of numbers. For example: 30,60 marks "*
@@ -534,7 +559,7 @@ function oneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function oneMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIoneMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     if response=="h"
         println("Specify the start and end points of the signal window "*
                 "as a comma-separated list of bracketed pairs "*
@@ -549,12 +574,12 @@ function oneMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function allAutoSignalWindow!(ctrl::AbstractDict)
+function TUIallAutoSignalWindow!(ctrl::AbstractDict)
     setSwin!(ctrl["run"])
     TUIplotter(ctrl)
 end
 
-function allSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIallSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     if response=="h"
         println("Specify the start and end points of the signal windows "*
                 "as a comma-separated pair of numbers. For example: 30,60 marks "*
@@ -570,7 +595,7 @@ function allSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function allMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIallMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     if response=="h"
         println("Specify the start and end points of the signal windows "*
                 "as a comma-separated list of bracketed pairs "*
