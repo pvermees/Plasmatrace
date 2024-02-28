@@ -463,12 +463,23 @@ function TUIgoto!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIplotter(ctrl::AbstractDict)
-    p = plot(ctrl["run"][ctrl["i"]],ctrl["channels"],den=ctrl["den"])
+    i = ctrl["i"]
+    if haskey(ctrl,"channels")
+        channels = ctrl["channels"]
+    else
+        channels = names(ctrl["run"][i].dat)[3:end]
+        println(channels)
+    end
+    p = plot(ctrl["run"][i],channels,den=ctrl["den"])
     display(p)
 end
 
 function TUIratioMessage(ctrl::AbstractDict)
-    channels = collect(values(ctrl["channels"]))
+    if haskey(ctrl,"channels")
+        channels = collect(values(ctrl["channels"]))
+    else
+        channels = names(ctrl["run"][ctrl["i"]].dat)[3:end]
+    end
     msg = "Choose one of the following denominators:\n"
     for i in 1:length(channels)
         msg *= string(i)*". "*channels[i]*"\n"
@@ -482,7 +493,11 @@ function TUIratios!(ctrl::AbstractDict,response::AbstractString)
         ctrl["den"] = nothing
     else
         i = parse(Int,response)
-        channels = collect(values(ctrl["channels"]))
+        if haskey(ctrl,"channels")
+            channels = collect(values(ctrl["channels"]))
+        else
+            channels = names(ctrl["run"][ctrl["i"]].dat)[3:end]
+        end
         ctrl["den"] = [channels[i]]
     end
     TUIplotter(ctrl)
