@@ -82,13 +82,16 @@ function getAnchor(method::String,refmat::String)
         return getx0y0(method,refmat)
     end
 end
-function getAnchor(method::AbstractString,standards::AbstractDict)
+function getAnchor(method::AbstractString,standards::Vector{String})
     nr = length(standards)
     out = Dict{String, NamedTuple}()
-    for (refmat,prefix) in standards
-        out[refmat] = getAnchor(method,refmat)
+    for standard in standards
+        out[standard] = getAnchor(method,standard)
     end
     return out
+end
+function getAnchor(method::AbstractString,standards::AbstractDict)
+    return getAnchor(method,collect(keys(standards)))
 end
 export getAnchor
 

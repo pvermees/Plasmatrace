@@ -82,7 +82,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
                 "t" => TUItabulate,
                 "s" => "standards",
                 "v" => TUIviewer!,
-                "p" => "process",
+                "p" => TUIprocess!,
                 "e" => "export",
                 "l" => "log",
                 "o" => "options",
@@ -440,6 +440,17 @@ end
 function TUIviewer!(ctrl::AbstractDict)
     TUIplotter(ctrl)
     push!(ctrl["chain"],"view")
+end
+
+function TUIprocess!(ctrl::AbstractDict)
+    blk = fitBlanks(ctrl["run"],n=ctrl["options"]["blank"])
+    groups = unique(getGroups(ctrl["run"]))
+    stds = groups[groups.!="sample"]
+    anchors = getAnchor(ctrl["method"],stds)
+    ctrl["par"] = fractionation(ctrl["run"],blank=blk,
+                                channels=ctrl["channels"],
+                                anchors=anchors,mf=ctrl["mf"])
+    ctrl["priority"]["process"] = false
 end
 
 function TUInext!(ctrl::AbstractDict)
