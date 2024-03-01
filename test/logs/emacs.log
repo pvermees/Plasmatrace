@@ -1,0 +1,14 @@
+task,action
+top,r
+instrument,1
+load,data
+top,m
+method,1
+columns,"15,17,18"
+top,s
+standards,p
+addStandardsByPrefix,BP
+refmat,2
+standards,t
+standards,x
+top,p

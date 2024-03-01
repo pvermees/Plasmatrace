@@ -1,21 +1,17 @@
-function readFile(fname::T;instrument="Agilent")::sample where T<:AbstractString
+function readFile(fname::AbstractString;instrument="Agilent")
     if instrument=="Agilent"
         sname, datetime, dat = readAgilent(fname)
+        bwin = autoWindow(dat[:,2:end],blank=true)
+        swin = autoWindow(dat[:,2:end],blank=false)
     else
         PTerror("unknownInstrument")
     end
-    sample(sname,datetime,dat)
+    Sample(sname,datetime,dat,bwin,swin,"sample")
 end
 
-function load!(pd::run;dname::T,instrument="Agilent") where T<:AbstractString
-    temp = load(dname,instrument=instrument)
-    setSamples!(pd,getSamples(temp))
-end
-export load!
-
-function load(dname::T;instrument="Agilent")::run where T<:AbstractString
+function load(dname::AbstractString;instrument="Agilent")
     fnames = readdir(dname)
-    samples = Vector{sample}(undef,0)
+    samples = Vector{Sample}(undef,0)
     datetimes = Vector{DateTime}(undef,0)
     ext = getExt(instrument)
     for fname in fnames
@@ -24,7 +20,7 @@ function load(dname::T;instrument="Agilent")::run where T<:AbstractString
                 pname = joinpath(dname,fname)
                 samp = readFile(pname,instrument=instrument)
                 push!(samples,samp)
-                push!(datetimes,getDateTime(samp))
+                push!(datetimes,samp.datetime)
             catch e
                 println("Failed to read "*fname)
             end
@@ -37,17 +33,13 @@ function load(dname::T;instrument="Agilent")::run where T<:AbstractString
     runtime = Dates.value.(dt)./sph
     for i in eachindex(sortedsamples)
         samp = sortedsamples[i]
-        dat = getDat(samp)
-        dat[:,1] = dat[:,2]./sph .+ runtime[i]
-        setDat!(samp,dat)
+        samp.dat[:,1] = samp.dat[:,2]./sph .+ runtime[i]
     end
-    out = run(sortedsamples)
-    setInstrument!(out,instrument)
-    out
+    return sortedsamples
 end
 export load
 
-function readAgilent(fname::T) where T<:AbstractString
+function readAgilent(fname::AbstractString)
     f = open(fname,"r")
     strs = readlines(f)
 
@@ -70,4 +62,12 @@ function readAgilent(fname::T) where T<:AbstractString
 
     close(f)
     return sname, datetime, dat
+end
+
+function getExt(instrument)
+    if instrument == "Agilent"
+        return ".csv"
+    else
+        PTerror("unknownInstrument")
+    end
 end

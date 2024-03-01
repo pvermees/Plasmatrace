@@ -1,58 +1,3 @@
-# polynomial fit with logarithmic coefficients
-function polyFit(;t,y,n=1)
-    
-    function misfit(par)
-        pred = polyVal(p=par,t=t)
-        sum((y.-pred).^2)
-    end
-
-    b0 = log(abs(Statistics.mean(y)))
-    init = [b0;fill(-10,n-1)]
-    fit = Optim.optimize(misfit,init)
-    Optim.minimizer(fit)
-
-end
-
-function polyVal(;p,t)
-    np = size(p,1)
-    nt = size(t,1)
-    out = fill(exp(p[1]),nt)
-    if np>1
-        for i in 2:np
-            out .+= exp(p[i]).*t.^(i-1)
-        end
-    end
-    out
-end
-
-# average ratios
-function averat(df;num=nothing,den=nothing,logratios=false)
-    nc = ncol(df)
-    nr = nrow(df)
-    function misfit(mu,df,logratios)
-        expected = logratios ? exp.(mu) : mu
-    end
-    muvec = Statistics.mean.(eachcol(df))
-    mumat = reshape(muvec,(1,nc))
-    mu = DataFrame(mumat,names(df))
-    if logratios # TODO
-        init = log.(mu)
-        out = nothing
-        # optimise
-    else
-        sigma = Statistics.cov(Matrix(df))/nr
-        out = formRatios(mu,sigma=sigma,num=num,den=den)
-    end
-    out
-end
-
-# gets k-th linear index (i,j) of n x n matrix
-function iuppert(k::Integer,n::Integer)
-  i = n - 1 - floor(Int,sqrt(-8*k + 4*n*(n-1) + 1)/2 - 0.5)
-  j = k + i + div( (n-i+1)*(n-i) - n*(n-1) , 2)
-  return i, j
-end
-
 function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
     labels = names(df)
     nc = size(labels,1)
@@ -121,9 +66,29 @@ function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
     out
 end
 
-function select(myrun;i::AbstractVector)
-    out = deepcopy(myrun)
-    samples = getSamples(out)
-    setSamples!(out,samples[i])
+# polynomial fit with logarithmic coefficients
+function polyFit(;t,y,n=1)
+    
+    function misfit(par)
+        pred = polyVal(p=par,t=t)
+        sum((y.-pred).^2)
+    end
+
+    b0 = log(abs(Statistics.mean(y)))
+    init = [b0;fill(-10,n-1)]
+    fit = Optim.optimize(misfit,init)
+    Optim.minimizer(fit)
+
+end
+
+function polyVal(;p,t)
+    np = size(p,1)
+    nt = size(t,1)
+    out = fill(exp(p[1]),nt)
+    if np>1
+        for i in 2:np
+            out .+= exp(p[i]).*t.^(i-1)
+        end
+    end
     out
 end

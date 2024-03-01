@@ -21,52 +21,47 @@ Here is an example of a menu-driven Plasmatrace session:
 julia> using Plasmatrace
 julia> PT()
 -------------------
- Plasmatrace 0.2.1
+ Plasmatrace 0.3.0 
 -------------------
 
-f: Load the data files[*]
-m: Specify a method[*]
-b: Bulk settings[*]
+r: Read data files[*]
+m: Specify the method[*]
+t: Tabulate the samples
+s: Mark standards[*]
 v: View and adjust each sample
-p: Process the data
-e: Export the results
+p: Process the data[*]
+e: Export the isotope ratios
 l: Import/export a session log
+o: Options
 x: Exit
-f
-i. Specify your instrument[*]
-r. Open and read the data files[*]
-l. List all the samples in the session
-x. Exit
-i
+r
+
 Choose a file format:
 1. Agilent
+x. Exit
 1
-i. Specify your instrument
-r. Open and read the data files[*]
-l. List all the samples in the session
-x. Exit
-r
+
 Enter the full path of the data directory:
-/home/pvermees/Documents/Plasmatrace/Garnet/
-i. Specify your instrument
-r. Open and read the data files
-l. List all the samples in the session
-x. Exit
-x
-f: Load the data files
-m: Specify a method[*]
-b: Bulk settings[*]
+data
+
+r: Read data files
+m: Specify the method[*]
+t: Tabulate the samples
+s: Mark standards[*]
 v: View and adjust each sample
-p: Process the data
-e: Export the results
+p: Process the data[*]
+e: Export the isotope ratios
 l: Import/export a session log
+o: Options
 x: Exit
 m
-Choose an application:
-1. Lu-Hf
-1
-Choose from the following list of channels:
 
+Choose a method:
+1. Lu-Hf
+x. Exit
+1
+
+Choose from the following list of channels:
 1. Mg24 -> 24
 2. Al27 -> 27
 3. Ca43 -> 43
@@ -85,126 +80,111 @@ Choose from the following list of channels:
 16. Lu175 -> 257
 17. Hf176 -> 258
 18. Hf178 -> 260
-
-and select the channels corresponding to the following isotopes or their proxies: 
-Lu176,Hf177,Hf176
+and select the channels corresponding to the following isotopes or their proxies:
+176Lu, 176Hf, 177Hf
 Specify your selection as a comma-separated list of numbers:
+
 15,17,18
-f: Load the data files
-m: Specify a method
-b: Bulk settings[*]
+
+r: Read data files
+m: Specify the method
+t: Tabulate the samples
+s: Mark standards[*]
 v: View and adjust each sample
-p: Process the data
-e: Export the results
+p: Process the data[*]
+e: Export the isotope ratios
 l: Import/export a session log
+o: Options
 x: Exit
-b
-b. Set default blank windows[*]
-w. Set default signal windows[*]
-p. Add a standard by prefix[*]
-n. Adjust the order of the polynomial fits
-l. List all the standards
-r. Remove a standard
-x. Exit
-b
-a: automatic
-s: set a one-part window
-m: set a multi-part window
-a
-b. Set default blank windows
-w. Set default signal windows[*]
-p. Add a standard by prefix[*]
-n. Adjust the order of the polynomial fits
-l. List all the standards
-r. Remove a standard
-x. Exit
-w
-a: automatic
-s: set a one-part window
-m: set a multi-part window
-a
-b. Set default blank windows
-w. Set default signal windows
-p. Add a standard by prefix[*]
-n. Adjust the order of the polynomial fits
-l. List all the standards
-r. Remove a standard
-x. Exit
-x
-f: Load the data files
-m: Specify a method
-b: Bulk settings[*]
-v: View and adjust each sample
-p: Process the data
-e: Export the results
-l: Import/export a session log
-x: Exit
-b
-b. Set default blank windows
-w. Set default signal windows
-p. Add a standard by prefix[*]
-n. Adjust the order of the polynomial fits
-l. List all the standards
-r. Remove a standard
+s
+
+Choose an option:
+p. Add a standard by prefix
+n. Add a standard by number
+N. Remove a standard by number
+r. Remove all standards
+t. Tabulate all the samples
 x. Exit
 p
-s: Use a single primary reference material
-m: Use multiple primary reference materials
-s
-Enter the prefix of the reference material:
+
+Specify the prefix of the standard:
 BP
-Now match this prefix with one of the following reference materials:
+
+Which of the following standards did you select?
 1. Hogsbo
 2. BP
 2
-b. Set default blank windows
-w. Set default signal windows
+
+Choose an option:
 p. Add a standard by prefix
-n. Adjust the order of the polynomial fits
-l. List all the standards
-r. Remove a standard
+n. Add a standard by number
+N. Remove a standard by number
+r. Remove all standards
+t. Tabulate all the samples
 x. Exit
 x
-f: Load the data files
-m: Specify a method
-b: Bulk settings
+
+r: Read data files
+m: Specify the method
+t: Tabulate the samples
+s: Mark standards
 v: View and adjust each sample
-p: Process the data
-e: Export the results
+p: Process the data[*]
+e: Export the isotope ratios
 l: Import/export a session log
+o: Options
 x: Exit
 p
 Fitting blanks...
-Fitting standards...
-f: Load the data files
-m: Specify a method
-b: Bulk settings
+Fractionation correction...
+ * Status: success
+
+ * Candidate solution
+    Final objective value:     6.142784e+06
+
+ * Found with
+    Algorithm:     Nelder-Mead
+
+ * Convergence measures
+    √(Σ(yᵢ-ȳ)²)/n ≤ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    73
+    f(x) calls:    139
+
+Done
+
+r: Read data files
+m: Specify the method
+t: Tabulate the samples
+s: Mark standards
 v: View and adjust each sample
 p: Process the data
-e: Export the results
+e: Export the isotope ratios
 l: Import/export a session log
+o: Options
 x: Exit
 e
-s. Export one sample
-m. Export multiple samples
-a. Export all samples
-s
-Enter the prefix of the sample to export:
-hogsbo
-j: export to .json
-c: export to .csv
+
+Choose an option:
+c. Export to .csv
+j. Export to .json
 x. Exit
 c
-Enter the path and name of the .csv file:
-/home/pvermees/Desktop/hogsbo.csv
 
-f: Load the data files
-m: Specify a method
-b: Bulk settings
+Enter the path and name of the .csv file:
+test.csv
+
+r: Read data files
+m: Specify the method
+t: Tabulate the samples
+s: Mark standards
 v: View and adjust each sample
 p: Process the data
-e: Export the results
+e: Export the isotope ratios
 l: Import/export a session log
+o: Options
 x: Exit
 x
 
@@ -218,16 +198,13 @@ The blanks are fitted using a second order polynomial, whereas the
 signal drift is modelled using a linear function:
 
 ```
-julia> dname = "/home/pvermees/Documents/Plasmatrace/Garnet/";
-julia> session = load(dname,instrument="Agilent");
-julia> setMethod!(session,method="LuHf",
-       channels=["Lu175 -> 175","Hf178 -> 260","Hf176 -> 258"])
-julia> setBlanks!(session);
-julia> setSignals!(session);
-julia> fitBlanks!(session,n=2);
-julia> markStandards!(session,prefix="hogsbo_",standard=1);
-julia> markStandards!(session,prefix="BP -",standard=2);
-julia> fitStandards!(session,refmat=["Hogsbo","BP"],n=1,m=0);
-julia> p = plot(session,i=15)
-julia> display(p)
+julia> run = load("/home/mydata",instrument="Agilent")
+julia> blk = fitBlanks(myrun,n=2)
+julia> standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
+julia> setStandards!(myrun,standards)
+julia> anchors = getAnchor("LuHf",standards)
+julia> channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
+julia> fit = fractionation(myrun,blank=blk,channels=channels,anchors=anchors,mf=1.4671)
+julia> ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
+julia> CSV.write("out.csv", ratios)
 ```

@@ -1,145 +1,206 @@
-# get sample attributes from a run:
-function accesSample(pd::run,
-                     i::Union{Nothing,Integer,AbstractVector{<:Integer}},
-                     T::Type,
-                     fun::Function)
-    if isnothing(i) i = 1:length(pd) end
-    samples = getSamples(pd)[i]
-    if isa(i,Integer)
-        out = fun(samples)
-    else
-        out = Vector{T}(undef,size(i,1))
-        for j in eachindex(samples)
-            out[j] = fun(samples[j])
-        end
+function getChannels(run::Vector{Sample})
+    return getChannels(run[1])
+end
+function getChannels(samp::Sample)
+    return names(samp.dat)[3:end]
+end
+export getChannels
+
+function getSnames(run::Vector{Sample})
+    return getAttr(run,:sname)
+end
+export getSnames
+function getGroups(run::Vector{Sample})
+    return getAttr(run,:group)
+end
+export getGroups
+function getAttr(run::Vector{Sample},attr::Symbol)
+    ns = length(run)
+    first = getproperty(run[1],attr)
+    out = fill(first,ns)
+    for i in eachindex(run)
+        out[i] = getproperty(run[i],attr)
     end
-    out
-end
-function accesSample!(pd::run,
-                      i::Union{Integer,AbstractVector{<:Integer}},
-                      fun::Function,val::Any)
-    samples = getSamples(pd)
-    for j in i fun(samples[j],val) end
-    setSamples!(pd,samples)
-end
-# set the control parameters inside a run:
-function accessControl!(pd::run,fun::Function,val::Any)
-    ctrl = getControl(pd)
-    fun(ctrl,val)
-    setControl!(pd,ctrl)
-end
-# set the pars parameters inside a run:
-function accessPar!(pd::run,fun::Function,val::Any)
-    par = getPar(pd)
-    fun(par,val)
-    setPar!(pd,par)
+    return out
 end
 
-# get sample attributes
-function getSname(pd::sample) getproperty(pd,:sname) end
-function getDateTime(pd::sample) getproperty(pd,:datetime) end
-function getDat(pd::sample) getproperty(pd,:dat) end
-function getBWin(pd::sample) getproperty(pd,:bwin) end
-function getSWin(pd::sample) getproperty(pd,:swin) end
-function getStandard(pd::sample) getproperty(pd,:standard) end
+function setStandards!(run::Vector{Sample},selection::Vector{Int},refmat::AbstractString)
+    for i in selection
+        run[i].group = refmat
+    end
+end
+function setStandards!(run::Vector{Sample},prefix::AbstractString,refmat::AbstractString)
+    snames = getSnames(run)
+    selection = findall(contains(prefix),snames)
+    setStandards!(run::Vector{Sample},selection,refmat)
+end
+function setStandards!(run::Vector{Sample},standards::Dict)
+    for (refmat,prefix) in standards
+        setStandards!(run,prefix,refmat)
+    end
+end
+function setStandards!(run::Vector{Sample})
+    for sample in run
+        sample.group = "sample" # reset
+    end
+end
+export setStandards!
+function resetStandards!(run::Vector{Sample},selection::Vector{Int})
+    for i in selection
+        run[i].group = "sample"
+    end
+end
 
-# get run attributes
-function getSamples(pd::run) getproperty(pd,:samples) end
-function getControl(pd::run) getproperty(pd,:control) end
-function getPar(pd::run) getproperty(pd,:par) end
-function getCov(pd::run) getproperty(pd,:cov) end
+function summarise(run::Vector{Sample},verbatim=true)
+    ns = length(run)
+    snames = getSnames(run)
+    groups = fill("sample",ns)
+    dates = fill(run[1].datetime,ns)
+    for i in eachindex(run)
+        groups[i] = run[i].group
+        dates[i] = run[i].datetime
+    end
+    out = DataFrame(name=snames,date=dates,group=groups)
+    if verbatim println(out) end
+    return out
+end
+function summarize(run::Vector{Sample},verbatim=true)
+    summarise(run,verbatim)
+end
+export summarise, summarize
 
-# get sample attributes from a run
-function getSnames(pd::run;i=nothing) accesSample(pd,i,AbstractString,getSname) end
-function getDateTimes(pd::run;i=nothing) accesSample(pd,i,DateTime,getDateTime) end
-function getDat(pd::run;i=nothing) accesSample(pd,i,DataFrame,getDat) end
-function getBWin(pd::run;i=nothing) accesSample(pd,i,AbstractVector{window},getBWin) end
-function getSWin(pd::run;i=nothing) accesSample(pd,i,AbstractVector{window},getSWin) end
-function getStandard(pd::run;i=nothing) accesSample(pd,i,Integer,getStandard) end
+function getx0y0(method::AbstractString,refmat::AbstractString)
+    L = lambda[method][1]
+    t = referenceMaterials[method][refmat].t[1]
+    x0 = 1/(exp(L*t)-1)
+    y0 = referenceMaterials[method][refmat].y0[1]
+    return (x0=x0, y0=y0)
+end
 
-# get control attributes
-function getInstrument(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:instrument) end
-function getMethod(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:method) end
-function getA(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:A) end
-function getB(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:B) end
-function getIsotopes(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:isotopes) end
-function getChannels(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:channels) end
-function getGainOption(ctrl::Union{Nothing,control}) return isnothing(ctrl) ? nothing : getproperty(ctrl,:gainOption) end
+function getAnchor(method::AbstractString,refmat::AbstractString)
+    if method=="LuHf"
+        return getx0y0(method,refmat)
+    end
+end
+function getAnchor(method::AbstractString,standards::Vector{String})
+    nr = length(standards)
+    out = Dict{String, NamedTuple}()
+    for standard in standards
+        out[standard] = getAnchor(method,standard)
+    end
+    return out
+end
+function getAnchor(method::AbstractString,standards::AbstractDict)
+    return getAnchor(method,collect(keys(standards)))
+end
+export getAnchor
 
-# get control attributes from a run
-function getMethod(pd::run) getMethod(getControl(pd)) end
-function getA(pd::run) getA(getControl(pd)) end
-function getB(pd::run) getB(getControl(pd)) end
-function getIsotopes(pd::run) getIsotopes(getControl(pd)) end
-function getChannels(pd::run) getChannels(getControl(pd)) end
-function getGainOption(pd::run) getGainOption(getControl(pd)) end
+function setBwin!(samp::Sample,bwin=nothing)
+    if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
+    samp.bwin = bwin
+end
+function setBwin!(run::Vector{Sample},bwin=nothing)
+    for i in eachindex(run)
+        setBwin!(run[i],bwin)
+    end
+end
+export setBwin!
 
-# set sample attributes
-function setSname!(pd::sample,sname::String) setproperty!(pd,:sname,sname) end
-function setDateTime!(pd::sample,datetime::DateTime) setproperty!(pd,:datetime,datetime) end
-function setDat!(pd::sample,dat::DataFrame) setproperty!(pd,:dat,dat) end
-function setBWin!(pd::sample,bwin::Vector{window}) setproperty!(pd,:bwin,bwin) end
-function setSWin!(pd::sample,swin::Vector{window}) setproperty!(pd,:swin,swin) end
-function setStandard!(pd::sample,standard::Integer) setproperty!(pd,:standard,standard) end
-export setStandard!
+function setSwin!(samp::Sample,swin=nothing)
+    if isnothing(swin) swin=autoWindow(samp,blank=false) end
+    samp.swin = swin
+end
+function setSwin!(run::Vector{Sample},swin=nothing)
+    for i in eachindex(run)
+        setSwin!(run[i],swin)
+    end
+end
+export setSwin!
 
-# set run attributes
-function setSamples!(pd::run,samples::AbstractVector{sample}) setproperty!(pd,:samples,samples) end
-function setControl!(pd::run,ctrl::control) setproperty!(pd,:control,ctrl) end
-function setPar!(pd::run,par::fitPars) setproperty!(pd,:par,par) end
-function setCov!(pd::run,cov::Matrix) setproperty!(pd,:cov,cov) end
+function autoWindow(signals::AbstractDataFrame;blank=false)
+    total = sum.(eachrow(signals))
+    q = Statistics.quantile(total,[0.05,0.95])
+    mid = (q[2]+q[1])/10
+    low = total.<mid
+    blk = findall(low)
+    sig = findall(.!low)
+    if blank
+        min = minimum(blk)
+        max = maximum(blk)
+        from = floor(Int,min)
+        to = floor(Int,(19*max+min)/20)
+    else
+        min = minimum(sig)
+        max = maximum(sig)
+        from = ceil(Int,(9*min+max)/10)
+        to = ceil(Int,max)
+    end
+    return [(from,to)]
+end
+function autoWindow(samp::Sample;blank=false)
+    autoWindow(samp.dat[:,3:end],blank=blank)
+end
 
-# set key sample attributes in a run
-function setBWin!(pd::run;i::Union{Integer,AbstractVector{<:Integer}},bwin::Vector{window}) accesSample!(pd,i,setBwin!,bwin) end
-function setSWin!(pd::run;i::Union{Integer,AbstractVector{<:Integer}},swin::Vector{window}) accesSample!(pd,i,setSwin!,swin) end
-function setStandard!(pd::run;i::Union{Int,AbstractVector{<:Integer}},standard::Integer) accesSample!(pd,i,setStandard!,standard) end
+function pool(run::Vector{Sample};blank=false,signal=false,group=nothing)
+    if isnothing(group)
+        selection = 1:length(run)
+    else
+        groups = getGroups(run)
+        selection = findall(contains(group),groups)
+    end
+    ns = length(selection)
+    dats = Vector{DataFrame}(undef,ns)
+    for i in eachindex(selection)
+        dats[i] = windowData(run[selection[i]],blank=blank,signal=signal)
+    end
+    return reduce(vcat,dats)
+end
 
-# set control attributes
-function setInstrument!(ctrl::control,instrument::String) setproperty!(ctrl,:instrument,instrument) end
-function setMethod!(ctrl::control,method::String) setproperty!(ctrl,:method,method) end
-function setA!(ctrl::control,A::Vector{Float64}) setproperty!(ctrl,:A,A) end
-function setB!(ctrl::control,B::Vector{Float64}) setproperty!(ctrl,:B,B) end
-function setIsotopes!(ctrl::control,isotopes::Vector{String}) setproperty!(ctrl,:isotopes,isotopes) end
-function setChannels!(ctrl::control,channels::Vector{String}) setproperty!(ctrl,:channels,channels) end
-function setGainOption!(ctrl::control,gainOption::Integer) setproperty!(ctrl,:gainOption,gainOption) end
+function windowData(samp::Sample;blank=false,signal=false)
+    if blank
+        windows = samp.bwin
+    elseif signal
+        windows = samp.swin
+    else
+        windows = [(1,size(samp,1))]
+    end
+    selection = Integer[]
+    for w in windows
+        append!(selection, w[1]:w[2])
+    end
+    return samp.dat[selection,:]
+end
 
-# set control attributes in a run
-function setInstrument!(pd::run,instrument::String) accessControl!(pd,setInstrument!,instrument) end
-function setMethod!(pd::run,method::String) accessControl!(pd,setMethod!,method) end
-function setA!(pd::run,A::Vector{Float64}) accessControl!(pd,setA!,A) end
-function setB!(pd::run,B::Vector{Float64}) accessControl!(pd,setB!,B) end
-function setIsotopes!(pd::run,isotopes::Vector{String}) accessControl!(pd,setIsotopes!,isotopes) end
-function setChannels!(pd::run,channels::Vector{String}) accessControl!(pd,setChannels!,channels) end
-function setGainOption!(pd::run,gainOption::Integer) accessControl!(pd,setGainOption!,gainOption) end
-
-# get fitPars attributes
-function getBlankPars(fp::fitPars) getproperty(fp,:blank) end
-function getDriftPars(fp::fitPars) getproperty(fp,:drift) end
-function getDownPars(fp::fitPars) getproperty(fp,:down) end
-function getGainPar(fp::fitPars) getproperty(fp,:gain) end
-
-# set fitPars attributes
-function setBlankPars!(fp::fitPars,blank::AbstractVector{<:AbstractFloat}) setproperty!(fp,:blank,blank) end
-function setDriftPars!(fp::fitPars,drift::AbstractVector{<:AbstractFloat}) setproperty!(fp,:drift,drift) end
-function setDownPars!(fp::fitPars,down::AbstractVector{<:AbstractFloat}) setproperty!(fp,:down,down) end
-function setGainPar!(fp::fitPars,gain::AbstractFloat) setproperty!(fp,:gain,gain) end
-
-# get fitPars attributes from a run
-function getBlankPars(pd::run) getBlankPars(getPar(pd)) end
-function getDriftPars(pd::run) getDriftPars(getPar(pd)) end
-function getDownPars(pd::run) getDownPars(getPar(pd)) end
-function getGainPar(pd::run) getGainPar(getPar(pd)) end
-
-# set fitPars attributes in a run
-function setBlankPars!(pd::run,blank::AbstractVector{<:AbstractFloat}) accessPar!(pd,setBlankPars!,blank) end
-function setDriftPars!(pd::run,drift::AbstractVector{<:AbstractFloat}) accessPar!(pd,setDriftPars!,drift) end
-function setDownPars!(pd::run,down::AbstractVector{<:AbstractFloat}) accessPar!(pd,setDownPars!,down) end
-function setGainPar!(pd::run,gain::AbstractFloat) accessPar!(pd,setGainPar!,gain) end
-
-length(pd::run) = size(getSamples(pd),1)
-
-function poolRunDat(pd::run,i=nothing)
-    dats = getDat(pd,i=i)
-    typeof(dats)
-    reduce(vcat,dats)
+function string2windows(samp::Sample;text::AbstractString,single=false)
+    if single
+        parts = split(text,',')
+        stime = [parse(Float64,parts[1])]
+        ftime = [parse(Float64,parts[2])]
+        nw = 1
+    else
+        parts = split(text,['(',')',','])
+        stime = parse.(Float64,parts[2:4:end])
+        ftime = parse.(Float64,parts[3:4:end])
+        nw = Int(round(size(parts,1)/4))
+    end
+    windows = Vector{Window}(undef,nw)
+    t = samp.dat[:,2]
+    nt = size(t,1)
+    maxt = t[end]
+    for i in 1:nw
+        if stime[i]>t[end]
+            stime[i] = t[end-1]
+            print("Warning: start point out of bounds and truncated to ")
+            print(string(stime[i]) * " seconds.")
+        end
+        if ftime[i]>t[end]
+            ftime[i] = t[end]
+            print("Warning: end point out of bounds and truncated to ")
+            print(string(maxt) * " seconds.")
+        end
+        start = max(1,Int(round(nt*stime[i]/maxt)))
+        finish = min(nt,Int(round(nt*ftime[i]/maxt)))
+        windows[i] = (start,finish)
+    end
+    return windows
 end

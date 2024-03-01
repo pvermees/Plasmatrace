@@ -1,11 +1,49 @@
-function getP(Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,g)
-    @. -((FT*bPt*(exp(2*g)+A^2)+FT*Pm*((-exp(2*g))-A^2))*ft+B*bdt*exp(2*g)-B*dm*exp(2*g)+A*B*(Dm-bDt)*exp(g))/(FT^2*(exp(2*g)+A^2)*ft^2+B^2*exp(2*g))
+function getD(Pm,Dm,dm,x0,y0,ft,FT,mf,bPt,bDt,bdt)
+    D = @. -(((FT*bPt-FT*Pm)*ft*mf^2*x0+(bDt-Dm)*mf^2)*y0^2+(FT^2*bdt-FT^2*dm)*ft^2*mf*x0^2*y0+(FT^2*bDt-Dm*FT^2)*ft^2*x0^2)/((FT^2*ft^2*mf^2*x0^2+mf^2)*y0^2+FT^2*ft^2*x0^2)
+    return D
+end
+function getp(Pm,Dm,dm,x0,y0,ft,FT,mf,bPt,bDt,bdt)
+    p = @. -(((FT^2*dm-FT^2*bdt)*ft^2*mf*x0^2+(dm-bdt)*mf)*y0+(Dm*FT^2-FT^2*bDt)*ft^2*x0^2+(FT*bPt-FT*Pm)*ft*x0)/(((FT*bPt-FT*Pm)*ft*mf^2*x0+(bDt-Dm)*mf^2)*y0^2+(FT^2*bdt-FT^2*dm)*ft^2*mf*x0^2*y0+(FT^2*bDt-Dm*FT^2)*ft^2*x0^2)
+    p[findall(p.<0.0)] .= 0.0
+    p[findall(p.>1.0)] .= 1.0
+    return p
+end
+function SS(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
+    t, T, Pf, Df, df = predict(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
+    S = @. (Pf-Pm)^2 + (Df-Dm)^2 + (df-dm)^2
+    return sum(S)
 end
 
-function getD(Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,g)
-    @. -((FT^2*(bDt-Dm)*exp(g)+A*FT^2*bdt-A*FT^2*dm)*ft^2+(A*B*FT*Pm-A*B*FT*bPt)*ft+B^2*(bDt-Dm)*exp(g))/(FT^2*(exp(2*g)+A^2)*ft^2+B^2*exp(2*g))
+function predict(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
+    ft = polyVal(p=drift,t=t)
+    FT = polyVal(p=down,t=T)
+    mf = exp(mfrac)
+    bPt = polyVal(p=bP,t=t)
+    bDt = polyVal(p=bD,t=t)
+    bdt = polyVal(p=bd,t=t)
+    D = getD(Pm,Dm,dm,x0,y0,ft,FT,mf,bPt,bDt,bdt)
+    p = getp(Pm,Dm,dm,x0,y0,ft,FT,mf,bPt,bDt,bdt)
+    Pf = @. D*x0*(1-p)*ft*FT + bPt
+    Df = @. D + bDt
+    df = @. D*y0*p*mf + bdt
+    return t, T, Pf, Df, df
 end
-
-function getS(P,D,Pm,Dm,dm,A,B,ft,FT,bPt,bDt,bdt,g)
-    @. (Pm-P*ft*FT-bPt)^2 + (dm-A*D-B*P-bdt)^2 + (Dm-D*exp(g)-bDt)^2
+function predict(samp::Sample,pars::Pars,blank::AbstractDataFrame,
+                 channels::AbstractDict,anchors::AbstractDict)
+    if haskey(anchors,samp.group)
+        dat = windowData(samp,signal=true)
+        t = dat[:,1]
+        T = dat[:,2]
+        Pm = dat[:,channels["P"]]
+        Dm = dat[:,channels["D"]]
+        dm = dat[:,channels["d"]]
+        bP = blank[:,channels["P"]]
+        bD = blank[:,channels["D"]]
+        bd = blank[:,channels["d"]]
+        (x0,y0) = anchors[samp.group]
+        return predict(t,T,Pm,Dm,dm,x0,y0,pars.drift,pars.down,pars.mfrac,bP,bD,bd)
+    else
+        PTerror("notStandard")
+    end
 end
+export predict
