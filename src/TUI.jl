@@ -15,11 +15,11 @@ function PT(logbook="",debug=false)
     end
     while true
         if length(ctrl["chain"])<1 return end
-#        try
+        try
             dispatch!(ctrl)
-#        catch e
-#            println(e)
-#        end
+        catch e
+            println(e)
+        end
         if debug
             println(ctrl["history"])
             println(ctrl["chain"])
@@ -303,6 +303,26 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             (isnothing(ctrl["mf"]) ? "fitted" : ("fixed at "*string(ctrl["mf"])))*")",
             action = TUIsetmf!
         ),
+        "export" => (
+            message =
+            "Choose an option:\n"*
+            "c. Export to .csv\n"*
+            "j. Export to .json\n"*
+            "x. Exit",
+            action = Dict(
+                "c" => "csv",
+                "j" => "json",
+                "x" => "x"
+            )
+        ),
+        "csv" => (
+            message = "Enter the path and name of the .csv file:",
+            action = TUIexport2csv
+        ),
+        "json" => (
+            message = "Enter the path and name of the .json file:",
+            action = TUIexport2json
+        ),
         "log" => (
             message =
             "Choose an option:\n"*
@@ -310,16 +330,16 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             "e. Export the session log\n"*
             "x. Exit",
             action = Dict(
-                "i" => "import",
-                "e" => "export",
+                "i" => "importLog",
+                "e" => "exportLog",
                 "x" => "x"
             )
         ),
-        "import" => (
+        "importLog" => (
             message = "Enter the path and name of the log file:",
             action = TUIimport!
         ),
-        "export" => (
+        "exportLog" => (
             message = "Enter the path and name of the log file:",
             action = TUIexport
         )
@@ -444,14 +464,14 @@ end
 
 function TUIprocess!(ctrl::AbstractDict)
     println("Fitting blanks...")
-    blk = fitBlanks(ctrl["run"],n=ctrl["options"]["blank"])
+    ctrl["blank"] = fitBlanks(ctrl["run"],n=ctrl["options"]["blank"])
     groups = unique(getGroups(ctrl["run"]))
     stds = groups[groups.!="sample"]
-    anchors = getAnchor(ctrl["method"],stds)
+    ctrl["anchors"] = getAnchor(ctrl["method"],stds)
     println("Fractionation correction...")
-    ctrl["par"] = fractionation(ctrl["run"],blank=blk,
+    ctrl["par"] = fractionation(ctrl["run"],blank=ctrl["blank"],
                                 channels=ctrl["channels"],
-                                anchors=anchors,mf=ctrl["mf"])
+                                anchors=ctrl["anchors"],mf=ctrl["mf"],verbose=true)
     ctrl["priority"]["process"] = false
     println("Done")
 end
@@ -655,6 +675,22 @@ function TUIexport(ctrl::AbstractDict,response::AbstractString)
     pop!(ctrl["history"])
     pop!(ctrl["history"])
     CSV.write(response,ctrl["history"])
+    return "xx"
+end
+
+function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
+    ratios = averat(ctrl["run"],channels=ctrl["channels"],
+                    pars=ctrl["par"],blank=ctrl["blank"])
+    fname = splitext(response)[1]*".csv"
+    CSV.write(fname,ratios)
+    return "xx"
+end
+
+function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
+    ratios = averat(ctrl["run"],channels=ctrl["channels"],
+                    pars=ctrl["par"],blank=ctrl["blank"])
+    fname = splitext(response)[1]*".json"
+    CSV.write(fname,ratios)
     return "xx"
 end
 
