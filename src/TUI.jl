@@ -15,11 +15,11 @@ function PT(logbook="",debug=false)
     end
     while true
         if length(ctrl["chain"])<1 return end
-        try
+#        try
             dispatch!(ctrl)
-        catch e
-            println(e)
-        end
+#        catch e
+#            println(e)
+#        end
         if debug
             println(ctrl["history"])
             println(ctrl["chain"])
@@ -355,7 +355,7 @@ end
 
 function TUImethod!(ctrl::AbstractDict,response::AbstractString)
     if response=="1"
-        ctrl["method"] = "Lu-Hf"
+        ctrl["method"] = "LuHf"
         ctrl["mf"] = 1.4671
     else
         return "x"
@@ -371,7 +371,7 @@ function TUIcolumnMessage(ctrl::AbstractDict)
     end
     msg *= "and select the channels corresponding to "*
     "the following isotopes or their proxies:\n"
-    if ctrl["method"]=="Lu-Hf"
+    if ctrl["method"]=="LuHf"
         msg *= "176Lu, 176Hf, 177Hf\n"
     end
     msg *= "Specify your selection as a "*
@@ -383,7 +383,7 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
     labels = names(ctrl["run"][1].dat)[3:end]
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
-    if ctrl["method"]=="Lu-Hf"
+    if ctrl["method"]=="LuHf"
         ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
         ctrl["priority"]["method"] = false
     end
@@ -417,7 +417,7 @@ function TUIresetStandards!(ctrl::AbstractDict)
 end
 
 function TUIshowRefmats(ctrl::AbstractDict)
-    if ctrl["method"]=="Lu-Hf"
+    if ctrl["method"]=="LuHf"
         msg = "Which of the following standards did you select?\n"*
         "1. Hogsbo\n"*
         "2. BP"
@@ -426,7 +426,7 @@ function TUIshowRefmats(ctrl::AbstractDict)
 end
 
 function TUIsetStandards!(ctrl::AbstractDict,response::AbstractString)
-    if ctrl["method"]=="Lu-Hf"
+    if ctrl["method"]=="LuHf"
         if response=="1"
             setStandards!(ctrl["run"],ctrl["selection"],"Hogsbo")
         elseif response=="2"
@@ -443,14 +443,17 @@ function TUIviewer!(ctrl::AbstractDict)
 end
 
 function TUIprocess!(ctrl::AbstractDict)
+    println("Fitting blanks...")
     blk = fitBlanks(ctrl["run"],n=ctrl["options"]["blank"])
     groups = unique(getGroups(ctrl["run"]))
     stds = groups[groups.!="sample"]
     anchors = getAnchor(ctrl["method"],stds)
+    println("Fractionation correction...")
     ctrl["par"] = fractionation(ctrl["run"],blank=blk,
                                 channels=ctrl["channels"],
                                 anchors=anchors,mf=ctrl["mf"])
     ctrl["priority"]["process"] = false
+    println("Done")
 end
 
 function TUInext!(ctrl::AbstractDict)

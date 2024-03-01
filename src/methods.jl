@@ -77,7 +77,7 @@ function getx0y0(method::AbstractString,refmat::AbstractString)
     return (x0=x0, y0=y0)
 end
 
-function getAnchor(method::String,refmat::String)
+function getAnchor(method::AbstractString,refmat::AbstractString)
     if method=="LuHf"
         return getx0y0(method,refmat)
     end
