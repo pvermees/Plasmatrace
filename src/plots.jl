@@ -56,8 +56,8 @@ function plot(samp::Sample,channels::Dict;
 end
 export plot
 
-function plotFitted!(p;samp::Sample,pars::Pars,blank::AbstractDataFrame,
-                     channels::AbstractDict,anchors::AbstractDict,
+function plotFitted!(p,samp::Sample,pars::Pars,blank::AbstractDataFrame,
+                     channels::AbstractDict,anchors::AbstractDict;
                      cumt=false,transformation="sqrt",
                      linecolor="black",linestyle=:solid)
     t, T, Pf, Df, df = predict(samp,pars,blank,channels,anchors)
@@ -65,5 +65,11 @@ function plotFitted!(p;samp::Sample,pars::Pars,blank::AbstractDataFrame,
         ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
         Plots.plot!(p,T,ty,linecolor=linecolor,linestyle=linestyle,label="")
     end
+end
+function plotFitted!(p,samp::Sample;cumt=false,transformation="sqrt",
+                     linecolor="black",linestyle=:solid)
+    plotFitted!(p,samp,_PT["par"],_PT["blank"],_PT["channels"],
+                _PT["anchors"],cumt=cumt,transformation=transformation,
+                linecolor=linecolor,linestyle=linestyle)
 end
 export plotFitted!

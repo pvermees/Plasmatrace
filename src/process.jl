@@ -56,7 +56,7 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
 end
 export fractionation
 
-function atomic(samp::Sample; channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+function atomic(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
     dat = windowData(samp,signal=true)
     t = dat[:,1]
     T = dat[:,2]
@@ -76,7 +76,7 @@ function atomic(samp::Sample; channels::AbstractDict,pars::Pars,blank::AbstractD
 end
 export atomic
 
-function averat(samp::Sample; channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+function averat(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
     t, T, P, D, d = atomic(samp,channels=channels,pars=pars,blank=blank)
     nr = length(t)
     sumP = sum(P)
@@ -93,7 +93,7 @@ function averat(samp::Sample; channels::AbstractDict,pars::Pars,blank::AbstractD
     rxy = covmat[1,2]/(sx*sy)
     return [x sx y sy rxy]
 end
-function averat(run::Vector{Sample}; channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+function averat(run::Vector{Sample};channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
     ns = length(run)
     out = DataFrame(name=fill("",ns),x=fill(0.0,ns),sx=fill(0.0,ns),
                     y=fill(0.0,ns),sy=fill(0.0,ns),rxy=fill(0.0,ns))
@@ -104,3 +104,10 @@ function averat(run::Vector{Sample}; channels::AbstractDict,pars::Pars,blank::Ab
     return out
 end
 export averat
+
+function export2IsoplotR(run::Vector{Sample};
+                         channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+    ratios = averat(run,channels=channels,pars=pars,blank=blank)
+    println("TODO")
+end
+export export2IsoplotR

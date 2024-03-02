@@ -5,10 +5,9 @@ load,data
 top,m
 method,1
 columns,"15,17,18"
+iratio,3
 top,s
 standards,p
 addStandardsByPrefix,BP
 refmat,2
-standards,t
-standards,x
 top,p

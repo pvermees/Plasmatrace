@@ -34,22 +34,12 @@ function setStandards!(run::Vector{Sample},prefix::AbstractString,refmat::Abstra
     selection = findall(contains(prefix),snames)
     setStandards!(run::Vector{Sample},selection,refmat)
 end
-function setStandards!(run::Vector{Sample},standards::Dict)
+function setStandards!(run::Vector{Sample},standards::AbstractDict)
     for (refmat,prefix) in standards
         setStandards!(run,prefix,refmat)
     end
 end
-function setStandards!(run::Vector{Sample})
-    for sample in run
-        sample.group = "sample" # reset
-    end
-end
 export setStandards!
-function resetStandards!(run::Vector{Sample},selection::Vector{Int})
-    for i in selection
-        run[i].group = "sample"
-    end
-end
 
 function summarise(run::Vector{Sample},verbatim=true)
     ns = length(run)
@@ -68,32 +58,6 @@ function summarize(run::Vector{Sample},verbatim=true)
     summarise(run,verbatim)
 end
 export summarise, summarize
-
-function getx0y0(method::AbstractString,refmat::AbstractString)
-    L = lambda[method][1]
-    t = referenceMaterials[method][refmat].t[1]
-    x0 = 1/(exp(L*t)-1)
-    y0 = referenceMaterials[method][refmat].y0[1]
-    return (x0=x0, y0=y0)
-end
-
-function getAnchor(method::AbstractString,refmat::AbstractString)
-    if method=="LuHf"
-        return getx0y0(method,refmat)
-    end
-end
-function getAnchor(method::AbstractString,standards::Vector{String})
-    nr = length(standards)
-    out = Dict{String, NamedTuple}()
-    for standard in standards
-        out[standard] = getAnchor(method,standard)
-    end
-    return out
-end
-function getAnchor(method::AbstractString,standards::AbstractDict)
-    return getAnchor(method,collect(keys(standards)))
-end
-export getAnchor
 
 function setBwin!(samp::Sample,bwin=nothing)
     if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
@@ -204,3 +168,55 @@ function string2windows(samp::Sample;text::AbstractString,single=false)
     end
     return windows
 end
+
+function setReferenceMaterials!(csv::AbstractString)
+    tab = CSV.read(csv, DataFrame)
+    refmat = Dict()
+    for row in eachrow(tab)
+        method = row["method"]
+        if !(method in keys(refmat))
+            refmat[method] = Dict()
+        end
+        name = row["name"]
+        refmat[method][name] = (t=(row["t"],row["st"]),y0=(row["y0"],row["sy0"]))
+    end
+    _PT["refmat"] = refmat
+end
+export setReferenceMaterials!
+
+function getx0y0(method::AbstractString,refmat::AbstractString)
+    L = _PT["lambda"][method][1]
+    t = _PT["refmat"][method][refmat].t[1]
+    x0 = 1/(exp(L*t)-1)
+    y0 = _PT["refmat"][method][refmat].y0[1]
+    return (x0=x0, y0=y0)
+end
+
+function getAnchor(method::AbstractString,refmat::AbstractString)
+    if method=="LuHf"
+        return getx0y0(method,refmat)
+    end
+end
+function getAnchor(method::AbstractString,standards::Vector{String})
+    nr = length(standards)
+    out = Dict{String, NamedTuple}()
+    for standard in standards
+        out[standard] = getAnchor(method,standard)
+    end
+    return out
+end
+function getAnchor(method::AbstractString,standards::AbstractDict)
+    return getAnchor(method,collect(keys(standards)))
+end
+export getAnchor
+
+function setAnchor!(method::AbstractString,standards::AbstractDict)
+    setMethod!(method)
+    setStandards!(standards)
+    setAnchor!()
+end
+function setAnchor!(method::AbstractString)
+    setMethod!(method)
+    setAnchor!()
+end
+export setAnchor!
