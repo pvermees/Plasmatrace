@@ -86,6 +86,15 @@ Specify your selection as a comma-separated list of numbers:
 
 15,17,18
 
+Which Hf-isotope is measured as Hf178 -> 260?
+1. 174Hf
+2. 177Hf
+3. 178Hf
+4. 179Hf
+5. 180Hf
+
+3
+
 r: Read data files
 m: Specify the method
 t: Tabulate the samples
@@ -99,11 +108,11 @@ x: Exit
 s
 
 Choose an option:
+t. Tabulate all the samples
 p. Add a standard by prefix
 n. Add a standard by number
 N. Remove a standard by number
 r. Remove all standards
-t. Tabulate all the samples
 x. Exit
 p
 
@@ -114,15 +123,6 @@ Which of the following standards did you select?
 1. Hogsbo
 2. BP
 2
-
-Choose an option:
-p. Add a standard by prefix
-n. Add a standard by number
-N. Remove a standard by number
-r. Remove all standards
-t. Tabulate all the samples
-x. Exit
-x
 
 r: Read data files
 m: Specify the method
@@ -137,22 +137,6 @@ x: Exit
 p
 Fitting blanks...
 Fractionation correction...
- * Status: success
-
- * Candidate solution
-    Final objective value:     6.142784e+06
-
- * Found with
-    Algorithm:     Nelder-Mead
-
- * Convergence measures
-    √(Σ(yᵢ-ȳ)²)/n ≤ 1.0e-08
-
- * Work counters
-    Seconds run:   0  (vs limit Inf)
-    Iterations:    73
-    f(x) calls:    139
-
 Done
 
 r: Read data files
@@ -174,7 +158,7 @@ x. Exit
 c
 
 Enter the path and name of the .csv file:
-test.csv
+output/test.csv
 
 r: Read data files
 m: Specify the method

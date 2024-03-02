@@ -1,4 +1,4 @@
-function PT(logbook="",debug=false)
+function PT(logbook="")
     welcome()
     ctrl = Dict(
         "priority" => Dict("load" => true, "method" => true,
@@ -19,11 +19,6 @@ function PT(logbook="",debug=false)
             dispatch!(ctrl)
         catch e
             println(e)
-        end
-        if debug
-            println(ctrl["history"])
-            println(ctrl["chain"])
-            println(keys(ctrl))
         end
     end
 end
@@ -50,6 +45,11 @@ function dispatch!(ctrl::AbstractDict;key=nothing,response=nothing)
         pop!(ctrl["chain"])
     elseif next == "xx"
         if length(ctrl["chain"])<2 return end
+        pop!(ctrl["chain"])
+        pop!(ctrl["chain"])
+    elseif next == "xxx"
+        if length(ctrl["chain"])<3 return end
+        pop!(ctrl["chain"])
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
     elseif isnothing(next)
@@ -111,21 +111,25 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             message = TUIcolumnMessage,
             action = TUIcolumns!
         ),
+        "iratio" => (
+            message = TUIiratioMessage,
+            action = TUIiratio!
+        ),
         "standards" => (
             message =
             "Choose an option:\n"*
+            "t. Tabulate all the samples\n"*
             "p. Add a standard by prefix\n"*
             "n. Add a standard by number\n"*
             "N. Remove a standard by number\n"*
             "r. Remove all standards\n"*
-            "t. Tabulate all the samples\n"*
             "x. Exit",
             action = Dict(
+                "t" => TUItabulate,
                 "p" => "addStandardsByPrefix",
                 "n" => "addStandardsByNumber",
                 "N" => "removeStandardsByNumber",
                 "r" => TUIresetStandards!,
-                "t" => TUItabulate,
                 "x" => "x"
             )
         ),
@@ -376,7 +380,6 @@ end
 function TUImethod!(ctrl::AbstractDict,response::AbstractString)
     if response=="1"
         ctrl["method"] = "LuHf"
-        ctrl["mf"] = 1.4671
     else
         return "x"
     end
@@ -403,11 +406,42 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
     labels = names(ctrl["run"][1].dat)[3:end]
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
+    next = "xx"
     if ctrl["method"]=="LuHf"
         ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
         ctrl["priority"]["method"] = false
+        next = "iratio"
     end
-    return "xx"
+    return next
+end
+
+function TUIiratioMessage(ctrl::AbstractDict)
+    if ctrl["method"]=="LuHf"
+        msg = "Which Hf-isotope is measured as "*ctrl["channels"]["d"]*"?\n"*
+        "1. 174Hf\n"*
+        "2. 177Hf\n"*
+        "3. 178Hf\n"*
+        "4. 179Hf\n"*
+        "5. 180Hf\n"
+    end
+    return msg
+end
+
+function TUIiratio!(ctrl::AbstractDict,response::AbstractString)
+    if ctrl["method"]=="LuHf"
+        if response=="1"
+            ctrl["mf"] = _PT["iratio"]["Hf174Hf177"]
+        elseif response=="3"
+            ctrl["mf"] = _PT["iratio"]["Hf178Hf177"]
+        elseif response=="4"
+            ctrl["mf"] = _PT["iratio"]["Hf179Hf177"]
+        elseif response=="5"
+            ctrl["mf"] = _PT["iratio"]["Hf180Hf177"]
+        else # "2"
+            ctrl["mf"] = nothing
+        end
+    end
+    return "xxx"
 end
 
 function TUItabulate(ctrl::AbstractDict)
@@ -454,7 +488,7 @@ function TUIsetStandards!(ctrl::AbstractDict,response::AbstractString)
         end
     end
     ctrl["priority"]["standards"] = false
-    return "xx"
+    return "xxx"
 end
 
 function TUIviewer!(ctrl::AbstractDict)
@@ -471,7 +505,7 @@ function TUIprocess!(ctrl::AbstractDict)
     println("Fractionation correction...")
     ctrl["par"] = fractionation(ctrl["run"],blank=ctrl["blank"],
                                 channels=ctrl["channels"],
-                                anchors=ctrl["anchors"],mf=ctrl["mf"],verbose=true)
+                                anchors=ctrl["anchors"],mf=ctrl["mf"])
     ctrl["priority"]["process"] = false
     println("Done")
 end
