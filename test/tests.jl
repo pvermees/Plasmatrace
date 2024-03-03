@@ -1,6 +1,5 @@
 #=====================
 pkg > activate .
-pkg > add Test
 pkg > test Plasmatrace
 ======================#
 

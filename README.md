@@ -183,12 +183,12 @@ signal drift is modelled using a linear function:
 
 ```
 julia> run = load("/home/mydata",instrument="Agilent")
-julia> blk = fitBlanks(myrun,n=2)
+julia> blk = fitBlanks(run,n=2)
 julia> standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
-julia> setStandards!(myrun,standards)
+julia> setStandards!(run,standards)
 julia> anchors = getAnchor("LuHf",standards)
 julia> channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
-julia> fit = fractionation(myrun,blank=blk,channels=channels,anchors=anchors,mf=1.4671)
-julia> ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
+julia> fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,mf=1.4671)
+julia> ratios = averat(run,channels=channels,pars=fit,blank=blk)
 julia> CSV.write("out.csv", ratios)
 ```
