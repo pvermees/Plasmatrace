@@ -40,30 +40,27 @@ end
 export load
 
 function readAgilent(fname::AbstractString)
-    
+    f = open(fname,"r")
+    strs = readlines(f)
+
     # read header
-    sname = nothing
-    datetime = nothing
-    i = 0
-    for line in eachline(fname)
-        i += 1
-        if i==1
-            sname = split.(split(line,"\\"),"/")[end][end]
-        elseif i==3
-            dt = split(line," ")
-            date = parse.(Int,split(dt[8],"/"))
-            time = parse.(Int,split(dt[9],":"))
-            datetime = Dates.DateTime(date[3],date[2],date[1],
-                                      time[1],time[2],time[3])
-            break
-        end
-    end
+    sname = split.(split(strs[1],"\\"),"/")[end][end]
+    dt = split(strs[3]," ")
+    date = parse.(Int,split(dt[8],"/"))
+    time = parse.(Int,split(dt[9],":"))
+    datetime = Dates.DateTime(date[3],date[2],date[1],
+                              time[1],time[2],time[3])
+    labels = split(strs[4],",")
 
     # read signals
-    measurements = CSV.read(fname,DataFrame,header=4,footerskip=3)
-    hours = DataFrame("Run Time [hours]" => measurements[:,1]./sph)
-    dat = hcat(hours,measurements)
+    nr = size(strs,1)
+    measurements = mapreduce(vcat, strs[5:(nr-3)]) do s
+        (parse.(Float64, split(s, ",")))'
+    end
+    labels = ["Run Time [hours]";labels]
+    dat = DataFrame(hcat(measurements[:,1]./sph,measurements),labels)
 
+    close(f)
     return sname, datetime, dat
 end
 

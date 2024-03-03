@@ -721,10 +721,9 @@ function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"],channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"])
     fname = splitext(response)[1]*".json"
-    println("Not implemented yet.")
+    export2json(ctrl["run"],fname,channels=ctrl["channels"],
+                pars=ctrl["par"],blank=ctrl["blank"])
     return "xx"
 end
 

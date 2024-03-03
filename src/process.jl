@@ -105,9 +105,26 @@ function averat(run::Vector{Sample};channels::AbstractDict,pars::Pars,blank::Abs
 end
 export averat
 
-function export2IsoplotR(run::Vector{Sample};
-                         channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
-    ratios = averat(run,channels=channels,pars=pars,blank=blank)
-    println("TODO")
+function export2IsoplotR(ratios::AbstractDataFrame,fname::AbstractString,method::AbstractString)
+    json = jsonTemplate()
+    if method=="LuHf"
+        datastring = "\"ierr\":1,\"data\":{"*
+        "\"Lu176/Hf176\":["     *join(ratios[:,2],",")*"],"*
+        "\"err[Lu176/Hf176]\":["*join(ratios[:,3],",")*"],"*
+        "\"Hf177/Hf176\":["     *join(ratios[:,4],",")*"],"*
+        "\"err[Hf177/Hf176]\":["*join(ratios[:,5],",")*"],"*
+        "\"(rho)\":["*join(ratios[:,6],",")*"],"*
+        "\"(C)\":[],\"(omit)\":[],\"(comment)\":[]"
+        json = replace(json,
+                       "\"geochronometer\":\"U-Pb\",\"plotdevice\":\"concordia\"" =>
+                       "\"geochronometer\":\"Lu-Hf\",\"plotdevice\":\"isochron\"")
+        json = replace(json,"\"Lu-Hf\":{}" => "\"Lu-Hf\":{"*datastring*"}}")
+        json = replace(json,
+                       "\"Lu-Hf\":{\"format\":1,\"i2i\":true,\"projerr\":false,\"inverse\":false}" =>
+                       "\"Lu-Hf\":{\"format\":2,\"i2i\":true,\"projerr\":false,\"inverse\":true}")
+    end
+    file = open(fname,"w")
+    write(file,json)
+    close(file)
 end
 export export2IsoplotR
