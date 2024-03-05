@@ -11,7 +11,7 @@ function PT(logbook="")
         "mf" => nothing
     )
     if logbook != ""
-        TUIimport!(ctrl,logbook)
+        TUIimportLog!(ctrl,logbook)
     end
     while true
         if length(ctrl["chain"])<1 return end
@@ -309,7 +309,14 @@ function tree(key::AbstractString,ctrl::AbstractDict)
         ),
         "export" => (
             message =
-            "Choose an option:\n"*
+            "Enter one of the following options:\n"*
+            "a. All analyses\n"*
+            "s. Samples only (no standards)\n"*
+            "or enter the prefix of the analyses that you want to select",
+            action = TUIsubset!
+        ),
+        "format" => (
+            message =
             "c. Export to .csv\n"*
             "j. Export to .json\n"*
             "x. Exit",
@@ -341,11 +348,11 @@ function tree(key::AbstractString,ctrl::AbstractDict)
         ),
         "importLog" => (
             message = "Enter the path and name of the log file:",
-            action = TUIimport!
+            action = TUIimportLog!
         ),
         "exportLog" => (
             message = "Enter the path and name of the log file:",
-            action = TUIexport
+            action = TUIexportLog
         )
     )
     return branches[key]
@@ -692,7 +699,7 @@ function TUIsetmf!(ctrl::AbstractDict,response::AbstractString)
     return "x"
 end
 
-function TUIimport!(ctrl::AbstractDict,response::AbstractString)
+function TUIimportLog!(ctrl::AbstractDict,response::AbstractString)
     history = CSV.read(response,DataFrame)
     ctrl["history"] = DataFrame(task=String[],action=String[])
     for row in eachrow(history)
@@ -705,27 +712,39 @@ function TUIimport!(ctrl::AbstractDict,response::AbstractString)
     return nothing
 end
 
-function TUIexport(ctrl::AbstractDict,response::AbstractString)
+function TUIexportLog(ctrl::AbstractDict,response::AbstractString)
     pop!(ctrl["history"])
     pop!(ctrl["history"])
     CSV.write(response,ctrl["history"])
     return "xx"
 end
 
+function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
+    run = ctrl["run"]
+    if response=="a"
+        ctrl["selection"] = 1:length(run)
+    elseif response=="s"
+        ctrl["selection"] = findall(contains("sample"),getGroups(run))
+    else
+        ctrl["selection"] = findall(contains(response),getSnames(run))
+    end
+    return "format"
+end
+
 function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
     ratios = averat(ctrl["run"],channels=ctrl["channels"],
                     pars=ctrl["par"],blank=ctrl["blank"])
     fname = splitext(response)[1]*".csv"
-    CSV.write(fname,ratios)
-    return "xx"
+    CSV.write(fname,ratios[ctrl["selection"],:])
+    return "xxx"
 end
 
 function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
     ratios = averat(ctrl["run"],channels=ctrl["channels"],
                     pars=ctrl["par"],blank=ctrl["blank"])
     fname = splitext(response)[1]*".json"
-    export2IsoplotR(fname,ratios,ctrl["method"])
-    return "xx"
+    export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
+    return "xxx"
 end
 
 function TUIhelp(fun::AbstractString,response::AbstractString)

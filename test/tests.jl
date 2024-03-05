@@ -98,14 +98,14 @@ end
 
 Plots.closeall()
 
-#@testset "load" begin loadtest() end
-#@testset "plot raw data" begin plottest() end
-#@testset "set selection window" begin windowtest() end
-#@testset "set method and blanks" begin blanktest() end
-#@testset "assign standards" begin standardtest(true) end
-#@testset "fit fractionation" begin fractionationtest() end
-#@testset "plot fit" begin predicttest() end
-#@testset "process sample" begin sampletest() end
-#@testset "readme example" begin readmetest() end
+@testset "load" begin loadtest(true) end
+@testset "plot raw data" begin plottest() end
+@testset "set selection window" begin windowtest() end
+@testset "set method and blanks" begin blanktest() end
+@testset "assign standards" begin standardtest(true) end
+@testset "fit fractionation" begin fractionationtest() end
+@testset "plot fit" begin predicttest() end
+@testset "process sample" begin sampletest() end
+@testset "readme example" begin readmetest() end
 @testset "export" begin exporttest() end
-#@testset "TUI" begin TUItest() end
+@testset "TUI" begin TUItest() end
