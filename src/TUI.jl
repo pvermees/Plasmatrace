@@ -323,7 +323,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             action = Dict(
                 "c" => "csv",
                 "j" => "json",
-                "x" => "x"
+                "x" => "xx"
             )
         ),
         "csv" => (
@@ -424,7 +424,7 @@ end
 
 function TUIiratioMessage(ctrl::AbstractDict)
     if ctrl["method"]=="LuHf"
-        msg = "Which Hf-isotope is measured as "*ctrl["channels"]["d"]*"?\n"*
+        msg = "Which Hf-isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"*
         "1. 174Hf\n"*
         "2. 177Hf\n"*
         "3. 178Hf\n"*
