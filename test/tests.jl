@@ -1,6 +1,5 @@
 #=====================
 pkg > activate .
-pkg > add Test
 pkg > test Plasmatrace
 ======================#
 
@@ -72,7 +71,7 @@ function sampletest()
     myrun, blk, fit, channels, anchors = fractionationtest()
     t, T, P, D, d = atomic(myrun[1],channels=channels,pars=fit,blank=blk)
     ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
-    CSV.write("output/out.csv",ratios)
+    return ratios
 end
 
 function readmetest()
@@ -84,7 +83,13 @@ function readmetest()
     channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
     fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,mf=1.4671)
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
+    return ratios
+end
+
+function exporttest()
+    ratios = readmetest()
     CSV.write("output/out.csv",ratios)
+    export2IsoplotR("output/test.json",ratios,"LuHf")
 end
 
 function TUItest()
@@ -93,7 +98,7 @@ end
 
 Plots.closeall()
 
-@testset "load" begin loadtest() end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -102,4 +107,5 @@ Plots.closeall()
 @testset "plot fit" begin predicttest() end
 @testset "process sample" begin sampletest() end
 @testset "readme example" begin readmetest() end
+@testset "export" begin exporttest() end
 @testset "TUI" begin TUItest() end

@@ -220,3 +220,12 @@ function setAnchor!(method::AbstractString)
     setAnchor!()
 end
 export setAnchor!
+
+function subset(run::Vector{Sample},selector::AbstractString)
+    
+    if length(selection)<1
+        selection = findall(contains(prefix),getGroups(selector))
+    end
+    return run[selection]
+end
+export subset
