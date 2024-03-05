@@ -89,7 +89,7 @@ end
 function exporttest()
     ratios = readmetest()
     CSV.write("output/out.csv",ratios)
-    export2IsoplotR(ratios,"output/test.json","LuHf")
+    export2IsoplotR("output/test.json",ratios,"LuHf")
 end
 
 function TUItest()

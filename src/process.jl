@@ -105,7 +105,7 @@ function averat(run::Vector{Sample};channels::AbstractDict,pars::Pars,blank::Abs
 end
 export averat
 
-function export2IsoplotR(ratios::AbstractDataFrame,fname::AbstractString,method::AbstractString)
+function export2IsoplotR(fname::AbstractString,ratios::AbstractDataFrame,method::AbstractString)
     json = jsonTemplate()
     if method=="LuHf"
         datastring = "\"ierr\":1,\"data\":{"*
@@ -114,7 +114,8 @@ function export2IsoplotR(ratios::AbstractDataFrame,fname::AbstractString,method:
         "\"Hf177/Hf176\":["     *join(ratios[:,4],",")*"],"*
         "\"err[Hf177/Hf176]\":["*join(ratios[:,5],",")*"],"*
         "\"(rho)\":["*join(ratios[:,6],",")*"],"*
-        "\"(C)\":[],\"(omit)\":[],\"(comment)\":[]"
+        "\"(C)\":[],\"(omit)\":[],"*
+        "\"(comment)\":[\""*join(ratios[:,1],"\",\"")*"\"]"
         json = replace(json,
                        "\"geochronometer\":\"U-Pb\",\"plotdevice\":\"concordia\"" =>
                        "\"geochronometer\":\"Lu-Hf\",\"plotdevice\":\"isochron\"")
