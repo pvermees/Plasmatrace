@@ -39,6 +39,11 @@ function setStandards!(run::Vector{Sample},standards::AbstractDict)
         setStandards!(run,prefix,refmat)
     end
 end
+function setStandards!(run::Vector{Sample},refmat::AbstractString)
+    for sample in run
+        sample.group = refmat
+    end
+end
 export setStandards!
 
 function summarise(run::Vector{Sample},verbatim=true)
@@ -222,10 +227,12 @@ end
 export setAnchor!
 
 function subset(run::Vector{Sample},selector::AbstractString)
-    
     if length(selection)<1
         selection = findall(contains(prefix),getGroups(selector))
     end
     return run[selection]
+end
+function subset(ratios::AbstractDataFrame,prefix::AbstractString)
+    return ratios[findall(contains(prefix),ratios[:,1]),:]
 end
 export subset

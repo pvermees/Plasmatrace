@@ -1,4 +1,11 @@
-function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
+function formRatios(df,num="",den="";sigma=0.0)
+    N = num=="" ? nothing : [num]
+    D = den=="" ? nothing : [den]
+    return formRatios(df,N,D,sigma=sigma,brackets=!isnothing(D))
+end
+function formRatios(df,num::Union{Nothing,AbstractVector}=nothing,
+                    den::Union{Nothing,AbstractVector}=nothing;
+                    sigma=0.0,brackets=false)
     labels = names(df)
     nc = size(labels,1)
     if isnothing(num)
@@ -34,9 +41,7 @@ function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
     num = labels[n]
     den = labels[d]
     ratlabs = brackets ? "(".*num.*")/(".*den.*")" : num.*"/".*den
-    if isnothing(sigma)
-        out = DataFrame(ratios,ratlabs)
-    else # error propagation
+    if sigma>0.0
         nin = ncol(df)
         nrat = size(ratios,2)
         J = fill(0.0,nrat,nin)
@@ -62,6 +67,8 @@ function formRatios(df;sigma=nothing,num=nothing,den=nothing,brackets=false)
             olabs[irow] = "r[".*ratlabs[r].*",".*ratlabs[c].*"]"
         end
         out = DataFrame(reshape(row,1,nout),olabs)
+    else # error propagation
+        out = DataFrame(ratios,ratlabs)
     end
     out
 end

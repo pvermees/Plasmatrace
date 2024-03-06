@@ -9,8 +9,8 @@ function getp(Pm,Dm,dm,x0,y0,ft,FT,mf,bPt,bDt,bdt)
     return p
 end
 function SS(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
-    t, T, Pf, Df, df = predict(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
-    S = @. (Pf-Pm)^2 + (Df-Dm)^2 + (df-dm)^2
+    pred = predict(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
+    S = @. (pred[:,"P"]-Pm)^2 + (pred[:,"D"]-Dm)^2 + (pred[:,"d"]-dm)^2
     return sum(S)
 end
 
@@ -26,7 +26,7 @@ function predict(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
     Pf = @. D*x0*(1-p)*ft*FT + bPt
     Df = @. D + bDt
     df = @. D*y0*p*mf + bdt
-    return t, T, Pf, Df, df
+    return DataFrame(t=t,T=T,P=Pf,D=Df,d=df)
 end
 function predict(samp::Sample,pars::Pars,blank::AbstractDataFrame,
                  channels::AbstractDict,anchors::AbstractDict)

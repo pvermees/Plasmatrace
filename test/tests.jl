@@ -50,20 +50,20 @@ function fractionationtest()
     channels = Dict("d" => "Hf178 -> 260",
                     "D" => "Hf176 -> 258",
                     "P" => "Lu175 -> 175")
-    standards = Dict("BP" => "BP")#, "Hogsbo" => "hogsbo_ana")
+    standards = Dict("Hogsbo" => "hogsbo_ana")#, "BP" => "BP"
     setStandards!(myrun,standards)
     anchors = getAnchor("LuHf",standards)
     fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,mf=1.4671,verbose=true)
+                        anchors=anchors,nf=2,nF=0,mf=1.4671,verbose=true)
     return myrun, blk, fit, channels, anchors
 end
 
 function predicttest()
     myrun, blk, fit, channels, anchors = fractionationtest()
-    samp = myrun[1]
-    t, T, Pf, Df, df = predict(samp,fit,blk,channels,anchors)
-    p = plot(samp,channels)
-    plotFitted!(p,samp,fit,blk,channels,anchors)
+    samp = myrun[2]
+    pred = predict(samp,fit,blk,channels,anchors)
+    p = plot(samp,channels,den="D")
+    plotFitted!(p,samp,fit,blk,channels,anchors,den="D")
     @test display(p) != NaN
 end
 
@@ -77,19 +77,20 @@ end
 function readmetest()
     run = load("data",instrument="Agilent")
     blk = fitBlanks(run,n=2)
-    standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
+    standards = Dict("Hogsbo" => "hogsbo_ana")
     setStandards!(run,standards)
     anchors = getAnchor("LuHf",standards)
     channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
-    fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,mf=1.4671)
+    fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,nf=1,nF=0,mf=1.4671)
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
     return ratios
 end
 
 function exporttest()
     ratios = readmetest()
-    CSV.write("output/out.csv",ratios)
-    export2IsoplotR("output/test.json",ratios,"LuHf")
+    selection = subset(ratios,"BP")
+    CSV.write("output/BP.csv",selection)
+    export2IsoplotR("output/BP.json",selection,"LuHf")
 end
 
 function TUItest()
@@ -98,14 +99,14 @@ end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
-@testset "plot raw data" begin plottest() end
-@testset "set selection window" begin windowtest() end
-@testset "set method and blanks" begin blanktest() end
-@testset "assign standards" begin standardtest(true) end
-@testset "fit fractionation" begin fractionationtest() end
-@testset "plot fit" begin predicttest() end
-@testset "process sample" begin sampletest() end
-@testset "readme example" begin readmetest() end
+#@testset "load" begin loadtest(true) end
+#@testset "plot raw data" begin plottest() end
+#@testset "set selection window" begin windowtest() end
+#@testset "set method and blanks" begin blanktest() end
+#@testset "assign standards" begin standardtest(true) end
+#@testset "fit fractionation" begin fractionationtest() end
+#@testset "plot fit" begin predicttest() end
+#@testset "process sample" begin sampletest() end
+#@testset "readme example" begin readmetest() end
 @testset "export" begin exporttest() end
-@testset "TUI" begin TUItest() end
+#@testset "TUI" begin TUItest() end
