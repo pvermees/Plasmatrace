@@ -32,18 +32,22 @@ function predict(samp::Sample,pars::Pars,blank::AbstractDataFrame,
                  channels::AbstractDict,anchors::AbstractDict)
     if haskey(anchors,samp.group)
         dat = windowData(samp,signal=true)
-        t = dat[:,1]
-        T = dat[:,2]
-        Pm = dat[:,channels["P"]]
-        Dm = dat[:,channels["D"]]
-        dm = dat[:,channels["d"]]
-        bP = blank[:,channels["P"]]
-        bD = blank[:,channels["D"]]
-        bd = blank[:,channels["d"]]
         (x0,y0) = anchors[samp.group]
-        return predict(t,T,Pm,Dm,dm,x0,y0,pars.drift,pars.down,pars.mfrac,bP,bD,bd)
+        return predict(dat,pars,blank,channels,x0,y0)
     else
         PTerror("notStandard")
     end
+end
+function predict(dat::AbstractDataFrame,pars::Pars,blank::AbstractDataFrame,
+                 channels::AbstractDict,x0::AbstractFloat,y0::AbstractFloat)
+    t = dat[:,1]
+    T = dat[:,2]
+    Pm = dat[:,channels["P"]]
+    Dm = dat[:,channels["D"]]
+    dm = dat[:,channels["d"]]
+    bP = blank[:,channels["P"]]
+    bD = blank[:,channels["D"]]
+    bd = blank[:,channels["d"]]
+    return predict(t,T,Pm,Dm,dm,x0,y0,pars.drift,pars.down,pars.mfrac,bP,bD,bd)
 end
 export predict
