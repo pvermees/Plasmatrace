@@ -124,6 +124,7 @@ function pool(run::Vector{Sample};blank=false,signal=false,group=nothing)
     end
     return reduce(vcat,dats)
 end
+export pool
 
 function windowData(samp::Sample;blank=false,signal=false)
     if blank

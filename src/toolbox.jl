@@ -1,9 +1,5 @@
-function formRatios(df,num="",den="";sigma=0.0)
-    N = num=="" ? nothing : [num]
-    D = den=="" ? nothing : [den]
-    return formRatios(df,N,D,sigma=sigma,brackets=!isnothing(D))
-end
-function formRatios(df,num::Union{Nothing,AbstractVector}=nothing,
+function formRatios(df::AbstractDataFrame,
+                    num::Union{Nothing,AbstractVector}=nothing,
                     den::Union{Nothing,AbstractVector}=nothing;
                     sigma=0.0,brackets=false)
     labels = names(df)

@@ -8,12 +8,12 @@ titlefontsize, ms, xlim, ylim = see the generic Plot.plot function
 cumt = logical value indicating if the x-axis shows cumulative time in hours
 """
 function plot(samp::Sample,channels::Vector{String};
-              num="",den="",transformation="sqrt",seriestype=:scatter,
+              num=nothing,den=nothing,transformation="sqrt",seriestype=:scatter,
               titlefontsize=10,ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
     xlab = cumt ? names(samp.dat)[1] : names(samp.dat)[2]
     x = samp.dat[:,xlab]
     meas = samp.dat[:,channels]
-    y = (num=="" && den=="") ? meas : formRatios(meas,num,den)
+    y = (isnothing(num) && isnothing(den)) ? meas : formRatios(meas,num,den)
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
     ratsig = den=="" ? "signal" : "ratio"
     ylab = transformation=="" ? ratsig : transformation*"("*ratsig*")"
@@ -36,19 +36,18 @@ function plot(samp::Sample,channels::Vector{String};
     end
     return p
 end
-function plot(samp::Sample;num="",den="",transformation="sqrt",seriestype=:scatter,
+function plot(samp::Sample;num=nothing,den=nothing,transformation="sqrt",seriestype=:scatter,
               titlefontsize=10,ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
     plot(samp,getChannels(samp),num=num,den=den,
          transformation=transformation,seriestype=seriestype,
          titlefontsize=titlefontsize,ms=ms,ma=ma,
          xlim=lim,ylim=ylim,cumt=cumt)
 end
-function plot(samp::Sample,channels::Dict;num="",den="",transformation="sqrt",
-              seriestype=:scatter,titlefontsize=10,ms=2,ma=0.5,
-              xlim=:auto,ylim=:auto,cumt=false,display=true)
-    N = num=="" ? "" : channels[num]
-    D = den=="" ? "" : channels[den]
-    plot(samp,collect(values(channels)),num=N,den=D,
+function plot(samp::Sample,channels::AbstractDict;den="",
+              transformation="sqrt",seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false,display=true)
+    D = den=="" ? nothing : [channels[den]]
+    plot(samp,collect(values(channels)),den=D,
          transformation=transformation,seriestype=seriestype,
          titlefontsize=titlefontsize,ms=ms,ma=ma,
          xlim=xlim,ylim=ylim,cumt=cumt)
@@ -57,13 +56,23 @@ export plot
 
 function plotFitted!(p,samp::Sample,pars::Pars,blank::AbstractDataFrame,
                      channels::AbstractDict,anchors::AbstractDict;
-                     num="",den="",transformation="sqrt",cumt=false,
+                     den="",transformation="sqrt",cumt=false,
                      linecolor="black",linestyle=:solid)
     pred = predict(samp,pars,blank,channels,anchors)
-    plotdat = num=="" && den=="" ? pred[:,3:end] : formRatios(pred[:,3:end],num,den)
+    if den==""
+        plotdat = pred[:,3:end]
+    else
+        plotdat = formRatios(pred[:,3:end],nothing,[den])
+    end
     x = pred[:,"T"]
     for y in eachcol(plotdat)
-        ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
+        if transformation==""
+            ty = y
+        else
+            ty = fill(NaN,length(y))
+            pos = (y.>0.0)
+            ty[pos] = eval(Symbol(transformation)).(y[pos])
+        end
         Plots.plot!(p,x,ty,linecolor=linecolor,linestyle=linestyle,label="")
     end
 end

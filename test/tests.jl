@@ -54,7 +54,7 @@ function fractionationtest()
     setStandards!(myrun,standards)
     anchors = getAnchor("LuHf",standards)
     fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=0,
+                        anchors=anchors,nf=2,nF=1,
                         mf=1.4671,verbose=true)
     return myrun, blk, fit, channels, anchors
 end
@@ -71,10 +71,9 @@ end
 function crunchtest()
     myrun, blk, fit, channels, anchors = fractionationtest()
     pooled = pool(myrun,signal=true,group="Hogsbo")
-    CSV.write("output/pooled.csv",pooled)
     (x0,y0) = anchors["Hogsbo"]
     pred = predict(pooled,fit,blk,channels,x0,y0)
-    misfit = @. pooled[:,channels["P"]] - pred[:,"P"]
+    misfit = @. pooled[:,channels["d"]] - pred[:,"d"]
     p = Plots.histogram(misfit,legend=false)
     @test display(p) != NaN
 end
@@ -93,7 +92,7 @@ function readmetest()
     setStandards!(run,standards)
     anchors = getAnchor("LuHf",standards)
     channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
-    fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,nf=1,nF=0,mf=1.4671)
+    fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,nf=2,nF=1,mf=1.4671)
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
     return ratios
 end
@@ -111,15 +110,15 @@ end
 
 Plots.closeall()
 
-#@testset "load" begin loadtest(true) end
-#@testset "plot raw data" begin plottest() end
-#@testset "set selection window" begin windowtest() end
-#@testset "set method and blanks" begin blanktest() end
-#@testset "assign standards" begin standardtest(true) end
-#@testset "fit fractionation" begin fractionationtest() end
-#@testset "plot fit" begin predicttest() end
+@testset "load" begin loadtest(true) end
+@testset "plot raw data" begin plottest() end
+@testset "set selection window" begin windowtest() end
+@testset "set method and blanks" begin blanktest() end
+@testset "assign standards" begin standardtest(true) end
+@testset "fit fractionation" begin fractionationtest() end
+@testset "plot fit" begin predicttest() end
 @testset "crunch" begin crunchtest() end
-#@testset "process sample" begin sampletest() end
-#@testset "readme example" begin readmetest() end
-#@testset "export" begin exporttest() end
-#@testset "TUI" begin TUItest() end
+@testset "process sample" begin sampletest() end
+@testset "readme example" begin readmetest() end
+@testset "export" begin exporttest() end
+@testset "TUI" begin TUItest() end
