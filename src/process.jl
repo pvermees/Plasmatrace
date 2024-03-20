@@ -60,8 +60,8 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
         return out
     end
 
-    init = vcat(finit(dats,channels,anchors,mf),fill(-10.0,nf-1))
-    if (nF>0) init = vcat(init,fill(-10.0,nF)) end
+    init = vcat(finit(dats,channels,anchors,mf),fill(0.0,nf-1))
+    if (nF>0) init = vcat(init,fill(0.0,nF)) end
     if isnothing(mf) init = vcat(init,0.0) end
 
     if length(init)>0
