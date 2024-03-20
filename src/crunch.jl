@@ -2,12 +2,14 @@ function getD(Pm,Dm,dm,x0,y0,ft,FT,mf,bPt,bDt,bdt)
     D = @. -(((FT*bPt-FT*Pm)*ft*mf^2*x0+(bDt-Dm)*mf^2)*y0^2+(FT^2*bdt-FT^2*dm)*ft^2*mf*x0^2*y0+(FT^2*bDt-Dm*FT^2)*ft^2*x0^2)/((FT^2*ft^2*mf^2*x0^2+mf^2)*y0^2+FT^2*ft^2*x0^2)
     return D
 end
+export getD
 function getp(Pm,Dm,dm,x0,y0,ft,FT,mf,bPt,bDt,bdt)
     p = @. -(((FT^2*dm-FT^2*bdt)*ft^2*mf*x0^2+(dm-bdt)*mf)*y0+(Dm*FT^2-FT^2*bDt)*ft^2*x0^2+(FT*bPt-FT*Pm)*ft*x0)/(((FT*bPt-FT*Pm)*ft*mf^2*x0+(bDt-Dm)*mf^2)*y0^2+(FT^2*bdt-FT^2*dm)*ft^2*mf*x0^2*y0+(FT^2*bDt-Dm*FT^2)*ft^2*x0^2)
     p[findall(p.<0.0)] .= 0.0
     p[findall(p.>1.0)] .= 1.0
     return p
 end
+export getp
 function SS(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
     pred = predict(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
     S = @. (pred[:,"P"]-Pm)^2 + (pred[:,"D"]-Dm)^2 + (pred[:,"d"]-dm)^2
@@ -15,8 +17,8 @@ function SS(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
 end
 
 function predict(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
-    ft = polyVal(p=drift,t=t)
-    FT = polyVal(p=down,t=T)
+    ft = polyFac(p=drift,t=t)
+    FT = polyFac(p=down,t=T)
     mf = exp(mfrac)
     bPt = polyVal(p=bP,t=t)
     bDt = polyVal(p=bD,t=t)

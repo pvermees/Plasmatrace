@@ -91,11 +91,26 @@ end
 function polyVal(;p,t)
     np = size(p,1)
     nt = size(t,1)
-    out = fill(exp(p[1]),nt)
-    if np>1
-        for i in 2:np
+    out = fill(0.0,nt)
+    if np>0
+        for i in 1:np
             out .+= exp(p[i]).*t.^(i-1)
         end
     end
     out
 end
+export polyVal
+
+function polyFac(;p,t)
+    np = size(p,1)
+    nt = size(t,1)
+    out = fill(1.0,nt)
+    if np>0
+        out = fill(0.0,nt)
+        for i in 1:np
+            out .+= p[i].*t.^(i-1)
+        end
+    end
+    exp.(out)
+end
+export polyFac

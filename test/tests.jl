@@ -54,33 +54,32 @@ function fractionationtest()
     setStandards!(myrun,standards)
     anchors = getAnchor("LuHf",standards)
     fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,nf=2,nF=1,mf=1.4671,verbose=true)
+                        anchors=anchors,nf=1,nF=1,
+                        mf=1.4671,verbose=true)
     return myrun, blk, fit, channels, anchors
 end
 
 function predicttest()
     myrun, blk, fit, channels, anchors = fractionationtest()
-    samp = myrun[5]
+    samp = myrun[2]
+    println(fit)
+    #fit.drift = [4.287968519055774]
+    #fit.down = []
+    #fit.mfrac = 1/fit.mfrac
     pred = predict(samp,fit,blk,channels,anchors)
-    if true
-        p = plot(samp,channels,den="D")
-        plotFitted!(p,samp,fit,blk,channels,anchors,den="D")
-    else
-        dat = windowData(samp,signal=true)
-        ho = histogram(dat[:,channels["D"]],legend=false)
-        hp = histogram(pred[:,"D"],legend=false)
-        p = Plots.plot(ho,hp,layout=(1,2))
-        println("predicttest")
-    end
+    p = plot(samp,channels)#,den="D")
+    plotFitted!(p,samp,fit,blk,channels,anchors)#,den="D")
     @test display(p) != NaN
 end
 
 function crunchtest()
     myrun, blk, fit, channels, anchors = fractionationtest()
     pooled = pool(myrun,signal=true,group="Hogsbo")
+    CSV.write("output/pooled.csv",pooled)
     (x0,y0) = anchors["Hogsbo"]
     pred = predict(pooled,fit,blk,channels,x0,y0)
-    p = Plots.plot(pred[:,"t"],pred[:,"P"])
+    misfit = @. pooled[:,channels["P"]] - pred[:,"P"]
+    p = Plots.histogram(misfit,legend=false)
     @test display(p) != NaN
 end
 
@@ -122,8 +121,8 @@ Plots.closeall()
 #@testset "set method and blanks" begin blanktest() end
 #@testset "assign standards" begin standardtest(true) end
 #@testset "fit fractionation" begin fractionationtest() end
-#@testset "plot fit" begin predicttest() end
-@testset "crunch" begin crunchtest() end
+@testset "plot fit" begin predicttest() end
+#@testset "crunch" begin crunchtest() end
 #@testset "process sample" begin sampletest() end
 #@testset "readme example" begin readmetest() end
 #@testset "export" begin exporttest() end

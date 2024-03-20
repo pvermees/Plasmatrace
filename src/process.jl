@@ -10,9 +10,29 @@ function fitBlanks(run::Vector{Sample};n=2)
 end
 export fitBlanks
 
+function finit(dats::AbstractDict,channels::AbstractDict,
+               anchors::AbstractDict,mf::AbstractFloat)
+    out = Float64[]
+    for (refmat,dat) in dats
+        t = dat[:,1]
+        T = dat[:,2]
+        Pm = dat[:,channels["P"]]
+        Dm = dat[:,channels["D"]]
+        dm = dat[:,channels["d"]]
+        (x0,y0) = anchors[refmat]
+        D = @. Dm
+        p = @. dm/(D*y0*mf)
+        f = @. Pm/(D*x0*(1-p))
+        out = vcat(out,log.(f))
+    end
+    return Statistics.mean(out)
+end
+
 function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
                        channels::AbstractDict,anchors::AbstractDict,
-                       nf=1,nF=1,mf=nothing,verbose=false)
+                       nf=1,nF=0,mf=nothing,verbose=false)
+
+    if nf<1 PTerror("nfzero") end
 
     dats = Dict()
     for (refmat,anchor) in anchors
@@ -24,7 +44,7 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
     bP = blank[:,channels["P"]]
     
     function misfit(par)
-        drift = vcat(0.0,par[1:nf])
+        drift = par[1:nf]
         down = vcat(0.0,par[nf+1:nf+nF])
         mfrac = isnothing(mf) ? par[end] : log(mf)
         out = 0.0
@@ -40,15 +60,20 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
         return out
     end
 
-    init = fill(-10.0,nf+nF)
+    init = vcat(finit(dats,channels,anchors,mf),fill(-10.0,nf-1))
+    if (nF>0) init = vcat(init,fill(-10.0,nF)) end
     if isnothing(mf) init = vcat(init,0.0) end
-    
-    fit = Optim.optimize(misfit,init)
-    if verbose println(fit) end
-    
-    pars = Optim.minimizer(fit)
-    drift = vcat(0.0,pars[1:nf])
+
+    if length(init)>0
+        fit = Optim.optimize(misfit,init)
+        if verbose println(fit) end
+        pars = Optim.minimizer(fit)
+    else
+        pars = 0.0
+    end
+    drift = pars[1:nf]
     down = vcat(0.0,pars[nf+1:nf+nF])
+    
     mfrac = isnothing(mf) ? pars[end] : log(mf)
 
     return Pars(drift,down,mfrac)
@@ -63,8 +88,8 @@ function atomic(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDa
     Pm = dat[:,channels["P"]]
     Dm = dat[:,channels["D"]]
     dm = dat[:,channels["d"]]
-    ft = polyVal(p=pars.drift,t=t)
-    FT = polyVal(p=pars.down,t=T)
+    ft = polyFac(p=pars.drift,t=t)
+    FT = polyFac(p=pars.down,t=T)
     mf = exp(pars.mfrac)
     bPt = polyVal(p=blank[:,channels["P"]],t=t)
     bDt = polyVal(p=blank[:,channels["D"]],t=t)
