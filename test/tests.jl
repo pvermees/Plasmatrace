@@ -16,7 +16,7 @@ function plottest()
     myrun = loadtest()
     p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"])
     @test display(p) != NaN
-    p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"], den=["Hf178 -> 260"])
+    p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"], den="Hf178 -> 260")
     @test display(p) != NaN
 end
 
@@ -88,7 +88,7 @@ end
 function readmetest()
     run = load("data",instrument="Agilent")
     blk = fitBlanks(run,n=2)
-    standards = Dict("Hogsbo" => "hogsbo_ana")
+    standards = Dict("Hogsbo" => "hogsbo_ana") # "BP" => "BP"
     setStandards!(run,standards)
     anchors = getAnchor("LuHf",standards)
     channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
@@ -99,7 +99,7 @@ end
 
 function exporttest()
     ratios = readmetest()
-    selection = subset(ratios,"BP")
+    selection = subset(ratios,"BP") # "hogsbo"
     CSV.write("output/BP.csv",selection)
     export2IsoplotR("output/BP.json",selection,"LuHf")
 end

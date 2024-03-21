@@ -1,6 +1,6 @@
 """
 channels = optional array of names specifying the data columns to plot
-num = optional name of the data column to use as the numerator
+num = optional vector of name of the data column to use as the numerator
 den = optional name of the data column to use as the denominator
 transformation = "sqrt", "log" or ""
 seriestype = :scatter or :path
@@ -43,11 +43,11 @@ function plot(samp::Sample;num=nothing,den=nothing,transformation="sqrt",seriest
          titlefontsize=titlefontsize,ms=ms,ma=ma,
          xlim=lim,ylim=ylim,cumt=cumt)
 end
-function plot(samp::Sample,channels::AbstractDict;den="",
+function plot(samp::Sample,channels::AbstractDict;num=nothing,den=nothing,
               transformation="sqrt",seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false,display=true)
-    D = den=="" ? nothing : [channels[den]]
-    plot(samp,collect(values(channels)),den=D,
+    D = isnothing(den) ? nothing : channels[den]
+    plot(samp,collect(values(channels)),num=num,den=D,
          transformation=transformation,seriestype=seriestype,
          titlefontsize=titlefontsize,ms=ms,ma=ma,
          xlim=xlim,ylim=ylim,cumt=cumt)
@@ -56,14 +56,10 @@ export plot
 
 function plotFitted!(p,samp::Sample,pars::Pars,blank::AbstractDataFrame,
                      channels::AbstractDict,anchors::AbstractDict;
-                     den="",transformation="sqrt",cumt=false,
+                     num=nothing,den=nothing,transformation="sqrt",cumt=false,
                      linecolor="black",linestyle=:solid)
     pred = predict(samp,pars,blank,channels,anchors)
-    if den==""
-        plotdat = pred[:,3:end]
-    else
-        plotdat = formRatios(pred[:,3:end],nothing,[den])
-    end
+    plotdat = formRatios(pred[:,3:end],num,den)
     x = pred[:,"T"]
     for y in eachcol(plotdat)
         if transformation==""
