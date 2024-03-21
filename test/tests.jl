@@ -100,8 +100,8 @@ end
 function exporttest()
     ratios = readmetest()
     selection = subset(ratios,"BP") # "hogsbo"
-    CSV.write("output/BP.csv",selection)
-    export2IsoplotR("output/BP.json",selection,"LuHf")
+    CSV.write("BP.csv",selection)
+    export2IsoplotR("BP.json",selection,"LuHf")
 end
 
 function TUItest()
