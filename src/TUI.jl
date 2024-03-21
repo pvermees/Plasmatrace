@@ -6,7 +6,7 @@ function PT(logbook="")
         "history" => DataFrame(task=String[],action=String[]),
         "chain" => ["top"],
         "i" => 1,
-        "den" => nothing,
+        "den" => "",
         "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
         "mf" => nothing
     )
@@ -473,7 +473,7 @@ function TUIremoveStandardsByNumber!(ctrl::AbstractDict,response::AbstractString
 end
 
 function TUIresetStandards!(ctrl::AbstractDict)
-    setStandards!(ctrl["run"])
+    setStandards!(ctrl["run"],"sample")
     return "x"
 end
 
@@ -539,13 +539,18 @@ end
 
 function TUIplotter(ctrl::AbstractDict)
     i = ctrl["i"]
+    samp = ctrl["run"][i]
     if haskey(ctrl,"channels")
         channels = ctrl["channels"]
     else
-        channels = names(ctrl["run"][i].dat)[3:end]
+        channels = names(samp.dat)[3:end]
         println(channels)
     end
-    p = plot(ctrl["run"][i],channels,den=ctrl["den"])
+    p = plot(samp,channels,den=ctrl["den"])
+    if samp.group!="sample"
+        plotFitted!(p,samp,ctrl["par"],ctrl["blank"],
+                    ctrl["channels"],ctrl["anchors"],den=ctrl["den"])
+    end
     display(p)
 end
 
@@ -565,15 +570,17 @@ end
 
 function TUIratios!(ctrl::AbstractDict,response::AbstractString)
     if response=="n"
-        ctrl["den"] = nothing
+        ctrl["den"] = ""
+    elseif response=="x"
+        return "xx"
     else
         i = parse(Int,response)
         if haskey(ctrl,"channels")
-            channels = collect(values(ctrl["channels"]))
+            channels = collect(keys(ctrl["channels"]))
         else
             channels = names(ctrl["run"][ctrl["i"]].dat)[3:end]
         end
-        ctrl["den"] = [channels[i]]
+        ctrl["den"] = channels[i]
     end
     TUIplotter(ctrl)
     return "x"
