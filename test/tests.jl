@@ -92,7 +92,7 @@ function readmetest()
     setStandards!(run,standards)
     anchors = getAnchor("LuHf",standards)
     channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
-    fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,nf=2,nF=1,mf=1.4671)
+    fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,nf=1,nF=0,mf=1.4671)
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
     return ratios
 end

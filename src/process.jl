@@ -10,24 +10,6 @@ function fitBlanks(run::Vector{Sample};n=2)
 end
 export fitBlanks
 
-function finit(dats::AbstractDict,channels::AbstractDict,
-               anchors::AbstractDict,mf::AbstractFloat)
-    out = Float64[]
-    for (refmat,dat) in dats
-        t = dat[:,1]
-        T = dat[:,2]
-        Pm = dat[:,channels["P"]]
-        Dm = dat[:,channels["D"]]
-        dm = dat[:,channels["d"]]
-        (x0,y0) = anchors[refmat]
-        D = @. Dm
-        p = @. dm/(D*y0*mf)
-        f = @. Pm/(D*x0*(1-p))
-        out = vcat(out,log.(f))
-    end
-    return Statistics.mean(out)
-end
-
 function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
                        channels::AbstractDict,anchors::AbstractDict,
                        nf=1,nF=0,mf=nothing,verbose=false)
@@ -60,7 +42,7 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
         return out
     end
 
-    init = vcat(finit(dats,channels,anchors,mf),fill(0.0,nf-1))
+    init = fill(0.0,nf)
     if (nF>0) init = vcat(init,fill(0.0,nF)) end
     if isnothing(mf) init = vcat(init,0.0) end
 
