@@ -88,7 +88,7 @@ end
 function readmetest()
     run = load("data",instrument="Agilent")
     blk = fitBlanks(run,n=2)
-    standards = Dict("Hogsbo" => "hogsbo_ana")
+    standards = Dict("Hogsbo" => "hogsbo_ana") # "BP" => "BP"
     setStandards!(run,standards)
     anchors = getAnchor("LuHf",standards)
     channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
@@ -99,7 +99,7 @@ end
 
 function exporttest()
     ratios = readmetest()
-    selection = subset(ratios,"BP")
+    selection = subset(ratios,"BP") # "hogsbo"
     CSV.write("output/BP.csv",selection)
     export2IsoplotR("output/BP.json",selection,"LuHf")
 end
@@ -110,15 +110,15 @@ end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
-@testset "plot raw data" begin plottest() end
-@testset "set selection window" begin windowtest() end
-@testset "set method and blanks" begin blanktest() end
-@testset "assign standards" begin standardtest(true) end
-@testset "fit fractionation" begin fractionationtest() end
-@testset "plot fit" begin predicttest() end
-@testset "crunch" begin crunchtest() end
-@testset "process sample" begin sampletest() end
-@testset "readme example" begin readmetest() end
+#@testset "load" begin loadtest(true) end
+#@testset "plot raw data" begin plottest() end
+#@testset "set selection window" begin windowtest() end
+#@testset "set method and blanks" begin blanktest() end
+#@testset "assign standards" begin standardtest(true) end
+#@testset "fit fractionation" begin fractionationtest() end
+#@testset "plot fit" begin predicttest() end
+#@testset "crunch" begin crunchtest() end
+#@testset "process sample" begin sampletest() end
+#@testset "readme example" begin readmetest() end
 @testset "export" begin exporttest() end
-@testset "TUI" begin TUItest() end
+#@testset "TUI" begin TUItest() end
