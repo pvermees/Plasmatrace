@@ -67,6 +67,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
         "top" => (
             message =
             "r: Read data files"*check(ctrl,"load")*"\n"*
+            # "d: Specify date time format"*check(ctrl,"date_time")*"\n"*
             "m: Specify the method"*check(ctrl,"method")*"\n"*
             "t: Tabulate the samples\n"*
             "s: Mark standards"*check(ctrl,"standards")*"\n"*
@@ -78,6 +79,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             "x: Exit",
             action = Dict(
                 "r" => "instrument",
+                "d" => "date_time",
                 "m" => "method",
                 "t" => TUItabulate,
                 "s" => "standards",
@@ -100,6 +102,13 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             message = "Enter the full path of the data directory:",
             action = TUIload!,
         ),
+        # "date_time" => (
+        #     message =
+        #     "Specify the date time format for your files.\n
+        #     Default is d/m/Y H:M:S\n
+        #     Type ?Dates.DateFormat in the main Julia REPL for help",
+        #     action = TUIdatetime!
+        # ),
         "method" => (
             message =
             "Choose a method:\n"*
@@ -383,6 +392,10 @@ function TUIload!(ctrl::AbstractDict,response::AbstractString)
     ctrl["priority"]["load"] = false
     return "xx"
 end
+
+# function TUIdatetime!(ctrl::AbstractDict, response::AbstractString)
+#     return date_time_format::DateFormat = Dates.DateFormat(response)
+# end
 
 function TUImethod!(ctrl::AbstractDict,response::AbstractString)
     if response=="1"
