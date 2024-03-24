@@ -21,7 +21,7 @@ Here is an example of a menu-driven Plasmatrace session:
 julia> using Plasmatrace
 julia> PT()
 -------------------
- Plasmatrace 0.3.0 
+ Plasmatrace 0.3.0
 -------------------
 
 r: Read data files[*]
@@ -183,7 +183,7 @@ signal drift is modelled using a linear function:
 
 ```
 julia> run = load("/home/mydata",instrument="Agilent")
-julia> blk = fitBlanks(run,n=2)
+julia> blk = fit_blanks(run,n=2)
 julia> standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
 julia> setStandards!(run,standards)
 julia> anchors = getAnchor("LuHf",standards)
