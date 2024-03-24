@@ -1,7 +1,7 @@
-const sph = 3.6e6 # seconds per hour
+const hour_seconds = 3600 # seconds per hour, in base (and SciML) Julia styles, you should really avoid any abbreviations, especially if it requires a comment to state what is is.
 
-const Window = Tuple{Int,Int}
-export Window
+const window = Tuple{Int,Int}
+export window
 
 _PT = Dict(
     "lambda" => Dict(
@@ -23,18 +23,19 @@ _PT = Dict(
 export _PT
 
 mutable struct Sample
-    sname::String
-    datetime::DateTime
-    dat::DataFrame
-    bwin::Vector{Window}
-    swin::Vector{Window}
+    sample_name::String
+    analysis_name::String
+    date_time::DateTime
+    data::DataFrame
+    blank_window::Vector{Tuple{Int, Int}}
+    signal_window::Vector{Tuple{Int, Int}}
     group::String
 end
 export Sample
 
-mutable struct Pars
+mutable struct Parameters # I think we should use a more explicit name (I assume Parameters meant Parameters)
     drift::Vector{Float64}
-    down::Vector{Float64}
-    mfrac::Float64
+    downhole_fractionation::Vector{Float64}
+    mass_fractionation::Float64
 end
-export Pars
+export Parameters

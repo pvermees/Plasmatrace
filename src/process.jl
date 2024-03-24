@@ -1,14 +1,14 @@
-function fitBlanks(run::Vector{Sample};n=2)
+function fit_blanks(run::Vector{Sample};n=2)
     blk = pool(run,blank=true)
     channels = getChannels(run)
-    nc = length(channels)
-    bpar = DataFrame(zeros(n,nc),channels)
+    channels_count = length(channels)
+    bpar = DataFrame(zeros(n,channels_count),channels)
     for channel in channels
-        bpar[:,channel] = polyFit(t=blk[:,1],y=blk[:,channel],n=n)
+        bpar[:,channel] = polynomial_fit(t=blk[:,1],y=blk[:,channel],n=n)
     end
     return bpar
 end
-export fitBlanks
+export fit_blanks
 
 function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
                        channels::AbstractDict,anchors::AbstractDict,
@@ -20,24 +20,24 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
     for (refmat,anchor) in anchors
         dats[refmat] = pool(run,signal=true,group=refmat)
     end
-    
+
     bD = blank[:,channels["D"]]
     bd = blank[:,channels["d"]]
     bP = blank[:,channels["P"]]
-    
+
     function misfit(par)
         drift = par[1:nf]
-        down = vcat(0.0,par[nf+1:nf+nF])
-        mfrac = isnothing(mf) ? par[end] : log(mf)
+        downhole_fractionation = vcat(0.0,par[nf+1:nf+nF])
+        mass_fractionation = isnothing(mf) ? par[end] : log(mf)
         out = 0.0
-        for (refmat,dat) in dats
-            t = dat[:,1]
-            T = dat[:,2]
-            Pm = dat[:,channels["P"]]
-            Dm = dat[:,channels["D"]]
-            dm = dat[:,channels["d"]]
+        for (refmat,data) in dats
+            t = data[:,1]
+            T = data[:,2]
+            Pm = data[:,channels["P"]]
+            Dm = data[:,channels["D"]]
+            dm = data[:,channels["d"]]
             (x0,y0) = anchors[refmat]
-            out += SS(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
+            out += SS(t,T,Pm,Dm,dm,x0,y0,drift,downhole_fractionation,mass_fractionation,bP,bD,bd)
         end
         return out
     end
@@ -49,33 +49,33 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
     if length(init)>0
         fit = Optim.optimize(misfit,init)
         if verbose println(fit) end
-        pars = Optim.minimizer(fit)
+        parameters = Optim.minimizer(fit)
     else
-        pars = 0.0
+        parameters = 0.0
     end
-    drift = pars[1:nf]
-    down = vcat(0.0,pars[nf+1:nf+nF])
-    
-    mfrac = isnothing(mf) ? pars[end] : log(mf)
+    drift = parameters[1:nf]
+    downhole_fractionation = vcat(0.0,parameters[nf+1:nf+nF])
 
-    return Pars(drift,down,mfrac)
-    
+    mass_fractionation = isnothing(mf) ? parameters[end] : log(mf)
+
+    return Parameters(drift,downhole_fractionation,mass_fractionation)
+
 end
 export fractionation
 
-function atomic(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
-    dat = windowData(samp,signal=true)
-    t = dat[:,1]
-    T = dat[:,2]
-    Pm = dat[:,channels["P"]]
-    Dm = dat[:,channels["D"]]
-    dm = dat[:,channels["d"]]
-    ft = polyFac(p=pars.drift,t=t)
-    FT = polyFac(p=pars.down,t=T)
-    mf = exp(pars.mfrac)
-    bPt = polyVal(p=blank[:,channels["P"]],t=t)
-    bDt = polyVal(p=blank[:,channels["D"]],t=t)
-    bdt = polyVal(p=blank[:,channels["d"]],t=t)
+function atomic(sample::Sample;channels::AbstractDict,parameters::Parameters,blank::AbstractDataFrame)
+    data = windowData(sample,signal=true)
+    t = data[:,1]
+    T = data[:,2]
+    Pm = data[:,channels["P"]]
+    Dm = data[:,channels["D"]]
+    dm = data[:,channels["d"]]
+    ft = polynomial_factor(p=parameters.drift,t=t)
+    FT = polynomial_factor(p=parameters.downhole_fractionation,t=T)
+    mf = exp(parameters.mass_fractionation)
+    bPt = polynomial_values(p=blank[:,channels["P"]],t=t)
+    bDt = polynomial_values(p=blank[:,channels["D"]],t=t)
+    bdt = polynomial_values(p=blank[:,channels["d"]],t=t)
     P = @. (Pm-bPt)/(ft*FT)
     D = @. (Dm-bDt)
     d = @. (dm-bdt)/mf
@@ -83,8 +83,8 @@ function atomic(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDa
 end
 export atomic
 
-function averat(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
-    t, T, P, D, d = atomic(samp,channels=channels,pars=pars,blank=blank)
+function averat(sample::Sample;channels::AbstractDict,parameters::Parameters,blank::AbstractDataFrame)
+    t, T, P, D, d = atomic(sample,channels=channels,parameters=parameters,blank=blank)
     nr = length(t)
     sumP = sum(P)
     sumD = sum(D)
@@ -100,13 +100,13 @@ function averat(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDa
     rxy = covmat[1,2]/(sx*sy)
     return [x sx y sy rxy]
 end
-function averat(run::Vector{Sample};channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+function averat(run::Vector{Sample};channels::AbstractDict,parameters::Parameters,blank::AbstractDataFrame)
     ns = length(run)
     out = DataFrame(name=fill("",ns),x=fill(0.0,ns),sx=fill(0.0,ns),
                     y=fill(0.0,ns),sy=fill(0.0,ns),rxy=fill(0.0,ns))
     for i in 1:ns
-        out[i,1] = run[i].sname
-        out[i,2:end] = averat(run[i],channels=channels,pars=pars,blank=blank)
+        out[i,1] = run[i].sample_name
+        out[i,2:end] = averat(run[i],channels=channels,parameters=parameters,blank=blank)
     end
     return out
 end

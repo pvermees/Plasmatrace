@@ -6,8 +6,8 @@ function PT(logbook="")
         "history" => DataFrame(task=String[],action=String[]),
         "chain" => ["top"],
         "i" => 1,
-        "den" => "",
-        "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
+        "denominator" => "",
+        "options" => Dict("blank" => 2, "drift" => 1, "downhole_fractionation" => 1),
         "mf" => nothing
     )
     if logbook != ""
@@ -159,7 +159,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             action = TUIsetStandards!
         ),
         "view" => (
-            message = 
+            message =
             "n: Next\n"*
             "p: Previous\n"*
             "g: Go to\n"*
@@ -284,7 +284,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             "Set one of the following parameters:\n"*
             "b. Polynomial order of the blank correction\n"*
             "d. Polynomial order of the drift correction\n"*
-            "h. Polynomial order of the down hole fractionation correction\n"*
+            "h. Polynomial order of the downhole_fractionation hole fractionation correction\n"*
             "f. Fix or fit the fractionation factor\n"*
             "x. Exit",
             action = Dict(
@@ -307,7 +307,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
         ),
         "setNdown" => (
             message = "Enter a non-negative integer (current value = "*
-            string(ctrl["options"]["down"])*")",
+            string(ctrl["options"]["downhole_fractionation"])*")",
             action = TUIsetNdown!
         ),
         "setmf" => (
@@ -408,7 +408,7 @@ end
 
 function TUIcolumnMessage(ctrl::AbstractDict)
     msg = "Choose from the following list of channels:\n"
-    labels = names(ctrl["run"][1].dat)[3:end]
+    labels = names(ctrl["run"][1].data)[3:end]
     for i in eachindex(labels)
         msg *= string(i)*". "*labels[i]*"\n"
     end
@@ -423,7 +423,7 @@ function TUIcolumnMessage(ctrl::AbstractDict)
 end
 
 function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
-    labels = names(ctrl["run"][1].dat)[3:end]
+    labels = names(ctrl["run"][1].data)[3:end]
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
     next = "xx"
@@ -476,7 +476,7 @@ end
 
 function TUIaddStandardsByNumber!(ctrl::AbstractDict,response::AbstractString)
     ctrl["selection"] = parse.(Int,split(response,","))
-    return "refmat"    
+    return "refmat"
 end
 
 function TUIremoveStandardsByNumber!(ctrl::AbstractDict,response::AbstractString)
@@ -518,7 +518,7 @@ end
 
 function TUIprocess!(ctrl::AbstractDict)
     println("Fitting blanks...")
-    ctrl["blank"] = fitBlanks(ctrl["run"],n=ctrl["options"]["blank"])
+    ctrl["blank"] = fit_blanks(ctrl["run"],n=ctrl["options"]["blank"])
     groups = unique(getGroups(ctrl["run"]))
     stds = groups[groups.!="sample"]
     ctrl["anchors"] = getAnchor(ctrl["method"],stds)
@@ -552,17 +552,17 @@ end
 
 function TUIplotter(ctrl::AbstractDict)
     i = ctrl["i"]
-    samp = ctrl["run"][i]
+    sample = ctrl["run"][i]
     if haskey(ctrl,"channels")
         channels = ctrl["channels"]
     else
-        channels = names(samp.dat)[3:end]
+        channels = names(sample.data)[3:end]
         println(channels)
     end
-    p = plot(samp,channels,den=ctrl["den"])
-    if samp.group!="sample"
-        plotFitted!(p,samp,ctrl["par"],ctrl["blank"],
-                    ctrl["channels"],ctrl["anchors"],den=ctrl["den"])
+    p = plot(sample,channels,denominator=ctrl["denominator"])
+    if sample.group!="sample"
+        plotFitted!(p,sample,ctrl["par"],ctrl["blank"],
+                    ctrl["channels"],ctrl["anchors"],denominator=ctrl["denominator"])
     end
     display(p)
 end
@@ -571,7 +571,7 @@ function TUIratioMessage(ctrl::AbstractDict)
     if haskey(ctrl,"channels")
         channels = collect(values(ctrl["channels"]))
     else
-        channels = names(ctrl["run"][ctrl["i"]].dat)[3:end]
+        channels = names(ctrl["run"][ctrl["i"]].data)[3:end]
     end
     msg = "Choose one of the following denominators:\n"
     for i in 1:length(channels)
@@ -583,7 +583,7 @@ end
 
 function TUIratios!(ctrl::AbstractDict,response::AbstractString)
     if response=="n"
-        ctrl["den"] = ""
+        ctrl["denominator"] = ""
     elseif response=="x"
         return "xx"
     else
@@ -591,9 +591,9 @@ function TUIratios!(ctrl::AbstractDict,response::AbstractString)
         if haskey(ctrl,"channels")
             channels = collect(keys(ctrl["channels"]))
         else
-            channels = names(ctrl["run"][ctrl["i"]].dat)[3:end]
+            channels = names(ctrl["run"][ctrl["i"]].data)[3:end]
         end
-        ctrl["den"] = channels[i]
+        ctrl["denominator"] = channels[i]
     end
     TUIplotter(ctrl)
     return "x"
@@ -606,18 +606,18 @@ end
 
 function TUIoneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     response = TUIhelp("TUIoneSingleBlankWindow!",response)
-    samp = ctrl["run"][ctrl["i"]]
-    bwin = string2windows(samp,text=response,single=true)
-    setBwin!(samp,bwin)
+    sample = ctrl["run"][ctrl["i"]]
+    blank_window = string2windows(sample,text=response,single=true)
+    setBwin!(sample,blank_window)
     TUIplotter(ctrl)
     return "xx"
 end
 
 function TUIoneMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     response = TUIhelp("TUIoneMultiBlankWindow!",response)
-    samp = ctrl["run"][ctrl["i"]]
-    bwin = string2windows(samp,text=response,single=false)
-    setBwin!(samp,bwin)
+    sample = ctrl["run"][ctrl["i"]]
+    blank_window = string2windows(sample,text=response,single=false)
+    setBwin!(sample,blank_window)
     TUIplotter(ctrl)
     return "xx"
 end
@@ -630,9 +630,9 @@ end
 function TUIallSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     response = TUIhelp("TUIallSingleBlankWindow!",response)
     for i in eachindex(ctrl["run"])
-        samp = ctrl["run"][i]
-        bwin = string2windows(samp,text=response,single=true)
-        setBwin!(samp,bwin)
+        sample = ctrl["run"][i]
+        blank_window = string2windows(sample,text=response,single=true)
+        setBwin!(sample,blank_window)
     end
     TUIplotter(ctrl)
     return "xx"
@@ -641,9 +641,9 @@ end
 function TUIallMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     response = TUIhelp("TUIallMultiBlankWindow!",response)
     for i in eachindex(ctrl["run"])
-        samp = ctrl["run"][i]
-        bwin = string2windows(samp,text=response,single=false)
-        setBwin!(samp,bwin)
+        sample = ctrl["run"][i]
+        blank_window = string2windows(sample,text=response,single=false)
+        setBwin!(sample,blank_window)
     end
     TUIplotter(ctrl)
     return "xx"
@@ -656,18 +656,18 @@ end
 
 function TUIoneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     response = TUIhelp("TUIoneSingleSignalWindow!",response)
-    samp = ctrl["run"][ctrl["i"]]
-    swin = string2windows(samp,text=response,single=true)
-    setSwin!(samp,swin)
+    sample = ctrl["run"][ctrl["i"]]
+    signal_window = string2windows(sample,text=response,single=true)
+    setSwin!(sample,signal_window)
     TUIplotter(ctrl)
     return "xx"
 end
 
 function TUIoneMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     response = TUIhelp("TUIoneMultiSignalWindow!",response)
-    samp = ctrl["run"][ctrl["i"]]
-    swin = string2windows(samp,text=response,single=false)
-    setSwin!(samp,swin)
+    sample = ctrl["run"][ctrl["i"]]
+    signal_window = string2windows(sample,text=response,single=false)
+    setSwin!(sample,signal_window)
     TUIplotter(ctrl)
     return "xx"
 end
@@ -680,9 +680,9 @@ end
 function TUIallSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     response = TUIhelp("TUIallSingleSignalWindow!",response)
     for i in eachindex(ctrl["run"])
-        samp = ctrl["run"][i]
-        swin = string2windows(samp,text=response,single=true)
-        setSwin!(samp,swin)
+        sample = ctrl["run"][i]
+        signal_window = string2windows(sample,text=response,single=true)
+        setSwin!(sample,signal_window)
     end
     TUIplotter(ctrl)
     return "xx"
@@ -691,9 +691,9 @@ end
 function TUIallMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     response = TUIhelp("TUIallMultiSignalWindow!",response)
     for i in eachindex(ctrl["run"])
-        samp = ctrl["run"][i]
-        swin = string2windows(samp,text=response,single=false)
-        setSwin!(samp,swin)
+        sample = ctrl["run"][i]
+        signal_window = string2windows(sample,text=response,single=false)
+        setSwin!(sample,signal_window)
     end
     TUIplotter(ctrl)
     return "xx"
@@ -706,12 +706,12 @@ end
 
 function TUIsetNdrift!(ctrl::AbstractDict,response::AbstractString)
     ctrl["options"]["drift"] = parse(Int,response)
-    return "x"    
+    return "x"
 end
 
 function TUIsetNdown!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["options"]["down"] = parse(Int,response)
-    return "x"    
+    ctrl["options"]["downhole_fractionation"] = parse(Int,response)
+    return "x"
 end
 
 function TUIsetmf!(ctrl::AbstractDict,response::AbstractString)
@@ -753,7 +753,7 @@ end
 
 function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
     ratios = averat(ctrl["run"],channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"])
+                    parameters=ctrl["par"],blank=ctrl["blank"])
     fname = splitext(response)[1]*".csv"
     CSV.write(fname,ratios[ctrl["selection"],:])
     return "xxx"
@@ -761,7 +761,7 @@ end
 
 function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
     ratios = averat(ctrl["run"],channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"])
+                    parameters=ctrl["par"],blank=ctrl["blank"])
     fname = splitext(response)[1]*".json"
     export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
     return "xxx"

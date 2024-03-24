@@ -1,32 +1,32 @@
 """
 channels = optional array of names specifying the data columns to plot
-num = optional vector of name of the data column to use as the numerator
-den = optional name of the data column to use as the denominator
+numerator = optional vector of name of the data column to use as the numerator
+denominator = optional name of the data column to use as the denominator
 transformation = "sqrt", "log" or ""
 seriestype = :scatter or :path
 titlefontsize, ms, xlim, ylim = see the generic Plot.plot function
 cumt = logical value indicating if the x-axis shows cumulative time in hours
 """
-function plot(samp::Sample,channels::Vector{String};
-              num=nothing,den=nothing,transformation="sqrt",seriestype=:scatter,
+function plot(sample::Sample,channels::Vector{String};
+              numerator=nothing,denominator=nothing,transformation="sqrt",seriestype=:scatter,
               titlefontsize=10,ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
-    xlab = cumt ? names(samp.dat)[1] : names(samp.dat)[2]
-    x = samp.dat[:,xlab]
-    meas = samp.dat[:,channels]
-    y = (isnothing(num) && isnothing(den)) ? meas : formRatios(meas,num,den)
+    xlab = cumt ? names(sample.data)[1] : names(sample.data)[2]
+    x = sample.data[:,xlab]
+    meas = sample.data[:,channels]
+    y = (isnothing(numerator) && isnothing(denominator)) ? meas : form_ratios(meas,numerator,denominator)
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
-    ratsig = den=="" ? "signal" : "ratio"
+    ratsig = denominator=="" ? "signal" : "ratio"
     ylab = transformation=="" ? ratsig : transformation*"("*ratsig*")"
     p = Plots.plot(x,Matrix(ty),seriestype=seriestype,
                    ms=ms,ma=ma,label=permutedims(names(y)),
                    legend=:topleft,xlimits=xlim,ylimits=ylim)
     Plots.xlabel!(xlab)
     Plots.ylabel!(ylab)
-    title = samp.sname*" ["*samp.group*"]"
+    title = sample.sample_name*" ["*sample.group*"]"
     Plots.title!(title,titlefontsize=titlefontsize)
     # plot selection windows:
     dy = Plots.ylims(p)
-    for win in [samp.bwin,samp.swin]
+    for win in [sample.blank_window,sample.signal_window]
         for w in win
             from = x[w[1]]
             to = x[w[2]]
@@ -36,30 +36,30 @@ function plot(samp::Sample,channels::Vector{String};
     end
     return p
 end
-function plot(samp::Sample;num=nothing,den=nothing,transformation="sqrt",seriestype=:scatter,
+function plot(sample::Sample;numerator=nothing,denominator=nothing,transformation="sqrt",seriestype=:scatter,
               titlefontsize=10,ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false)
-    plot(samp,getChannels(samp),num=num,den=den,
+    plot(sample,getChannels(sample),numerator=numerator,denominator=denominator,
          transformation=transformation,seriestype=seriestype,
          titlefontsize=titlefontsize,ms=ms,ma=ma,
          xlim=lim,ylim=ylim,cumt=cumt)
 end
-function plot(samp::Sample,channels::AbstractDict;num=nothing,den=nothing,
+function plot(sample::Sample,channels::AbstractDict;numerator=nothing,denominator=nothing,
               transformation="sqrt",seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,cumt=false,display=true)
-    D = isnothing(den) ? nothing : channels[den]
-    plot(samp,collect(values(channels)),num=num,den=D,
+    D = isnothing(denominator) ? nothing : channels[denominator]
+    plot(sample,collect(values(channels)),numerator=numerator,denominator=D,
          transformation=transformation,seriestype=seriestype,
          titlefontsize=titlefontsize,ms=ms,ma=ma,
          xlim=xlim,ylim=ylim,cumt=cumt)
 end
 export plot
 
-function plotFitted!(p,samp::Sample,pars::Pars,blank::AbstractDataFrame,
+function plotFitted!(p,sample::Sample,parameters::Parameters,blank::AbstractDataFrame,
                      channels::AbstractDict,anchors::AbstractDict;
-                     num=nothing,den=nothing,transformation="sqrt",cumt=false,
+                     numerator=nothing,denominator=nothing,transformation="sqrt",cumt=false,
                      linecolor="black",linestyle=:solid)
-    pred = predict(samp,pars,blank,channels,anchors)
-    plotdat = formRatios(pred[:,3:end],num,den)
+    pred = predict(sample,parameters,blank,channels,anchors)
+    plotdat = form_ratios(pred[:,3:end],numerator,denominator)
     x = pred[:,"T"]
     for y in eachcol(plotdat)
         if transformation==""
