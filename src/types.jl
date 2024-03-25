@@ -1,4 +1,4 @@
-const hour_seconds = 3600 # seconds per hour, in base (and SciML) Julia styles, you should really avoid any abbreviations, especially if it requires a comment to state what is is.
+const hour_milliseconds = 3.6e6
 
 const window = Tuple{Int,Int}
 export window
