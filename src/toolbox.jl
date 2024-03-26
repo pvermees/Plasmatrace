@@ -1,52 +1,52 @@
-function formRatios(df::AbstractDataFrame,
-                    num::AbstractString,
-                    den::Union{Nothing,AbstractVector};
+function form_ratios(df::AbstractDataFrame,
+                    numerator::AbstractString,
+                    denominator::Union{Nothing,AbstractVector};
                     brackets=false)
-    formRatios(df,[num],den,brackets=brackets)
+    form_ratios(df,[numerator],denominator,brackets=brackets)
 end
-function formRatios(df::AbstractDataFrame,
-                    num::Union{Nothing,AbstractVector},
-                    den::AbstractString;
+function form_ratios(df::AbstractDataFrame,
+                    numerator::Union{Nothing,AbstractVector},
+                    denominator::AbstractString;
                     brackets=false)
-    formRatios(df,num,[den],brackets=brackets)
+    form_ratios(df,numerator,[denominator],brackets=brackets)
 end
-function formRatios(df::AbstractDataFrame,
-                    num::Union{Nothing,AbstractVector},
-                    den::Union{Nothing,AbstractVector};
+function form_ratios(df::AbstractDataFrame,
+                    numerator::Union{Nothing,AbstractVector},
+                    denominator::Union{Nothing,AbstractVector};
                     brackets=false)
     labels = names(df)
-    nc = size(labels,1)
-    if isnothing(num) && isnothing(den)
+    channels_count = size(labels,1)
+    if isnothing(numerator) && isnothing(denominator)
         return df
-    elseif isnothing(num)
-        n = findall(!=(den[1]),labels)
-        d = fill(findfirst(==(den[1]),labels),length(n))
-    elseif isnothing(den)
-        d = findall(!=(num[1]),labels)
-        n = fill(findfirst(==(num[1]),labels),length(d))
-    elseif length(num)==length(den)
-        n = findall(in(num),labels)
-        d = findall(in(den),labels)        
-    elseif length(num)>length(den)
-        n = findall(in(num),labels)
-        d = fill(findfirst(==(den[1]),labels),length(n))
+    elseif isnothing(numerator)
+        n = findall(!=(denominator[1]),labels)
+        d = fill(findfirst(==(denominator[1]),labels),length(n))
+    elseif isnothing(denominator)
+        d = findall(!=(numerator[1]),labels)
+        n = fill(findfirst(==(numerator[1]),labels),length(d))
+    elseif length(numerator)==length(denominator)
+        n = findall(in(numerator),labels)
+        d = findall(in(denominator),labels)
+    elseif length(numerator)>length(denominator)
+        n = findall(in(numerator),labels)
+        d = fill(findfirst(==(denominator[1]),labels),length(n))
     else
-        d = findall(in(den),labels)
-        n = fill(findfirst(==(num[1]),labels),length(d))
+        d = findall(in(denominator),labels)
+        n = fill(findfirst(==(numerator[1]),labels),length(d))
     end
     mat = Matrix(df)
     ratios = mat[:,n]./mat[:,d]
-    num = labels[n]
-    den = labels[d]
-    ratlabs = brackets ? "(".*num.*")/(".*den.*")" : num.*"/".*den
-    DataFrame(ratios,ratlabs)
+    numerator = labels[n]
+    denominator = labels[d]
+    ratio_labels = brackets ? "(".*numerator.*")/(".*denominator.*")" : numerator.*"/".*denominator
+    DataFrame(ratios,ratio_labels)
 end
 
 # polynomial fit with logarithmic coefficients
-function polyFit(;t,y,n=1)
-    
+function polynomial_fit(;t,y,n=1)
+
     function misfit(par)
-        pred = polyVal(p=par,t=t)
+        pred = polynomial_values(p=par,t=t)
         sum((y.-pred).^2)
     end
 
@@ -57,7 +57,7 @@ function polyFit(;t,y,n=1)
 
 end
 
-function polyVal(;p,t)
+function polynomial_values(;p,t)
     np = size(p,1)
     nt = size(t,1)
     out = fill(0.0,nt)
@@ -68,9 +68,9 @@ function polyVal(;p,t)
     end
     out
 end
-export polyVal
+export polynomial_values
 
-function polyFac(;p,t)
+function polynomial_factor(;p,t)
     np = size(p,1)
     nt = size(t,1)
     out = fill(1.0,nt)
@@ -82,4 +82,4 @@ function polyFac(;p,t)
     end
     exp.(out)
 end
-export polyFac
+export polynomial_factor

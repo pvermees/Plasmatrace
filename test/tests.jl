@@ -5,7 +5,7 @@ pkg > test Plasmatrace
 
 using Test, CSV
 import Plots
-    
+
 function loadtest(verbatim=false)
     run = load("data",instrument="Agilent")
     if verbatim summarise(run) end
@@ -16,7 +16,7 @@ function plottest()
     myrun = loadtest()
     p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"])
     @test display(p) != NaN
-    p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"], den="Hf178 -> 260")
+    p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"], denominator="Hf178 -> 260")
     @test display(p) != NaN
 end
 
@@ -30,7 +30,7 @@ end
 
 function blanktest()
     myrun = loadtest()
-    blk = fitBlanks(myrun,n=2)
+    blk = fit_blanks(myrun,n=2)
     return myrun, blk
 end
 
@@ -61,10 +61,10 @@ end
 
 function predicttest()
     myrun, blk, fit, channels, anchors = fractionationtest()
-    samp = myrun[5]
-    pred = predict(samp,fit,blk,channels,anchors)
-    p = plot(samp,channels,den="D")
-    plotFitted!(p,samp,fit,blk,channels,anchors,den="D")
+    sample = myrun[5]
+    pred = predict(sample,fit,blk,channels,anchors)
+    p = plot(sample,channels,denominator="D")
+    plotFitted!(p,sample,fit,blk,channels,anchors,denominator="D")
     @test display(p) != NaN
 end
 
@@ -87,7 +87,7 @@ end
 
 function readmetest()
     run = load("data",instrument="Agilent")
-    blk = fitBlanks(run,n=2)
+    blk = fit_blanks(run,n=2)
     standards = Dict("Hogsbo" => "hogsbo_ana") # "BP" => "BP"
     setStandards!(run,standards)
     anchors = getAnchor("LuHf",standards)

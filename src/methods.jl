@@ -1,13 +1,13 @@
 function getChannels(run::Vector{Sample})
     return getChannels(run[1])
 end
-function getChannels(samp::Sample)
-    return names(samp.dat)[3:end]
+function getChannels(sample::Sample)
+    return names(sample.data)[3:end]
 end
 export getChannels
 
 function getSnames(run::Vector{Sample})
-    return getAttr(run,:sname)
+    return getAttr(run,:sample_name)
 end
 export getSnames
 function getGroups(run::Vector{Sample})
@@ -50,10 +50,10 @@ function summarise(run::Vector{Sample},verbatim=true)
     ns = length(run)
     snames = getSnames(run)
     groups = fill("sample",ns)
-    dates = fill(run[1].datetime,ns)
+    dates = fill(run[1].date_time,ns)
     for i in eachindex(run)
         groups[i] = run[i].group
-        dates[i] = run[i].datetime
+        dates[i] = run[i].date_time
     end
     out = DataFrame(name=snames,date=dates,group=groups)
     if verbatim println(out) end
@@ -64,24 +64,24 @@ function summarize(run::Vector{Sample},verbatim=true)
 end
 export summarise, summarize
 
-function setBwin!(samp::Sample,bwin=nothing)
-    if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
-    samp.bwin = bwin
+function setBwin!(sample::Sample,blank_window=nothing)
+    if isnothing(blank_window) blank_window=autoWindow(sample,blank=true) end
+    sample.blank_window = blank_window
 end
-function setBwin!(run::Vector{Sample},bwin=nothing)
+function setBwin!(run::Vector{Sample},blank_window=nothing)
     for i in eachindex(run)
-        setBwin!(run[i],bwin)
+        setBwin!(run[i],blank_window)
     end
 end
 export setBwin!
 
-function setSwin!(samp::Sample,swin=nothing)
-    if isnothing(swin) swin=autoWindow(samp,blank=false) end
-    samp.swin = swin
+function setSwin!(sample::Sample,signal_window=nothing)
+    if isnothing(signal_window) signal_window=autoWindow(sample,blank=false) end
+    sample.signal_window = signal_window
 end
-function setSwin!(run::Vector{Sample},swin=nothing)
+function setSwin!(run::Vector{Sample},signal_window=nothing)
     for i in eachindex(run)
-        setSwin!(run[i],swin)
+        setSwin!(run[i],signal_window)
     end
 end
 export setSwin!
@@ -106,8 +106,8 @@ function autoWindow(signals::AbstractDataFrame;blank=false)
     end
     return [(from,to)]
 end
-function autoWindow(samp::Sample;blank=false)
-    autoWindow(samp.dat[:,3:end],blank=blank)
+function autoWindow(sample::Sample;blank=false)
+    autoWindow(sample.data[:,3:end],blank=blank)
 end
 
 function pool(run::Vector{Sample};blank=false,signal=false,group=nothing)
@@ -126,22 +126,22 @@ function pool(run::Vector{Sample};blank=false,signal=false,group=nothing)
 end
 export pool
 
-function windowData(samp::Sample;blank=false,signal=false)
+function windowData(sample::Sample;blank=false,signal=false)
     if blank
-        windows = samp.bwin
+        windows = sample.blank_window
     elseif signal
-        windows = samp.swin
+        windows = sample.signal_window
     else
-        windows = [(1,size(samp,1))]
+        windows = [(1,size(sample,1))]
     end
     selection = Integer[]
     for w in windows
         append!(selection, w[1]:w[2])
     end
-    return samp.dat[selection,:]
+    return sample.data[selection,:]
 end
 
-function string2windows(samp::Sample;text::AbstractString,single=false)
+function string2windows(sample::Sample;text::AbstractString,single=false)
     if single
         parts = split(text,',')
         stime = [parse(Float64,parts[1])]
@@ -154,7 +154,7 @@ function string2windows(samp::Sample;text::AbstractString,single=false)
         nw = Int(round(size(parts,1)/4))
     end
     windows = Vector{Window}(undef,nw)
-    t = samp.dat[:,2]
+    t = sample.data[:,2]
     nt = size(t,1)
     maxt = t[end]
     for i in 1:nw
