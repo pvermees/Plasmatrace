@@ -39,17 +39,17 @@ function load(dname::AbstractString;instrument="Agilent")
 end
 export load
 
-function readAgilent(fname::AbstractString)
+function readAgilent(fname::AbstractString,date_format="d/m/Y H:M:S")
     f = open(fname,"r")
     strs = readlines(f)
 
     # read header
     sname = split.(split(strs[1],"\\"),"/")[end][end]
-    dt = split(strs[3]," ")
-    date = parse.(Int,split(dt[8],"/"))
-    time = parse.(Int,split(dt[9],":"))
-    datetime = Dates.DateTime(date[3],date[2],date[1],
-                              time[1],time[2],time[3])
+    datetimestring = strs[3][findfirst(":",strs[3])[1]+2:findfirst("using",strs[3])[1]-2]
+    datetime = Dates.DateTime(datetimestring, Dates.DateFormat(date_format))
+    if Dates.Year(datetime) < Dates.Year(100)
+        datetime += Dates.Year(2000)
+    end
     labels = split(strs[4],",")
 
     # read signals
