@@ -101,7 +101,7 @@ function PAtest()
     all = load("data",instrument="Agilent")
     channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
     analogue = PAselect(all,channels=channels,cutoff=2e7)
-    println(analogue)
+    blk = fitBlanks(all[analogue],n=2)
 end
 
 function exporttest()
@@ -117,7 +117,7 @@ end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -126,7 +126,7 @@ Plots.closeall()
 @testset "plot fit" begin predicttest() end
 @testset "crunch" begin crunchtest() end
 @testset "process sample" begin sampletest() end
-@testset "readme example" begin readmetest() end =#
+@testset "readme example" begin readmetest() end 
 @testset "PA test" begin PAtest() end
-#=@testset "export" begin exporttest() end
-@testset "TUI" begin TUItest() end=#
+@testset "export" begin exporttest() end
+@testset "TUI" begin TUItest() end
