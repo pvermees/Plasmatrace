@@ -454,8 +454,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
                 "p" => TUIpulse!,
                 "a" => TUIanalog!,
                 "b" => TUIpulseanalog!,
-                "x" => "xx",
-                "?" => TUIhelp
+                "x" => "xx"
             )
         ),
         "addRefMat" => (
@@ -473,8 +472,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             "y-intercept of the inverse isochron.\n",
             action = Dict(
                 "p" => TUIaddRefMat!,
-                "x" => "x",
-                "?" => TUIhelp
+                "x" => "x"
             )
         ),
         "export" => (
