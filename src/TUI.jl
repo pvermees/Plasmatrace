@@ -6,7 +6,7 @@ function PT(logbook="")
         "history" => DataFrame(task=String[],action=String[]),
         "chain" => ["top"],
         "i" => 1,
-        "den" => "",
+        "den" => nothing,
         "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
         "mf" => nothing
     )
@@ -570,7 +570,7 @@ end
 
 function TUIratios!(ctrl::AbstractDict,response::AbstractString)
     if response=="n"
-        ctrl["den"] = ""
+        ctrl["den"] = nothing
     elseif response=="x"
         return "xx"
     else

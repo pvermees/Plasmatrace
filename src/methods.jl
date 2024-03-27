@@ -237,3 +237,22 @@ function subset(ratios::AbstractDataFrame,prefix::AbstractString)
     return ratios[findall(contains(prefix),ratios[:,1]),:]
 end
 export subset
+
+function getDat(samp::Sample)
+    return samp.dat
+end
+function getDat(samp::Sample,channels::AbstractDict)
+    return samp.dat[:,collect(values(channels))]
+end
+export getDat
+
+function PAselect(run::Vector{Sample};channels::AbstractDict,cutoff::AbstractFloat)
+    ns = length(run)
+    good = fill(false,ns)
+    for i in eachindex(good)
+        dat = getDat(run[i],channels)
+        good[i] = !(false in Matrix(dat .< cutoff))
+    end
+    return good
+end
+export PAselect
