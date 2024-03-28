@@ -441,21 +441,41 @@ function tree(key::AbstractString,ctrl::AbstractDict)
         ),
         "setPAcutoff" => (
             message =
+            "l: List the maximum signal strength for each file\n"*
             "p: Select samples measured in pulse mode\n"*
             "a: Select samples measured in analog mode\n"*
-            "b: Select both pulse and analog samples\n"*
+            "r: Remove the pulse/analog cutoff\n"*
             "x: Exit\n"*
             "?: Help",
             help =
-            "Subset samples that are measured in pulse mode "*
-            "(all relevant signals are below a specified cutoff) "*
-            "or in analog mode (above the cutoff)\n",
+            "On single collector ICP-MS instruments, low intensity ion beams are "*
+            "measured in 'pulse' (P) mode and high intensity ion beams are measured in "*
+            "'analog' (A) mode. The intercalibration of these two modes is not always perfect. "*
+            "Here you can set or remove the cutoff value between P and A mode, so that you "*
+            "can group samples and standards according to them.",
             action = Dict(
-                "p" => TUIpulse!,
-                "a" => TUIanalog!,
-                "b" => TUIpulseanalog!,
+                "l" => TUIPAlist,
+                "p" => "pulse",
+                "a" => "analog",
+                "r" => TUIPAclear!,
                 "x" => "xx"
             )
+        ),
+        "pulse" => (
+            message =
+            "Enter the maximum signal strength in cps (? for help, x to exit):",
+            help =
+            "After entering this value, only samples below the cutoff will be "*
+            "retained for analysis. All other samples will be ignored.",
+            action = TUIpulse!
+        ),
+        "analog" => (
+            message =
+            "Enter the minimum signal strength in cps (? for help, x to exit):",
+            help =
+            "After entering this value, only samples above the cutoff will be "*
+            "retained for analysis. All other samples will be ignored.",
+            action = TUIanalog!
         ),
         "addRefMat" => (
             message =
@@ -568,6 +588,7 @@ end
 
 function TUIload!(ctrl::AbstractDict,response::AbstractString)
     ctrl["run"] = load(response,instrument=ctrl["instrument"])
+    ctrl["PAselection"] = collect(1:length(ctrl["run"]))
     ctrl["priority"]["load"] = false
     return "xx"
 end
@@ -641,11 +662,11 @@ function TUIiratio!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUItabulate(ctrl::AbstractDict)
-    summarise(ctrl["run"])
+    summarise(ctrl["run"][ctrl["PAselection"]])
 end
 
 function TUIaddStandardsByPrefix!(ctrl::AbstractDict,response::AbstractString)
-    snames = getSnames(ctrl["run"])
+    snames = getSnames(ctrl["run"][ctrl["PAselection"]])
     ctrl["selection"] = findall(contains(response),snames)
     return "refmat"
 end
@@ -657,7 +678,7 @@ end
 
 function TUIremoveStandardsByNumber!(ctrl::AbstractDict,response::AbstractString)
     selection = parse.(Int,split(response,","))
-    resetStandards!(ctrl["run"],selection)
+    resetStandards!(ctrl["run"][ctrl["PAselection"]],selection)
     return "x"
 end
 
@@ -680,9 +701,9 @@ end
 function TUIsetStandards!(ctrl::AbstractDict,response::AbstractString)
     if ctrl["method"]=="LuHf"
         if response=="1"
-            setStandards!(ctrl["run"],ctrl["selection"],"Hogsbo")
+            setStandards!(ctrl["run"][ctrl["PAselection"]],ctrl["selection"],"Hogsbo")
         elseif response=="2"
-            setStandards!(ctrl["run"],ctrl["selection"],"BP")
+            setStandards!(ctrl["run"][ctrl["PAselection"]],ctrl["selection"],"BP")
         end
     end
     ctrl["priority"]["standards"] = false
@@ -696,13 +717,13 @@ end
 
 function TUIprocess!(ctrl::AbstractDict)
     println("Fitting blanks...")
-    ctrl["blank"] = fitBlanks(ctrl["run"],n=ctrl["options"]["blank"])
-    groups = unique(getGroups(ctrl["run"]))
+    ctrl["blank"] = fitBlanks(ctrl["run"][ctrl["PAselection"]],n=ctrl["options"]["blank"])
+    groups = unique(getGroups(ctrl["run"][ctrl["PAselection"]]))
     stds = groups[groups.!="sample"]
     ctrl["anchors"] = getAnchor(ctrl["method"],stds)
     println("Fractionation correction...")
-    ctrl["par"] = fractionation(ctrl["run"],blank=ctrl["blank"],
-                                channels=ctrl["channels"],
+    ctrl["par"] = fractionation(ctrl["run"][ctrl["PAselection"]],
+                                blank=ctrl["blank"],channels=ctrl["channels"],
                                 anchors=ctrl["anchors"],mf=ctrl["mf"])
     ctrl["priority"]["process"] = false
     println("Done")
@@ -710,20 +731,20 @@ end
 
 function TUInext!(ctrl::AbstractDict)
     ctrl["i"] += 1
-    if ctrl["i"]>length(ctrl["run"]) ctrl["i"] = 1 end
+    if ctrl["i"]>length(ctrl["run"][ctrl["PAselection"]]) ctrl["i"] = 1 end
     TUIplotter(ctrl)
 end
 
 function TUIprevious!(ctrl::AbstractDict)
     ctrl["i"] -= 1
-    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
+    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"][ctrl["PAselection"]]) end
     TUIplotter(ctrl)
 end
 
 function TUIgoto!(ctrl::AbstractDict,response::AbstractString)
     ctrl["i"] = parse(Int,response)
-    if ctrl["i"]>length(ctrl["run"]) ctrl["i"] = 1 end
-    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
+    if ctrl["i"]>length(ctrl["run"][ctrl["PAselection"]]) ctrl["i"] = 1 end
+    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"][ctrl["PAselection"]]) end
     TUIplotter(ctrl)
     return "x"
 end
@@ -749,7 +770,7 @@ function TUIratioMessage(ctrl::AbstractDict)
     if haskey(ctrl,"channels")
         channels = collect(values(ctrl["channels"]))
     else
-        channels = names(ctrl["run"][ctrl["i"]].dat)[3:end]
+        channels = names(ctrl["run"][1].dat)[3:end]
     end
     msg = "Choose one of the following denominators:\n"
     for i in 1:length(channels)
@@ -770,7 +791,7 @@ function TUIratios!(ctrl::AbstractDict,response::AbstractString)
         if haskey(ctrl,"channels")
             channels = collect(keys(ctrl["channels"]))
         else
-            channels = names(ctrl["run"][ctrl["i"]].dat)[3:end]
+            channels = names(ctrl["run"][1].dat)[3:end]
         end
         ctrl["den"] = channels[i]
     end
@@ -779,12 +800,12 @@ function TUIratios!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIoneAutoBlankWindow!(ctrl::AbstractDict)
-    setBwin!(ctrl["run"][ctrl["i"]])
+    setBwin!(ctrl["run"][ctrl["PAselection"]][ctrl["i"]])
     TUIplotter(ctrl)
 end
 
 function TUIoneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
-    samp = ctrl["run"][ctrl["i"]]
+    samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
     bwin = string2windows(samp,text=response,single=true)
     setBwin!(samp,bwin)
     TUIplotter(ctrl)
@@ -792,7 +813,7 @@ function TUIoneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIoneMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
-    samp = ctrl["run"][ctrl["i"]]
+    samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
     bwin = string2windows(samp,text=response,single=false)
     setBwin!(samp,bwin)
     TUIplotter(ctrl)
@@ -825,12 +846,12 @@ function TUIallMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIoneAutoSignalWindow!(ctrl::AbstractDict)
-    setSwin!(ctrl["run"][ctrl["i"]])
+    setSwin!(ctrl["run"][ctrl["PAselection"]][ctrl["i"]])
     TUIplotter(ctrl)
 end
 
 function TUIoneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
-    samp = ctrl["run"][ctrl["i"]]
+    samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
     swin = string2windows(samp,text=response,single=true)
     setSwin!(samp,swin)
     TUIplotter(ctrl)
@@ -838,7 +859,7 @@ function TUIoneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIoneMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
-    samp = ctrl["run"][ctrl["i"]]
+    samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
     swin = string2windows(samp,text=response,single=false)
     setSwin!(samp,swin)
     TUIplotter(ctrl)
@@ -890,18 +911,45 @@ function TUIsetmf!(ctrl::AbstractDict,response::AbstractString)
     return "x"
 end
 
-function TUIpulse!()
-    println("TODO")
+function TUIPAlist(ctrl::AbstractDict)
+    snames = getSnames(ctrl["run"])
+    for i in eachindex(snames)
+        dat = getDat(ctrl["run"][i],ctrl["channels"])
+        maxval = maximum(Matrix(dat))
+        formatted = @sprintf("%.*e", 3, maxval)
+        println(formatted*" ("*snames[i]*")")
+    end
     return "x"
 end
 
-function TUIanalog!()
-    println("TODO")
-    return "x"
+function TUIpulse!(ctrl::AbstractDict,response::AbstractString)
+    if response=="x"
+        return "x"
+    elseif response=="?"
+        return "?"
+    else
+        cutoff = parse(Float64,response)
+        analog = PAselect(ctrl["run"],channels=ctrl["channels"],cutoff=cutoff)
+        ctrl["PAselection"] = collect(1:length(ctrl["run"]))[.!analog]
+        return "x"
+    end
 end
 
-function TUIpulseanalog!()
-    println("TODO")
+function TUIanalog!(ctrl::AbstractDict,response::AbstractString)
+    if response=="x"
+        return "x"
+    elseif response=="?"
+        return "?"
+    else
+        cutoff = parse(Float64,response)
+        analog = PAselect(ctrl["run"],channels=ctrl["channels"],cutoff=cutoff)
+        ctrl["PAselection"] = collect(1:length(ctrl["run"]))[analog]
+        return "x"
+    end
+end
+
+function TUIPAclear!(ctrl::AbstractDict)
+    ctrl["PAselection"] = collect(1:length(ctrl["run"]))
     return "x"
 end
 
@@ -931,7 +979,7 @@ function TUIexportLog(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
-    run = ctrl["run"]
+    run = ctrl["run"][ctrl["PAselection"]]
     if response=="a"
         ctrl["selection"] = 1:length(run)
     elseif response=="s"
@@ -945,7 +993,7 @@ function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"],channels=ctrl["channels"],
+    ratios = averat(ctrl["run"][ctrl["PAselection"]],channels=ctrl["channels"],
                     pars=ctrl["par"],blank=ctrl["blank"])
     fname = splitext(response)[1]*".csv"
     CSV.write(fname,ratios[ctrl["selection"],:])
@@ -953,7 +1001,7 @@ function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"],channels=ctrl["channels"],
+    ratios = averat(ctrl["run"][ctrl["PAselection"]],channels=ctrl["channels"],
                     pars=ctrl["par"],blank=ctrl["blank"])
     fname = splitext(response)[1]*".json"
     export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])

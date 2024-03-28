@@ -248,11 +248,11 @@ export getDat
 
 function PAselect(run::Vector{Sample};channels::AbstractDict,cutoff::AbstractFloat)
     ns = length(run)
-    good = fill(false,ns)
-    for i in eachindex(good)
+    A = fill(false,ns)
+    for i in eachindex(A)
         dat = getDat(run[i],channels)
-        good[i] = !(false in Matrix(dat .< cutoff))
+        A[i] = (false in Matrix(dat .< cutoff))
     end
-    return good
+    return A
 end
 export PAselect
