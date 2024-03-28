@@ -100,8 +100,8 @@ end
 function PAtest()
     all = load("data",instrument="Agilent")
     channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
-    analogue = PAselect(all,channels=channels,cutoff=2e7)
-    blk = fitBlanks(all[analogue],n=2)
+    analog = PAselect(all,channels=channels,cutoff=1e7)
+    blk = fitBlanks(all[analog],n=2)
 end
 
 function exporttest()
