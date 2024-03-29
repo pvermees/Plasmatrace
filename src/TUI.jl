@@ -29,7 +29,7 @@ function dispatch!(ctrl::AbstractDict;key=nothing,response=nothing,verbose=false
         println(ctrl["chain"])
     end
     if isnothing(key) key = ctrl["chain"][end] end
-    (message,help,action) = tree(key,ctrl)
+    (message,help,action) = tree(ctrl)[key]
     if isa(message,Function)
         println("\n"*message(ctrl))
     else
@@ -70,8 +70,8 @@ function dispatch!(ctrl::AbstractDict;key=nothing,response=nothing,verbose=false
     end
 end
 
-function tree(key::AbstractString,ctrl::AbstractDict)
-    branches = Dict(
+function tree(ctrl::AbstractDict)
+    Dict(
         "top" => (
             message =
             "r: Read data files"*check(ctrl,"load")*"\n"*
@@ -559,8 +559,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             help = "Save the current Plasmatrace so that you can replicate your results later",
             action = TUIexportLog
         )
-    )
-    return branches[key]
+    )    
 end
 
 function welcome()
@@ -629,32 +628,20 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIiratioMessage(ctrl::AbstractDict)
-    if ctrl["method"]=="LuHf"
-        msg = "Which Hf-isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"*
-        "1: 174Hf\n"*
-        "2: 177Hf\n"*
-        "3: 178Hf\n"*
-        "4: 179Hf\n"*
-        "5: 180Hf\n"
+    msg = "Which Hf-isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"
+    isotopes = keys(_PT["iratio"][ctrl["method"]])
+    for i in eachindex(isotopes)
+        msg *= string(i)*": "*string(isotopes[i])*"\n"
     end
-    msg *= "?: Help\n"
+    msg *= "x: Exit\n" * "?: Help"
     return msg
 end
 
 function TUIiratio!(ctrl::AbstractDict,response::AbstractString)
-    if ctrl["method"]=="LuHf"
-        if response=="1"
-            ctrl["mf"] = _PT["iratio"]["Hf174Hf177"]
-        elseif response=="3"
-            ctrl["mf"] = _PT["iratio"]["Hf178Hf177"]
-        elseif response=="4"
-            ctrl["mf"] = _PT["iratio"]["Hf179Hf177"]
-        elseif response=="5"
-            ctrl["mf"] = _PT["iratio"]["Hf180Hf177"]
-        else # "2"
-            ctrl["mf"] = nothing
-        end
-    end
+    method = ctrl["method"]
+    iratios = _PT["iratio"][method]
+    i = parse(Int,response)
+    ctrl["mf"] = iratios[i]
     return "xxx"
 end
 
