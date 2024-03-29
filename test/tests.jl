@@ -1,11 +1,6 @@
-#=====================
-pkg > activate .
-pkg > test Plasmatrace
-======================#
-
 using Test, CSV
 import Plots
-    
+
 function loadtest(verbatim=false)
     run = load("data",instrument="Agilent")
     if verbatim summarise(run) end

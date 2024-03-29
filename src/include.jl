@@ -1,4 +1,4 @@
-using Dates, DataFrames, Printf, Debugger
+using Dates, DataFrames, Printf
 import Plots, Statistics, Optim, LinearAlgebra, CSV
 
 include("types.jl")

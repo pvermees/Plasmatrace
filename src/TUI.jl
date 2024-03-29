@@ -39,6 +39,8 @@ function dispatch!(ctrl::AbstractDict;key=nothing,response=nothing,verbose=false
     if response == "?"
         println(help)
         next = nothing
+    elseif response == "x"
+        next = "x"
     elseif isa(action,Function)
         next = action(ctrl,response)
     else
@@ -479,9 +481,7 @@ function tree(key::AbstractString,ctrl::AbstractDict)
         ),
         "addRefMat" => (
             message =
-            "p: Enter the path to the standards file\n"*
-            "x: Exit\n"*
-            "?: Help\n",
+            "Enter the path to the standards file (? for help, x to exit)",
             help =
             "Add new isotopic reference materials to Plasmatrace by specifying "*
             "the path to a .csv file that is formatted as follows:\n\n"*
@@ -489,11 +489,8 @@ function tree(key::AbstractString,ctrl::AbstractDict)
             "Lu-Hf,Hogsbo,1029,3.55\n"*
             "Lu-Hf,BP,1745,3.55\n\n"*
             "where 't' is the age of the sample and 'y0' is the "*
-            "y-intercept of the inverse isochron.\n",
-            action = Dict(
-                "p" => TUIaddRefMat!,
-                "x" => "x"
-            )
+            "y-intercept of the inverse isochron.",
+            action = TUIaddRefMat!
         ),
         "export" => (
             message =
@@ -688,24 +685,19 @@ function TUIresetStandards!(ctrl::AbstractDict)
 end
 
 function TUIshowRefmats(ctrl::AbstractDict)
-    if ctrl["method"]=="LuHf"
-        msg = "Which of the following standards did you select?\n"*
-        "1: Hogsbo\n"*
-        "2: BP\n"*
-        "x: Exit"*
-        "?: Help"
+    msg = "Which of the following standards did you select?\n"
+    standards = collect(keys(_PT["refmat"][ctrl["method"]]))
+    for i in eachindex(standards)
+        msg *= string(i)*": "*standards[i]*"\n"
     end
+    msg *= "x: Exit\n"*"?: Help"
     return msg
 end
 
 function TUIsetStandards!(ctrl::AbstractDict,response::AbstractString)
-    if ctrl["method"]=="LuHf"
-        if response=="1"
-            setStandards!(ctrl["run"][ctrl["PAselection"]],ctrl["selection"],"Hogsbo")
-        elseif response=="2"
-            setStandards!(ctrl["run"][ctrl["PAselection"]],ctrl["selection"],"BP")
-        end
-    end
+    standards = collect(keys(_PT["refmat"][ctrl["method"]]))
+    i = parse(Int,response)
+    setStandards!(ctrl["run"][ctrl["PAselection"]],ctrl["selection"],standards[i])
     ctrl["priority"]["standards"] = false
     return "xxx"
 end
@@ -923,29 +915,17 @@ function TUIPAlist(ctrl::AbstractDict)
 end
 
 function TUIpulse!(ctrl::AbstractDict,response::AbstractString)
-    if response=="x"
-        return "x"
-    elseif response=="?"
-        return "?"
-    else
-        cutoff = parse(Float64,response)
-        analog = PAselect(ctrl["run"],channels=ctrl["channels"],cutoff=cutoff)
-        ctrl["PAselection"] = collect(1:length(ctrl["run"]))[.!analog]
-        return "x"
-    end
+    cutoff = parse(Float64,response)
+    analog = PAselect(ctrl["run"],channels=ctrl["channels"],cutoff=cutoff)
+    ctrl["PAselection"] = collect(1:length(ctrl["run"]))[.!analog]
+    return "x"
 end
 
 function TUIanalog!(ctrl::AbstractDict,response::AbstractString)
-    if response=="x"
-        return "x"
-    elseif response=="?"
-        return "?"
-    else
-        cutoff = parse(Float64,response)
-        analog = PAselect(ctrl["run"],channels=ctrl["channels"],cutoff=cutoff)
-        ctrl["PAselection"] = collect(1:length(ctrl["run"]))[analog]
-        return "x"
-    end
+    cutoff = parse(Float64,response)
+    analog = PAselect(ctrl["run"],channels=ctrl["channels"],cutoff=cutoff)
+    ctrl["PAselection"] = collect(1:length(ctrl["run"]))[analog]
+    return "x"
 end
 
 function TUIPAclear!(ctrl::AbstractDict)
@@ -953,8 +933,8 @@ function TUIPAclear!(ctrl::AbstractDict)
     return "x"
 end
 
-function TUIaddRefMat!()
-    println("TODO")
+function TUIaddRefMat!(ctrl::AbstractDict,response::AbstractString)
+    setReferenceMaterials!(response)
     return "x"
 end
 
