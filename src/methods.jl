@@ -1,3 +1,10 @@
+function init_PT!()
+    _PT["lambda"] = getLambda()
+    _PT["iratio"] = getiratio()
+    _PT["refmat"] = getReferenceMaterials()
+end
+export init_PT!
+
 function getChannels(run::Vector{Sample})
     return getChannels(run[1])
 end
@@ -175,21 +182,6 @@ function string2windows(samp::Sample;text::AbstractString,single=false)
     return windows
 end
 
-function setReferenceMaterials!(csv::AbstractString)
-    tab = CSV.read(csv, DataFrame)
-    refmat = Dict()
-    for row in eachrow(tab)
-        method = row["method"]
-        if !(method in keys(refmat))
-            refmat[method] = Dict()
-        end
-        name = row["name"]
-        refmat[method][name] = (t=(row["t"],row["st"]),y0=(row["y0"],row["sy0"]))
-    end
-    _PT["refmat"] = refmat
-end
-export setReferenceMaterials!
-
 function getx0y0(method::AbstractString,refmat::AbstractString)
     L = _PT["lambda"][method][1]
     t = _PT["refmat"][method][refmat].t[1]
@@ -256,3 +248,47 @@ function PAselect(run::Vector{Sample};channels::AbstractDict,cutoff::AbstractFlo
     return A
 end
 export PAselect
+
+function getLambda(csv::AbstractString=joinpath(@__DIR__,"../settings/lambda.csv"))
+    tab = CSV.read(csv, DataFrame)
+    out = Dict()
+    for row in eachrow(tab)
+        method = row["method"]
+        out[method] = (row["lambda"],row["err"])
+    end
+    return out    
+end
+export getLambda
+function getiratio(csv::AbstractString=joinpath(@__DIR__,"../settings/iratio.csv"))
+    tab = CSV.read(csv, DataFrame)
+    out = Dict()
+    for row in eachrow(tab)
+        isotope = row["isotope"]
+        abundance = row["abundance"]
+        method = row["method"]
+        entry = NamedTuple{(Symbol(isotope),)}((abundance))
+        if !(method in keys(out))
+            out[method] = entry
+        end
+        out[method] = merge(out[method],entry)
+    end
+    return out    
+end
+export getiratio
+function getReferenceMaterials(csv::AbstractString=joinpath(@__DIR__,"../settings/standards.csv"))
+    tab = CSV.read(csv, DataFrame)
+    out = Dict()
+    for row in eachrow(tab)
+        method = row["method"]
+        if !(method in keys(out))
+            out[method] = Dict()
+        end
+        name = row["name"]
+        out[method][name] = (t=(row["t"],row["st"]),y0=(row["y0"],row["sy0"]))
+    end
+    return out    
+end
+function setReferenceMaterials!(csv::AbstractString=joinpath(@__DIR__,"../settings/standards.csv"))
+    _PT["refmat"] = getReferenceMaterials!(csv)
+end
+export setReferenceMaterials!

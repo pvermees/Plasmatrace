@@ -11,3 +11,5 @@ include("plots.jl")
 include("process.jl")
 include("crunch.jl")
 include("TUI.jl")
+
+init_PT!()
