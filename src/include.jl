@@ -1,4 +1,4 @@
-using Dates, DataFrames, Printf
+using Dates, DataFrames, Printf, Debugger
 import Plots, Statistics, Optim, LinearAlgebra, CSV
 
 include("types.jl")
@@ -11,3 +11,5 @@ include("plots.jl")
 include("process.jl")
 include("crunch.jl")
 include("TUI.jl")
+
+init_PT!()

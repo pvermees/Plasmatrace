@@ -1,3 +1,17 @@
+function init_PT!()
+    _PT["lambda"] = Dict(
+        "LuHf" => (1.867e-05,8e-08)
+    )
+    _PT["iratio"] = Dict(
+        "Hf174Hf177" => 0.00871,
+        "Hf178Hf177" => 1.4671,
+        "Hf179Hf177" => 0.7325,
+        "Hf180Hf177" => 1.88651
+    )
+    setReferenceMaterials!()
+end
+export init_PT!
+
 function getChannels(run::Vector{Sample})
     return getChannels(run[1])
 end
@@ -175,7 +189,7 @@ function string2windows(samp::Sample;text::AbstractString,single=false)
     return windows
 end
 
-function setReferenceMaterials!(csv::AbstractString)
+function setReferenceMaterials!(csv::AbstractString=joinpath(@__DIR__,"../settings/standards.csv"))
     tab = CSV.read(csv, DataFrame)
     refmat = Dict()
     for row in eachrow(tab)
