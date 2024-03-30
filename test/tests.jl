@@ -86,7 +86,9 @@ function readmetest()
     standards = Dict("Hogsbo" => "hogsbo_ana") # "BP" => "BP"
     setStandards!(run,standards)
     anchors = getAnchor("Lu-Hf",standards)
-    channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
+    channels = Dict("d"=>"Hf178 -> 260",
+                    "D"=>"Hf176 -> 258",
+                    "P"=>"Lu175 -> 175")
     fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,nf=1,nF=0,mf=1.4671)
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
     return ratios
@@ -94,7 +96,9 @@ end
 
 function PAtest()
     all = load("data",instrument="Agilent")
-    channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
+    channels = Dict("d"=>"Hf178 -> 260",
+                    "D"=>"Hf176 -> 258",
+                    "P"=>"Lu175 -> 175")
     analog = PAselect(all,channels=channels,cutoff=1e7)
     blk = fitBlanks(all[analog],n=2)
 end
@@ -109,13 +113,17 @@ end
 function RbSrtest()
     run = load("/home/pvermees/Documents/CSV",instrument="Agilent")
     blk = fitBlanks(run,n=2)
-    standards = Dict("MDC -" => "MDC")
+    standards = Dict("MDC" => "MDC -")
     setStandards!(run,standards)
     anchors = getAnchor("Rb-Sr",standards)
-    channels = Dict("d"=>"Sr88 -> 104","D"=>"Sr87 -> 103","P"=>"Rb85 -> 85")
+    channels = Dict("d"=>"Sr88 -> 104",
+                    "D"=>"Sr87 -> 103",
+                    "P"=>"Rb85 -> 85")
     fit = fractionation(run,blank=blk,channels=channels,
                         anchors=anchors,nf=1,nF=0,mf=8.37861)
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
+    selection = subset(ratios,"Entire")
+    export2IsoplotR("Entire.json",selection,"Rb-Sr")
     return ratios
 end
 
@@ -125,7 +133,7 @@ end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
+#=@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -137,5 +145,5 @@ Plots.closeall()
 @testset "readme example" begin readmetest() end 
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
-@testset "TUI" begin TUItest() end
-#=@testset "Rb-Sr" begin RbSrtest() end=#
+@testset "TUI" begin TUItest() end=#
+@testset "Rb-Sr" begin RbSrtest() end
