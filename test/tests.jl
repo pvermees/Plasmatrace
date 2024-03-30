@@ -106,6 +106,19 @@ function exporttest()
     export2IsoplotR("BP.json",selection,"Lu-Hf")
 end
 
+function RbSrtest()
+    run = load("/home/pvermees/Documents/CSV",instrument="Agilent")
+    blk = fitBlanks(run,n=2)
+    standards = Dict("MDC -" => "MDC")
+    setStandards!(run,standards)
+    anchors = getAnchor("Rb-Sr",standards)
+    channels = Dict("d"=>"Sr88 -> 104","D"=>"Sr87 -> 103","P"=>"Rb85 -> 85")
+    fit = fractionation(run,blank=blk,channels=channels,
+                        anchors=anchors,nf=1,nF=0,mf=8.37861)
+    ratios = averat(run,channels=channels,pars=fit,blank=blk)
+    return ratios
+end
+
 function TUItest()
     PT("logs/test.log")
 end
@@ -125,3 +138,4 @@ Plots.closeall()
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
 @testset "TUI" begin TUItest() end
+#=@testset "Rb-Sr" begin RbSrtest() end=#
