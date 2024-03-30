@@ -14,6 +14,7 @@ function load(dname::AbstractString;instrument="Agilent")
     samples = Vector{Sample}(undef,0)
     datetimes = Vector{DateTime}(undef,0)
     ext = getExt(instrument)
+    maxT = 0.0
     for fname in fnames
         if occursin(ext,fname)
             try
@@ -21,6 +22,7 @@ function load(dname::AbstractString;instrument="Agilent")
                 samp = readFile(pname,instrument=instrument)
                 push!(samples,samp)
                 push!(datetimes,samp.datetime)
+                maxT = maximum([maxT,maximum(samp.dat[:,1])])
             catch e
                 println("Failed to read "*fname)
             end
@@ -30,10 +32,12 @@ function load(dname::AbstractString;instrument="Agilent")
     sortedsamples = samples[order]
     sorteddatetimes = datetimes[order]
     dt = sorteddatetimes .- sorteddatetimes[1]
-    runtime = Dates.value.(dt)./sph
+    runtime = Dates.value.(dt)
+    maxt = runtime[end] + maxT
     for i in eachindex(sortedsamples)
         samp = sortedsamples[i]
-        samp.dat[:,1] = samp.dat[:,2]./sph .+ runtime[i]
+        samp.dat.t = (samp.dat[:,1] .+ runtime[i])./maxt
+        samp.dat.T = samp.dat[:,1] ./ maxT
     end
     return sortedsamples
 end
@@ -42,12 +46,14 @@ export load
 function readAgilent(fname::AbstractString,date_format="d/m/Y H:M:S")
     f = open(fname,"r")
     strs = readlines(f)
-
+    nr = size(strs,1)
+    
     # read header
     sname = split.(split(strs[1],"\\"),"/")[end][end]
-    datetimestring = strs[3][findfirst(":",strs[3])[1]+2:
-                             findfirst("using",strs[3])[1]-2]
-    datetime = Dates.DateTime(datetimestring,
+    datetimeline = strs[3]
+    from = findfirst(":",datetimeline)[1]+2
+    to = findfirst("using",datetimeline)[1]-2
+    datetime = Dates.DateTime(datetimeline[from:to],
                               Dates.DateFormat(date_format))
     if Dates.Year(datetime) < Dates.Year(100)
         datetime += Dates.Year(2000)
@@ -55,12 +61,10 @@ function readAgilent(fname::AbstractString,date_format="d/m/Y H:M:S")
     labels = split(strs[4],",")
 
     # read signals
-    nr = size(strs,1)
     measurements = mapreduce(vcat, strs[5:(nr-3)]) do s
         (parse.(Float64, split(s, ",")))'
     end
-    labels = ["Run Time [hours]";labels]
-    dat = DataFrame(hcat(measurements[:,1]./sph,measurements),labels)
+    dat = DataFrame(measurements,labels)
 
     close(f)
     return sname, datetime, dat
