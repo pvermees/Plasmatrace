@@ -114,10 +114,7 @@ function tree(ctrl::AbstractDict)
             action = TUIload!,
         ),
         "method" => (
-            message =
-            "1: Lu-Hf\n"*
-            "x: Exit\n"*
-            "?: Help",
+            message = TUIshowMethods,
             help = "Choose a geochronometer. Email us if you can't find your chosen method.",
             action = TUImethod!
         ),
@@ -590,8 +587,10 @@ function TUIload!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUImethod!(ctrl::AbstractDict,response::AbstractString)
-    if response=="1"
-        ctrl["method"] = "Lu-Hf"
+    methods = _PT["methods"][:,"method"]
+    i = parse(Int,response)
+    if i in 1:length(methods)
+        ctrl["method"] = methods[i]
     else
         return "x"
     end
@@ -610,7 +609,7 @@ function TUIcolumnMessage(ctrl::AbstractDict)
         msg *= "176Lu, 176Hf, 177Hf\n"
     end
     msg *= "Specify your selection as a "*
-    "comma-separated list of numbers:\n"
+    "comma-separated list of numbers:"
     return msg
 end
 
@@ -669,6 +668,16 @@ end
 function TUIresetStandards!(ctrl::AbstractDict)
     setStandards!(ctrl["run"],"sample")
     return "x"
+end
+
+function TUIshowMethods(ctrl::AbstractDict)
+    methods = _PT["methods"][:,"method"]
+    msg = ""
+    for i in eachindex(methods)
+        msg *= string(i)*": "*methods[i]*"\n"
+    end
+    msg *= "x: Exit\n"*"?: Help"
+    return msg
 end
 
 function TUIshowRefmats(ctrl::AbstractDict)

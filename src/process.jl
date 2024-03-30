@@ -117,16 +117,16 @@ function export2IsoplotR(fname::AbstractString,
                          method::AbstractString)
     json = jsonTemplate()
     
-    if method in ["Lu-Hf","Rb-Sr"]
+    if method in ["Lu-Hf","Rb-Sr","K-Ca"]
                         
         old = "\"geochronometer\":\"U-Pb\",\"plotdevice\":\"concordia\""
         new = "\"geochronometer\":\""*method*"\",\"plotdevice\":\"isochron\""
         json = replace(json, old => new)
 
-        i = findfirst(==(method),_PT["method"][:,"method"])
-        P = _PT["method"][i,"P"]
-        D = _PT["method"][i,"D"]
-        d = _PT["method"][i,"d"]
+        i = findfirst(==(method),_PT["methods"][:,"method"])
+        P = _PT["methods"][i,"P"]
+        D = _PT["methods"][i,"D"]
+        d = _PT["methods"][i,"d"]
         datastring = "\"ierr\":1,\"data\":{"*
         "\""* P *"/"* D *"\":["*     join(ratios[:,2],",")*"],"*
         "\"err["* P *"/"* D *"]\":["*join(ratios[:,3],",")*"],"*

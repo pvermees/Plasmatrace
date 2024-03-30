@@ -3,9 +3,6 @@ const sph = 3.6e6 # seconds per hour
 const Window = Tuple{Int,Int}
 export Window
 
-_PT::AbstractDict = Dict()
-export _PT
-
 mutable struct Sample
     sname::String
     datetime::DateTime
@@ -22,3 +19,13 @@ mutable struct Pars
     mfrac::Float64
 end
 export Pars
+
+_PT::AbstractDict = Dict()
+
+function init_PT!()
+    _PT["methods"] = getMethods()
+    _PT["lambda"] = getLambdas()
+    _PT["iratio"] = getiratios()
+    _PT["refmat"] = getReferenceMaterials()
+end
+export init_PT!
