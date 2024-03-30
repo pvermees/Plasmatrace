@@ -2,7 +2,7 @@ using Dates, DataFrames, Printf
 import Plots, Statistics, Optim, LinearAlgebra, CSV
 
 include("types.jl")
-include("methods.jl")
+include("accessors.jl")
 include("errors.jl")
 include("toolbox.jl")
 include("io.jl")
