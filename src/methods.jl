@@ -1,6 +1,7 @@
 function init_PT!()
-    _PT["lambda"] = getLambda()
-    _PT["iratio"] = getiratio()
+    _PT["method"] = getMethods()
+    _PT["lambda"] = getLambdas()
+    _PT["iratio"] = getiratios()
     _PT["refmat"] = getReferenceMaterials()
 end
 export init_PT!
@@ -191,7 +192,7 @@ function getx0y0(method::AbstractString,refmat::AbstractString)
 end
 
 function getAnchor(method::AbstractString,refmat::AbstractString)
-    if method=="LuHf"
+    if method=="Lu-Hf"
         return getx0y0(method,refmat)
     end
 end
@@ -249,17 +250,21 @@ function PAselect(run::Vector{Sample};channels::AbstractDict,cutoff::AbstractFlo
 end
 export PAselect
 
-function getLambda(csv::AbstractString=joinpath(@__DIR__,"../settings/lambda.csv"))
+function getMethods(csv::AbstractString=joinpath(@__DIR__,"../settings/methods.csv"))
+    return CSV.read(csv, DataFrame)
+end
+export getMethods
+function getLambdas(csv::AbstractString=joinpath(@__DIR__,"../settings/lambda.csv"))
     tab = CSV.read(csv, DataFrame)
     out = Dict()
     for row in eachrow(tab)
         method = row["method"]
         out[method] = (row["lambda"],row["err"])
     end
-    return out    
+    return out
 end
-export getLambda
-function getiratio(csv::AbstractString=joinpath(@__DIR__,"../settings/iratio.csv"))
+export getLambdas
+function getiratios(csv::AbstractString=joinpath(@__DIR__,"../settings/iratio.csv"))
     tab = CSV.read(csv, DataFrame)
     out = Dict()
     for row in eachrow(tab)
@@ -272,9 +277,9 @@ function getiratio(csv::AbstractString=joinpath(@__DIR__,"../settings/iratio.csv
         end
         out[method] = merge(out[method],entry)
     end
-    return out    
+    return out
 end
-export getiratio
+export getiratios
 function getReferenceMaterials(csv::AbstractString=joinpath(@__DIR__,"../settings/standards.csv"))
     tab = CSV.read(csv, DataFrame)
     out = Dict()
@@ -286,8 +291,9 @@ function getReferenceMaterials(csv::AbstractString=joinpath(@__DIR__,"../setting
         name = row["name"]
         out[method][name] = (t=(row["t"],row["st"]),y0=(row["y0"],row["sy0"]))
     end
-    return out    
+    return out
 end
+export getReferenceMaterials
 function setReferenceMaterials!(csv::AbstractString=joinpath(@__DIR__,"../settings/standards.csv"))
     _PT["refmat"] = getReferenceMaterials!(csv)
 end
