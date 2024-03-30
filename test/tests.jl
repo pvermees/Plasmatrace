@@ -33,7 +33,7 @@ function standardtest(verbatim=false)
     myrun, blk = blanktest()
     standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
     setStandards!(myrun,standards)
-    anchors = getAnchor("LuHf",standards)
+    anchors = getAnchor("Lu-Hf",standards)
     if verbatim
         summarise(myrun)
         println(anchors)
@@ -47,7 +47,7 @@ function fractionationtest()
                     "P" => "Lu175 -> 175")
     standards = Dict("Hogsbo" => "hogsbo_ana")#, "BP" => "BP"
     setStandards!(myrun,standards)
-    anchors = getAnchor("LuHf",standards)
+    anchors = getAnchor("Lu-Hf",standards)
     fit = fractionation(myrun,blank=blk,channels=channels,
                         anchors=anchors,nf=2,nF=1,
                         mf=1.4671,verbose=true)
@@ -85,7 +85,7 @@ function readmetest()
     blk = fitBlanks(run,n=2)
     standards = Dict("Hogsbo" => "hogsbo_ana") # "BP" => "BP"
     setStandards!(run,standards)
-    anchors = getAnchor("LuHf",standards)
+    anchors = getAnchor("Lu-Hf",standards)
     channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
     fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,nf=1,nF=0,mf=1.4671)
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
@@ -103,7 +103,7 @@ function exporttest()
     ratios = readmetest()
     selection = subset(ratios,"BP") # "hogsbo"
     CSV.write("BP.csv",selection)
-    export2IsoplotR("BP.json",selection,"LuHf")
+    export2IsoplotR("BP.json",selection,"Lu-Hf")
 end
 
 function TUItest()

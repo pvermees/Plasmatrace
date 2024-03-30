@@ -591,7 +591,7 @@ end
 
 function TUImethod!(ctrl::AbstractDict,response::AbstractString)
     if response=="1"
-        ctrl["method"] = "LuHf"
+        ctrl["method"] = "Lu-Hf"
     else
         return "x"
     end
@@ -606,7 +606,7 @@ function TUIcolumnMessage(ctrl::AbstractDict)
     end
     msg *= "and select the channels corresponding to "*
     "the following isotopes or their proxies:\n"
-    if ctrl["method"]=="LuHf"
+    if ctrl["method"]=="Lu-Hf"
         msg *= "176Lu, 176Hf, 177Hf\n"
     end
     msg *= "Specify your selection as a "*
@@ -619,7 +619,7 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
     next = "xx"
-    if ctrl["method"]=="LuHf"
+    if ctrl["method"]=="Lu-Hf"
         ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
         ctrl["priority"]["method"] = false
         next = "iratio"

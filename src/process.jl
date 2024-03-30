@@ -112,27 +112,40 @@ function averat(run::Vector{Sample};channels::AbstractDict,pars::Pars,blank::Abs
 end
 export averat
 
-function export2IsoplotR(fname::AbstractString,ratios::AbstractDataFrame,method::AbstractString)
+function export2IsoplotR(fname::AbstractString,
+                         ratios::AbstractDataFrame,
+                         method::AbstractString)
     json = jsonTemplate()
-    if method=="LuHf"
+    
+    if method in ["Lu-Hf","Rb-Sr"]
+                        
+        old = "\"geochronometer\":\"U-Pb\",\"plotdevice\":\"concordia\""
+        new = "\"geochronometer\":\""*method*"\",\"plotdevice\":\"isochron\""
+        json = replace(json, old => new)
+
+        i = findfirst(==(method),_PT["method"][:,"method"])
+        P = _PT["method"][i,"P"]
+        D = _PT["method"][i,"D"]
+        d = _PT["method"][i,"d"]
         datastring = "\"ierr\":1,\"data\":{"*
-        "\"Lu176/Hf176\":["     *join(ratios[:,2],",")*"],"*
-        "\"err[Lu176/Hf176]\":["*join(ratios[:,3],",")*"],"*
-        "\"Hf177/Hf176\":["     *join(ratios[:,4],",")*"],"*
-        "\"err[Hf177/Hf176]\":["*join(ratios[:,5],",")*"],"*
+        "\""* P *"/"* D *"\":["*     join(ratios[:,2],",")*"],"*
+        "\"err["* P *"/"* D *"]\":["*join(ratios[:,3],",")*"],"*
+        "\""* d *"/"* D *"\":["*     join(ratios[:,4],",")*"],"*
+        "\"err["* d *"/"* D *"]\":["*join(ratios[:,5],",")*"],"*
         "\"(rho)\":["*join(ratios[:,6],",")*"],"*
         "\"(C)\":[],\"(omit)\":[],"*
         "\"(comment)\":[\""*join(ratios[:,1],"\",\"")*"\"]"
-        json = replace(json,
-                       "\"geochronometer\":\"U-Pb\",\"plotdevice\":\"concordia\"" =>
-                       "\"geochronometer\":\"Lu-Hf\",\"plotdevice\":\"isochron\"")
-        json = replace(json,"\"Lu-Hf\":{}" => "\"Lu-Hf\":{"*datastring*"}}")
-        json = replace(json,
-                       "\"Lu-Hf\":{\"format\":1,\"i2i\":true,\"projerr\":false,\"inverse\":false}" =>
-                       "\"Lu-Hf\":{\"format\":2,\"i2i\":true,\"projerr\":false,\"inverse\":true}")
+        json = replace(json,"\""*method*"\":{}" => "\""*method*"\":{"*datastring*"}}")
+        
+        old = "\""*method*"\":{\"format\":1,\"i2i\":true,\"projerr\":false,\"inverse\":false}"
+        new = "\""*method*"\":{\"format\":2,\"i2i\":true,\"projerr\":false,\"inverse\":true}"
+        json = replace(json, old => new)
+        
     end
+    
     file = open(fname,"w")
     write(file,json)
     close(file)
+    
 end
 export export2IsoplotR
