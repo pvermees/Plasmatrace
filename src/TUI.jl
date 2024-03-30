@@ -605,9 +605,8 @@ function TUIcolumnMessage(ctrl::AbstractDict)
     end
     msg *= "and select the channels corresponding to "*
     "the following isotopes or their proxies:\n"
-    if ctrl["method"]=="Lu-Hf"
-        msg *= "176Lu, 176Hf, 177Hf\n"
-    end
+    i = findfirst(_PT["methods"][:,"method"].==ctrl["method"])
+    msg *= join(_PT["methods"][i,2:end],", ") * "\n"
     msg *= "Specify your selection as a "*
     "comma-separated list of numbers:"
     return msg
@@ -618,16 +617,14 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
     next = "xx"
-    if ctrl["method"]=="Lu-Hf"
-        ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
-        ctrl["priority"]["method"] = false
-        next = "iratio"
-    end
+    ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
+    ctrl["priority"]["method"] = false
+    next = "iratio"
     return next
 end
 
 function TUIiratioMessage(ctrl::AbstractDict)
-    msg = "Which Hf-isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"
+    msg = "Which isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"
     isotopes = keys(_PT["iratio"][ctrl["method"]])
     for i in eachindex(isotopes)
         msg *= string(i)*": "*string(isotopes[i])*"\n"
