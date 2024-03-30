@@ -20,7 +20,7 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
     for (refmat,anchor) in anchors
         dats[refmat] = pool(run,signal=true,group=refmat)
     end
-    
+
     bD = blank[:,channels["D"]]
     bd = blank[:,channels["d"]]
     bP = blank[:,channels["P"]]
@@ -55,7 +55,7 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
     end
     drift = pars[1:nf]
     down = vcat(0.0,pars[nf+1:nf+nF])
-    
+
     mfrac = isnothing(mf) ? pars[end] : log(mf)
 
     return Pars(drift,down,mfrac)
@@ -63,7 +63,8 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
 end
 export fractionation
 
-function atomic(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+function atomic(samp::Sample;
+                channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
     dat = windowData(samp,signal=true)
     t = dat[:,1]
     T = dat[:,2]
@@ -83,7 +84,8 @@ function atomic(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDa
 end
 export atomic
 
-function averat(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+function averat(samp::Sample;
+                channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
     t, T, P, D, d = atomic(samp,channels=channels,pars=pars,blank=blank)
     nr = length(t)
     sumP = sum(P)
@@ -100,13 +102,15 @@ function averat(samp::Sample;channels::AbstractDict,pars::Pars,blank::AbstractDa
     rxy = covmat[1,2]/(sx*sy)
     return [x sx y sy rxy]
 end
-function averat(run::Vector{Sample};channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+function averat(run::Vector{Sample};
+                channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
     ns = length(run)
     out = DataFrame(name=fill("",ns),x=fill(0.0,ns),sx=fill(0.0,ns),
                     y=fill(0.0,ns),sy=fill(0.0,ns),rxy=fill(0.0,ns))
     for i in 1:ns
         out[i,1] = run[i].sname
-        out[i,2:end] = averat(run[i],channels=channels,pars=pars,blank=blank)
+        out[i,2:end] = averat(run[i],channels=channels,
+                              pars=pars,blank=blank)
     end
     return out
 end
@@ -135,7 +139,8 @@ function export2IsoplotR(fname::AbstractString,
         "\"(rho)\":["*join(ratios[:,6],",")*"],"*
         "\"(C)\":[],\"(omit)\":[],"*
         "\"(comment)\":[\""*join(ratios[:,1],"\",\"")*"\"]"
-        json = replace(json,"\""*method*"\":{}" => "\""*method*"\":{"*datastring*"}}")
+        json = replace(json,"\""*method*"\":{}" =>
+                       "\""*method*"\":{"*datastring*"}}")
         
         old = "\""*method*"\":{\"format\":1,\"i2i\":true,\"projerr\":false,\"inverse\":false}"
         new = "\""*method*"\":{\"format\":2,\"i2i\":true,\"projerr\":false,\"inverse\":true}"

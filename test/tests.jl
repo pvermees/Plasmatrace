@@ -89,7 +89,9 @@ function readmetest()
     channels = Dict("d"=>"Hf178 -> 260",
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
-    fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,nf=1,nF=0,mf=1.4671)
+    fit = fractionation(run,blank=blk,channels=channels,
+                        anchors=anchors,nf=1,nF=0,#mf=1.4671,
+                        verbose=true)
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
     return ratios
 end
@@ -111,19 +113,32 @@ function exporttest()
 end
 
 function RbSrtest()
-    run = load("/home/pvermees/Documents/CSV",instrument="Agilent")
+    run = load("/home/pvermees/Documents/MDC",instrument="Agilent")
     blk = fitBlanks(run,n=2)
     standards = Dict("MDC" => "MDC -")
     setStandards!(run,standards)
     anchors = getAnchor("Rb-Sr",standards)
-    channels = Dict("d"=>"Sr88 -> 104",
+    channels = Dict("d"=>"Sr86 -> 102",
                     "D"=>"Sr87 -> 103",
                     "P"=>"Rb85 -> 85")
     fit = fractionation(run,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=0,mf=8.37861)
+                        anchors=anchors,nf=1,nF=1,#mf=8.37861,
+                        verbose=true)
+
+    samp = run[1]
+
+    println(fit)
+    println(samp.dat[:,2])
+    println(polyFac(p=fit.down,t=samp.dat[:,2]))
+    
+    #=pred = predict(samp,fit,blk,channels,anchors)
+    p = plot(samp,channels,den="D")
+    plotFitted!(p,samp,fit,blk,channels,anchors,den="D")
+    display(p)=#
+    
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
-    selection = subset(ratios,"Entire")
-    export2IsoplotR("Entire.json",selection,"Rb-Sr")
+    selection = subset(ratios,"MDC -")
+    export2IsoplotR("MDC.json",selection,"Rb-Sr")
     return ratios
 end
 
@@ -133,7 +148,7 @@ end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -145,5 +160,5 @@ Plots.closeall()
 @testset "readme example" begin readmetest() end 
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
-@testset "TUI" begin TUItest() end=#
-@testset "Rb-Sr" begin RbSrtest() end
+@testset "TUI" begin TUItest() end
+#=@testset "Rb-Sr" begin RbSrtest() end=#

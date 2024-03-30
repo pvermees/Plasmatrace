@@ -45,8 +45,10 @@ function readAgilent(fname::AbstractString,date_format="d/m/Y H:M:S")
 
     # read header
     sname = split.(split(strs[1],"\\"),"/")[end][end]
-    datetimestring = strs[3][findfirst(":",strs[3])[1]+2:findfirst("using",strs[3])[1]-2]
-    datetime = Dates.DateTime(datetimestring, Dates.DateFormat(date_format))
+    datetimestring = strs[3][findfirst(":",strs[3])[1]+2:
+                             findfirst("using",strs[3])[1]-2]
+    datetime = Dates.DateTime(datetimestring,
+                              Dates.DateFormat(date_format))
     if Dates.Year(datetime) < Dates.Year(100)
         datetime += Dates.Year(2000)
     end
