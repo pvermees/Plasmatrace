@@ -26,7 +26,7 @@ function predict(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
     Pf = @. D*x0*(1-p)*ft*FT + bPt
     Df = @. D + bDt
     df = @. D*y0*p*mf + bdt
-    return DataFrame(t=t,T=T,P=Pf,D=Df,d=df)
+    return DataFrame(P=Pf,D=Df,d=df)
 end
 function predict(samp::Sample,
                  pars::Pars,
@@ -47,8 +47,8 @@ function predict(dat::AbstractDataFrame,
                  channels::AbstractDict,
                  x0::AbstractFloat,
                  y0::AbstractFloat)
-    t = dat[:,1]
-    T = dat[:,2]
+    t = dat.t
+    T = dat.T
     Pm = dat[:,channels["P"]]
     Dm = dat[:,channels["D"]]
     dm = dat[:,channels["d"]]

@@ -4,7 +4,7 @@ function fitBlanks(run::Vector{Sample};n=2)
     nc = length(channels)
     bpar = DataFrame(zeros(n,nc),channels)
     for channel in channels
-        bpar[:,channel] = polyFit(t=blk[:,1],y=blk[:,channel],n=n)
+        bpar[:,channel] = polyFit(t=blk.t,y=blk[:,channel],n=n)
     end
     return bpar
 end
@@ -31,8 +31,8 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
         mfrac = isnothing(mf) ? par[end] : log(mf)
         out = 0.0
         for (refmat,dat) in dats
-            t = dat[:,1]
-            T = dat[:,2]
+            t = dat.t
+            T = dat.T
             Pm = dat[:,channels["P"]]
             Dm = dat[:,channels["D"]]
             dm = dat[:,channels["d"]]
@@ -66,8 +66,8 @@ export fractionation
 function atomic(samp::Sample;
                 channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
     dat = windowData(samp,signal=true)
-    t = dat[:,1]
-    T = dat[:,2]
+    t = dat.t
+    T = dat.T
     Pm = dat[:,channels["P"]]
     Dm = dat[:,channels["D"]]
     dm = dat[:,channels["d"]]

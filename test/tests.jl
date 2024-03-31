@@ -36,7 +36,6 @@ function standardtest(verbatim=false)
     anchors = getAnchor("Lu-Hf",standards)
     if verbatim
         summarise(myrun)
-        println(anchors)
     end
 end
 
@@ -149,7 +148,7 @@ end
 Plots.closeall()
 
 @testset "load" begin loadtest(true) end
-#=@testset "plot raw data" begin plottest() end
+@testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
 @testset "assign standards" begin standardtest(true) end
@@ -161,4 +160,4 @@ Plots.closeall()
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
 @testset "TUI" begin TUItest() end
-@testset "Rb-Sr" begin RbSrtest() end=#
+#=@testset "Rb-Sr" begin RbSrtest() end=#

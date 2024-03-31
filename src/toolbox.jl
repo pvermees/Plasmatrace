@@ -123,7 +123,7 @@ function autoWindow(signals::AbstractDataFrame;blank=false)
     return [(from,to)]
 end
 function autoWindow(samp::Sample;blank=false)
-    autoWindow(samp.dat[:,3:end],blank=blank)
+    autoWindow(samp.dat[:,2:end-2],blank=blank)
 end
 
 function pool(run::Vector{Sample};blank=false,signal=false,group=nothing)
