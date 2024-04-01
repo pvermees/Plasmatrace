@@ -127,10 +127,7 @@ function export2IsoplotR(fname::AbstractString,
         new = "\"geochronometer\":\""*method*"\",\"plotdevice\":\"isochron\""
         json = replace(json, old => new)
 
-        i = findfirst(==(method),_PT["methods"][:,"method"])
-        P = _PT["methods"][i,"P"]
-        D = _PT["methods"][i,"D"]
-        d = _PT["methods"][i,"d"]
+        P, D, d = getPDd(method)
         datastring = "\"ierr\":1,\"data\":{"*
         "\""* P *"/"* D *"\":["*     join(ratios[:,2],",")*"],"*
         "\"err["* P *"/"* D *"]\":["*join(ratios[:,3],",")*"],"*

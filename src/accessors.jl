@@ -104,13 +104,19 @@ end
 export setAnchor!
 
 function getDat(samp::Sample)
-    return samp.dat
+    return samp.dat[:,2:end-2]
 end
 function getDat(samp::Sample,channels::AbstractDict)
     return samp.dat[:,collect(values(channels))]
 end
 export getDat
 
+function getPDd(method)
+    i = findfirst(==(method),_PT["methods"][:,"method"])
+    PDd = _PT["methods"][i,2:end]
+    return PDd.P, PDd.D, PDd.d
+end
+export getPDd
 function getMethods(csv::AbstractString=joinpath(@__DIR__,"../settings/methods.csv"))
     return CSV.read(csv, DataFrame)
 end
@@ -119,8 +125,7 @@ function getLambdas(csv::AbstractString=joinpath(@__DIR__,"../settings/lambda.cs
     tab = CSV.read(csv, DataFrame)
     out = Dict()
     for row in eachrow(tab)
-        method = row["method"]
-        out[method] = (row["lambda"],row["err"])
+        out[row.method] = (row["lambda"],row["err"])
     end
     return out
 end
@@ -129,9 +134,9 @@ function getiratios(csv::AbstractString=joinpath(@__DIR__,"../settings/iratio.cs
     tab = CSV.read(csv, DataFrame)
     out = Dict()
     for row in eachrow(tab)
-        isotope = row["isotope"]
-        abundance = row["abundance"]
-        method = row["method"]
+        isotope = row.isotope
+        abundance = row.abundance
+        method = row.method
         entry = NamedTuple{(Symbol(isotope),)}((abundance))
         if !(method in keys(out))
             out[method] = entry
