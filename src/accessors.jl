@@ -68,27 +68,46 @@ function setSwin!(run::Vector{Sample},swin=nothing)
 end
 export setSwin!
 
-function getx0y0(method::AbstractString,refmat::AbstractString)
-    L = _PT["lambda"][method][1]
-    t = _PT["refmat"][method][refmat].t[1]
-    x0 = 1/(exp(L*t)-1)
-    y0 = _PT["refmat"][method][refmat].y0[1]
-    return (x0=x0, y0=y0)
+function getx0y0y1(method::AbstractString,
+                   refmat::AbstractString,
+                   UPb::Bool=false)
+    if UPb
+        L8 = _PT["lambda"]["U238-Pb206"][1]
+        L5 = _PT["lambda"]["U235-Pb207"][1]
+        U58 = _PT["iratio"]["U-Pb"]["U235"]/_PT["iratio"]["U-Pb"]["U238"]
+        t = _PT["refmat"][method][refmat].t[1]
+        x0 = 1/(exp(L8*t)-1)
+        y0 = _PT["refmat"][method][refmat].y0[1]
+        y1 = U58*(exp(L5*t)-1)/(exp(L8*t)-1)
+    else
+        L = _PT["lambda"][method][1]
+        t = _PT["refmat"][method][refmat].t[1]
+        x0 = 1/(exp(L*t)-1)
+        y0 = _PT["refmat"][method][refmat].y0[1]
+        y1 = 0.0
+    end
+    return (x0=x0,y0=y0,y1=y1)
 end
 
-function getAnchor(method::AbstractString,refmat::AbstractString)
-    return getx0y0(method,refmat)
+function getAnchor(method::AbstractString,
+                   refmat::AbstractString,
+                   UPb::Bool=false)
+    return getx0y0y1(method,refmat,UPb)
 end
-function getAnchor(method::AbstractString,standards::Vector{String})
+function getAnchor(method::AbstractString,
+                   standards::Vector{String},
+                   UPb::Bool=false)
     nr = length(standards)
     out = Dict{String, NamedTuple}()
     for standard in standards
-        out[standard] = getAnchor(method,standard)
+        out[standard] = getAnchor(method,standard,UPb)
     end
     return out
 end
-function getAnchor(method::AbstractString,standards::AbstractDict)
-    return getAnchor(method,collect(keys(standards)))
+function getAnchor(method::AbstractString,
+                   standards::AbstractDict,
+                   UPb::Bool=false)
+    return getAnchor(method,collect(keys(standards)),UPb)
 end
 export getAnchor
 

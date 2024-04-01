@@ -36,8 +36,8 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
             Pm = dat[:,channels["P"]]
             Dm = dat[:,channels["D"]]
             dm = dat[:,channels["d"]]
-            (x0,y0) = anchors[refmat]
-            out += SS(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
+            (x0,y0,y1) = anchors[refmat]
+            out += SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
         end
         return out
     end

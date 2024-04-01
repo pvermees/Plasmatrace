@@ -65,8 +65,8 @@ end
 function crunchtest()
     myrun, blk, fit, channels, anchors = fractionationtest()
     pooled = pool(myrun,signal=true,group="Hogsbo")
-    (x0,y0) = anchors["Hogsbo"]
-    pred = predict(pooled,fit,blk,channels,x0,y0)
+    (x0,y0,y1) = anchors["Hogsbo"]
+    pred = predict(pooled,fit,blk,channels,x0,y0,y1)
     misfit = @. pooled[:,channels["d"]] - pred[:,"d"]
     p = Plots.histogram(misfit,legend=false)
     @test display(p) != NaN
