@@ -26,10 +26,13 @@ function predict(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
     Pf = @. D*x0*(1-p)*ft*FT + bPt
     Df = @. D + bDt
     df = @. D*y0*p*mf + bdt
-    return DataFrame(t=t,T=T,P=Pf,D=Df,d=df)
+    return DataFrame(P=Pf,D=Df,d=df)
 end
-function predict(samp::Sample,pars::Pars,blank::AbstractDataFrame,
-                 channels::AbstractDict,anchors::AbstractDict)
+function predict(samp::Sample,
+                 pars::Pars,
+                 blank::AbstractDataFrame,
+                 channels::AbstractDict,
+                 anchors::AbstractDict)
     if haskey(anchors,samp.group)
         dat = windowData(samp,signal=true)
         (x0,y0) = anchors[samp.group]
@@ -38,16 +41,22 @@ function predict(samp::Sample,pars::Pars,blank::AbstractDataFrame,
         PTerror("notStandard")
     end
 end
-function predict(dat::AbstractDataFrame,pars::Pars,blank::AbstractDataFrame,
-                 channels::AbstractDict,x0::AbstractFloat,y0::AbstractFloat)
-    t = dat[:,1]
-    T = dat[:,2]
+function predict(dat::AbstractDataFrame,
+                 pars::Pars,
+                 blank::AbstractDataFrame,
+                 channels::AbstractDict,
+                 x0::AbstractFloat,
+                 y0::AbstractFloat)
+    t = dat.t
+    T = dat.T
     Pm = dat[:,channels["P"]]
     Dm = dat[:,channels["D"]]
     dm = dat[:,channels["d"]]
     bP = blank[:,channels["P"]]
     bD = blank[:,channels["D"]]
     bd = blank[:,channels["d"]]
-    return predict(t,T,Pm,Dm,dm,x0,y0,pars.drift,pars.down,pars.mfrac,bP,bD,bd)
+    return predict(t,T,Pm,Dm,dm,x0,y0,
+                   pars.drift,pars.down,pars.mfrac,
+                   bP,bD,bd)
 end
 export predict

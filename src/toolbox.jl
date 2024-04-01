@@ -84,7 +84,7 @@ function polyFac(;p,t)
 end
 export polyFac
 
-function summarise(run::Vector{Sample},verbatim=true)
+function summarise(run::Vector{Sample})
     ns = length(run)
     snames = getSnames(run)
     groups = fill("sample",ns)
@@ -94,11 +94,10 @@ function summarise(run::Vector{Sample},verbatim=true)
         dates[i] = run[i].datetime
     end
     out = DataFrame(name=snames,date=dates,group=groups)
-    if verbatim println(out) end
     return out
 end
-function summarize(run::Vector{Sample},verbatim=true)
-    summarise(run,verbatim)
+function summarize(run::Vector{Sample})
+    summarise(run)
 end
 export summarise, summarize
 
@@ -123,7 +122,7 @@ function autoWindow(signals::AbstractDataFrame;blank=false)
     return [(from,to)]
 end
 function autoWindow(samp::Sample;blank=false)
-    autoWindow(samp.dat[:,3:end],blank=blank)
+    autoWindow(samp.dat[:,2:end-2],blank=blank)
 end
 
 function pool(run::Vector{Sample};blank=false,signal=false,group=nothing)
@@ -191,13 +190,13 @@ function string2windows(samp::Sample;text::AbstractString,single=false)
     return windows
 end
 
-function subset(run::Vector{Sample},selector::AbstractString)
-    if length(selection)<1
-        selection = findall(contains(prefix),getGroups(selector))
-    end
+function subset(run::Vector{Sample},
+                prefix::AbstractString)
+    selection = findall(contains(prefix),getGroups(run))
     return run[selection]
 end
-function subset(ratios::AbstractDataFrame,prefix::AbstractString)
+function subset(ratios::AbstractDataFrame,
+                prefix::AbstractString)
     return ratios[findall(contains(prefix),ratios[:,1]),:]
 end
 export subset

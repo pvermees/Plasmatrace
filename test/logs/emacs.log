@@ -1,7 +1,7 @@
 task,action
 top,r
 instrument,1
-load,data
+load,data/Lu-Hf
 top,m
 method,1
 columns,"15,17,18"

@@ -2,7 +2,7 @@ using Test, CSV
 import Plots
 
 function loadtest(verbatim=false)
-    run = load("data",instrument="Agilent")
+    run = load("data/Lu-Hf",instrument="Agilent")
     if verbatim summarise(run) end
     return run
 end
@@ -36,7 +36,6 @@ function standardtest(verbatim=false)
     anchors = getAnchor("Lu-Hf",standards)
     if verbatim
         summarise(myrun)
-        println(anchors)
     end
 end
 
@@ -81,20 +80,26 @@ function sampletest()
 end
 
 function readmetest()
-    run = load("data",instrument="Agilent")
+    run = load("data/Lu-Hf",instrument="Agilent")
     blk = fitBlanks(run,n=2)
     standards = Dict("Hogsbo" => "hogsbo_ana") # "BP" => "BP"
     setStandards!(run,standards)
     anchors = getAnchor("Lu-Hf",standards)
-    channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
-    fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,nf=1,nF=0,mf=1.4671)
+    channels = Dict("d"=>"Hf178 -> 260",
+                    "D"=>"Hf176 -> 258",
+                    "P"=>"Lu175 -> 175")
+    fit = fractionation(run,blank=blk,channels=channels,
+                        anchors=anchors,nf=1,nF=0,#mf=1.4671,
+                        verbose=true)
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
     return ratios
 end
 
 function PAtest()
-    all = load("data",instrument="Agilent")
-    channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
+    all = load("data/Lu-Hf",instrument="Agilent")
+    channels = Dict("d"=>"Hf178 -> 260",
+                    "D"=>"Hf176 -> 258",
+                    "P"=>"Lu175 -> 175")
     analog = PAselect(all,channels=channels,cutoff=1e7)
     blk = fitBlanks(all[analog],n=2)
 end
@@ -104,6 +109,27 @@ function exporttest()
     selection = subset(ratios,"BP") # "hogsbo"
     CSV.write("BP.csv",selection)
     export2IsoplotR("BP.json",selection,"Lu-Hf")
+end
+
+function RbSrtest()
+    run = load("data/Rb-Sr",instrument="Agilent")
+
+    blk = fitBlanks(run,n=2)
+    standards = Dict("MDC" => "MDC -")
+    setStandards!(run,standards)
+    anchors = getAnchor("Rb-Sr",standards)
+    channels = Dict("d"=>"Sr86 -> 102",
+                    "D"=>"Sr87 -> 103",
+                    "P"=>"Rb85 -> 85")
+
+    fit = fractionation(run,blank=blk,channels=channels,
+                        anchors=anchors,nf=1,nF=1,mf=1,
+                        verbose=true)
+    
+    ratios = averat(run,channels=channels,pars=fit,blank=blk)
+    selection = subset(ratios,"EntireCreek")
+    export2IsoplotR("Entire.json",selection,"Rb-Sr")
+    return ratios
 end
 
 function TUItest()
@@ -125,3 +151,4 @@ Plots.closeall()
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
 @testset "TUI" begin TUItest() end
+@testset "Rb-Sr" begin RbSrtest() end

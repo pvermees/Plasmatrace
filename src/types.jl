@@ -1,5 +1,3 @@
-const sph = 3.6e6 # seconds per hour
-
 const Window = Tuple{Int,Int}
 export Window
 

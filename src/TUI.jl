@@ -39,8 +39,8 @@ function dispatch!(ctrl::AbstractDict;key=nothing,response=nothing,verbose=false
     if response == "?"
         println(help)
         next = nothing
-    elseif response == "x"
-        next = "x"
+    elseif response in ["x","xx","xxx"]
+        next = response
     elseif isa(action,Function)
         next = action(ctrl,response)
     else
@@ -85,7 +85,8 @@ function tree(ctrl::AbstractDict)
             "o: Options\n"*
             "x: Exit\n"*
             "?: Help",
-            help = "This is the top-level menu. Asterisks (*) mark compulsory steps.",
+            help = "This is the top-level menu. Asterisks (*) "*
+            "mark compulsory steps.",
             action = Dict(
                 "r" => "instrument",
                 "m" => "method",
@@ -95,8 +96,7 @@ function tree(ctrl::AbstractDict)
                 "p" => TUIprocess!,
                 "e" => "export",
                 "l" => "log",
-                "o" => "options",
-                "x" => "x"
+                "o" => "options"
             )
         ),
         "instrument" => (
@@ -104,18 +104,21 @@ function tree(ctrl::AbstractDict)
             "1: Agilent\n"*
             "x: Exit\n"*
             "?: Help",
-            help = "Choose a file format. Email us if you don't find your instrument in this list.",
+            help = "Choose a file format. Email us if you don't "*
+            "find your instrument in this list.",
             action = TUIinstrument!
         ),
         "load" => (
-            message = "Enter the full path of the data directory (? for help, x to exit):",
-            help = "Plasmatrace will read all the files in this directory. "*
-            "You don't need to select the files, just the directory.",
+            message = "Enter the full path of the data directory "*
+            "(? for help, x to exit):",
+            help = "Plasmatrace will read all the files in this folder. "*
+            "You don't need to select the files, just the folder.",
             action = TUIload!,
         ),
         "method" => (
             message = TUIshowMethods,
-            help = "Choose a geochronometer. Email us if you can't find your chosen method.",
+            help = "Choose a geochronometer. Email us if you can't "*
+            "find your chosen method.",
             action = TUImethod!
         ),
         "columns" => (
@@ -126,9 +129,10 @@ function tree(ctrl::AbstractDict)
         "iratio" => (
             message = TUIiratioMessage,
             help =
-            "Plasmatrace does not know which data label corresponds to which isotope. "*
-            "Sometimes one non-radiogenic isotope is used as a proxy for another. "*
-            "This must be specified for the proxy conversion to work.",
+            "Plasmatrace does not know which data label corresponds to "*
+            "which isotope. Sometimes one non-radiogenic isotope is used "*
+            "as a proxy for another. This must be specified for the "*
+            "proxy conversion to work.",
             action = TUIiratio!
         ),
         "standards" => (
@@ -142,22 +146,24 @@ function tree(ctrl::AbstractDict)
             "?: Help",
             help =
             "Choose one or more primary reference materials. "*
-            "Note that secondary reference materials should be treated as regular samples.",
+            "Note that secondary reference materials should be "*
+            "treated as regular samples.",
             action = Dict(
                 "t" => TUItabulate,
                 "p" => "addStandardsByPrefix",
                 "n" => "addStandardsByNumber",
                 "N" => "removeStandardsByNumber",
-                "r" => TUIresetStandards!,
-                "x" => "x"
+                "r" => TUIresetStandards!
             )
         ),
         "addStandardsByPrefix" => (
-            message = "Specify the prefix of the standard (? for help, x to exit):",
+            message = "Specify the prefix of the standard "*
+            "(? for help, x to exit):",
             help =
-            "For example, suppose that Plesovice zircon reference materials are "*
-            "named STDCZ01, STDCZ02, ..., then you can select all the standards "*
-            "by entering STDCZ here. Enter 'x' to go up one level and tabulate the "*
+            "For example, suppose that Plesovice zircon reference "*
+            "materials are named STDCZ01, STDCZ02, ..., then you can "*
+            "select all the standards by entering STDCZ here. "*
+            "Enter 'x' to go up one level and tabulate the "*
             "sample if you forgot the exact prefix of your standards.",
             action = TUIaddStandardsByPrefix!
         ),
@@ -167,8 +173,9 @@ function tree(ctrl::AbstractDict)
             "(? for help, x to exit):",
             help =
             "For example, suppose that the analyses are labelled as "*
-            "G001, G002, ..., then it is not possible to identify the standards by "*
-            "prefix, but you can still select them by sequence number (e.g., 1,2,8,9,15,16,...).",
+            "G001, G002, ..., then it is not possible to identify "*
+            "the standards by prefix, but you can still select them "*
+            "by sequence number (e.g., 1,2,8,9,15,16,...).",
             action = TUIaddStandardsByNumber!
         ),
         "removeStandardsByNumber" => (
@@ -176,19 +183,21 @@ function tree(ctrl::AbstractDict)
             "Select the standards as a comma-separated list of numbers "*
             "(? for help, x to exit):",
             help =
-            "'bad' standards can be removed one-by-one, by specifying their number. "*
-            "Enter 'x' to go up one level and tabulate the sample if you forgot the "*
-            "exact prefix of your standards.",
+            "'bad' standards can be removed one-by-one, by specifying "*
+            "their number. Enter 'x' to go up one level and tabulate "*
+            "the sample if you forgot the exact prefix of your standards.",
             action = TUIremoveStandardsByNumber!
         ),
         "refmat" => (
             message = TUIshowRefmats,
             help =
-            "Even though you may have specified the prefix of your reference materials, "*
-            "Plasmatrace still does not know which standard this refers to. That information "*
-            "can be specified here. If you do not find your reference material in this list, "*
-            "then you can either specify your own reference material under 'options' in the "*
-            "top menu, or you can email us to add the material to the software.",
+            "Even though you may have specified the prefix of your "*
+            "reference materials, Plasmatrace still does not know "*
+            "which standard this refers to. That information can be "*
+            "specified here. If you do not find your reference material "*
+            "in this list, then you can either specify your own 
+            reference material under 'options' in the top menu, or "*
+            "you can email us to add the material to the software.",
             action = TUIsetStandards!
         ),
         "view" => (
@@ -203,9 +212,9 @@ function tree(ctrl::AbstractDict)
             "x: Exit\n"*
             "?: Help",
             help =
-            "It is useful to view all the samples in your analytical sequence "*
-            "at least once, to modify blank and signal windows or checking the "*
-            "fit to the standards.",
+            "It is useful to view all the samples in your analytical "*
+            "sequence at least once, to modify blank and signal "*
+            "windows or checking the fit to the standards.",
             action = Dict(
                 "n" => TUInext!,
                 "p" => TUIprevious!,
@@ -213,20 +222,20 @@ function tree(ctrl::AbstractDict)
                 "t" => TUItabulate,
                 "r" => "setDen",
                 "b" => "Bwin",
-                "s" => "Swin",
-                "x" => "x"
+                "s" => "Swin"
             )
         ),
         "goto" => (
-            message = "Enter the number of the sample to plot (? for help, x to exit):",
+            message = "Enter the number of the sample to plot "*
+            "(? for help, x to exit):",
             help = "Jump to a specific analysis.",
             action = TUIgoto!
         ),
         "setDen" => (
             message = TUIratioMessage,
             help =
-            "Plot the ratios of the channels relative to a common denominator. "*
-            "Zero values for the denominator are omitted.",
+            "Plot the ratios of the channels relative to a common "*
+            "denominator. Zero values for the denominator are omitted.",
             action = TUIratios!
         ),
         "Bwin" => (
@@ -241,9 +250,10 @@ function tree(ctrl::AbstractDict)
             "x: Exit\n"*
             "?: Help",
             help =
-            "Specify the blank (background signal) as pairs of time stamps (in seconds) "*
-            "or trust Plasmatrace to choose the blank windows automatically. "*
-            "The blanks of all the analyses (samples + blanks) will be combined and "*
+            "Specify the blank (background signal) as pairs of time "*
+            "stamps (in seconds) or trust Plasmatrace to choose the "*
+            "blank windows automatically. The blanks of all the "*
+            "analyses (samples + blanks) will be combined and "*
             "interpolated under the signal.",
             action = Dict(
                 "a" => TUIoneAutoBlankWindow!,
@@ -251,8 +261,7 @@ function tree(ctrl::AbstractDict)
                 "m" => "oneMultiBlankWindow",
                 "A" => TUIallAutoBlankWindow!,
                 "S" => "allSingleBlankWindow",
-                "M" => "allMultiBlankWindow",
-                "x" => "x"
+                "M" => "allMultiBlankWindow"
             )
         ),
         "Swin" => (
@@ -268,34 +277,34 @@ function tree(ctrl::AbstractDict)
             "?: Help",
             help = 
             "Specify the signal as pairs of time stamps (in seconds) "*
-            "or trust Plasmatrace to choose the signal windows automatically. "*
-            "The signals of the reference materials are used to define the "*
-            "drift and fractionation corrections, which are then applied to the samples.",
+            "or trust Plasmatrace to choose the signal windows "*
+            "automatically. The signals of the reference materials "*
+            "are used to define the drift and fractionation "*
+            "corrections, which are then applied to the samples.",
             action = Dict(
                 "a" => TUIoneAutoSignalWindow!,
                 "s" => "oneSingleSignalWindow",
                 "m" => "oneMultiSignalWindow",
                 "A" => TUIallAutoSignalWindow!,
                 "S" => "allSingleSignalWindow",
-                "M" => "allMultiSignalWindow",
-                "x" => "x"
+                "M" => "allMultiSignalWindow"
             )
         ),
         "oneSingleBlankWindow" => (
             message =
-            "Enter the start and end point of the selection window (in seconds)\n"*
-            "Type '?' for help.",
+            "Enter the start and end point of the selection window "*
+            "(in seconds). Type '?' for help and 'x' to exit.",
             help =
             "Specify the start and end point of the blank window "*
-            "as a comma-separated pair of numbers. For example: 0,20 marks "*
-            "a blank window from 0 to 20 seconds.",
+            "as a comma-separated pair of numbers. For example: "*
+            "0,20 marks a blank window from 0 to 20 seconds.",
             action = TUIoneSingleBlankWindow!
         ),
         "oneMultiBlankWindow" => (
             message =
             "Enter the start and end points of the multi-part "*
             "selection window (in seconds)\n"*
-            "Type '?' for help.",
+            "Type '?' for help and 'x' to exit.",
             help =
             "Specify the start and end points of the blank window "*
             "as a comma-separated list of bracketed pairs "*
@@ -305,19 +314,19 @@ function tree(ctrl::AbstractDict)
         ),
         "allSingleBlankWindow" => (
             message =
-            "Enter the start and end point of the selection window (in seconds)\n"*
-            "Type 'h' for help.",
+            "Enter the start and end point of the selection window "*
+            "(in seconds). Type '?' for help and 'x' to exit.",
             help =
             "Specify the start and end point of the blank windows "*
-            "as a comma-separated pair of numbers. For example: 0,20 marks "*
-            "a blank window from 0 to 20 seconds.",
+            "as a comma-separated pair of numbers. For example: "*
+            "0,20 marks a blank window from 0 to 20 seconds.",
             action = TUIallSingleBlankWindow!
         ),
         "allMultiBlankWindow" => (
             message =
             "Enter the start and end points of the multi-part "*
-            "selection window (in seconds)\n"*
-            "Type 'h' for help.",
+            "selection window (in seconds). "*
+            "Type '?' for help and 'x' to exit.",
             help =
             "Specify the start and end points of the blank windows "*
             "as a comma-separated list of bracketed pairs "*
@@ -327,19 +336,19 @@ function tree(ctrl::AbstractDict)
         ),
         "oneSingleSignalWindow" => (
             message =
-            "Enter the start and end point of the selection window (in seconds)\n"*
-            "Type 'h' for help.",
+            "Enter the start and end point of the selection window "*
+            "(in seconds). Type '?' for help and 'x' to exit.",
             help =
             "Specify the start and end points of the signal window "*
-            "as a comma-separated pair of numbers. For example: 30,60 marks "*
-            "a signal window from 30 to 60 seconds.",
+            "as a comma-separated pair of numbers. For example: "*
+            "30,60 marks a signal window from 30 to 60 seconds.",
             action = TUIoneSingleSignalWindow!
         ),
         "oneMultiSignalWindow" => (
             message =
             "Enter the start and end points of the multi-part "*
-            "selection window (in seconds)\n"*
-            "Type 'h' or help.",
+            "selection window (in seconds). "*
+            "Type '?' for help and 'x' to exit.",
             help =
             "Specify the start and end points of the signal window "*
             "as a comma-separated list of bracketed pairs "*
@@ -349,12 +358,12 @@ function tree(ctrl::AbstractDict)
         ),
         "allSingleSignalWindow" => (
             message =
-            "Enter the start and end point of the selection windows (in seconds)\n"*
-            "Type 'h' for help.",
+            "Enter the start and end point of the selection windows "*
+            "(in seconds). Type '?' for help and 'x' to exit.",
             help =
             "Specify the start and end points of the signal windows "*
-            "as a comma-separated pair of numbers. For example: 30,60 marks "*
-            "a signal window from 30 to 60 seconds.",
+            "as a comma-separated pair of numbers. For example: "*
+            "30,60 marks a signal window from 30 to 60 seconds.",
             action = TUIallSingleSignalWindow!
         ),
         "allMultiSignalWindow" => (
@@ -373,23 +382,24 @@ function tree(ctrl::AbstractDict)
             message =
             "b: Set the polynomial order of the blank correction\n"*
             "d: Set the polynomial order of the drift correction\n"*
-            "h: Set the polynomial order of the down hole fractionation correction\n"*
+            "h: Set the polynomial order of the down hole "*
+            "fractionation correction\n"*
             "f: Fix or fit the fractionation factor\n"*
             "p: Subset the data by P/A cutoff\n"*
             "r: Define new reference materials\n"*
             "x: Exit\n"*
             "?: Help",
             help =
-            "Advanced settings to override the default behaviour of Plasmatrace. "*
-            "See the individual options for further information.",
+            "Advanced settings to override the default behaviour "*
+            "of Plasmatrace. See the individual options for "*
+            "further information.",
             action = Dict(
                 "b" => "setNblank",
                 "d" => "setNdrift",
                 "h" => "setNdown",
                 "f" => "setmf",
                 "p" => "setPAcutoff",
-                "r" => "addRefMat",
-                "x" => "x"
+                "r" => "addRefMat"
             )
         ),
         "setNblank" => (
@@ -426,15 +436,18 @@ function tree(ctrl::AbstractDict)
             message =
             "Click [Enter] to treat the mass fractionation as a free "*
             "parameter, or enter a decimal number (currently "*
-            (isnothing(ctrl["mf"]) ? "fitted" : ("fixed at "*string(ctrl["mf"])))*
+            (isnothing(ctrl["mf"]) ?
+             "fitted" : ("fixed at "*string(ctrl["mf"])))*
             ", ? for help, x to exit)",
             help =
-            "Clicking [Enter] tells Plasmatrace to estimate the mass fractionation "*
-            "factor by forcing the y-intercept of an inverse isochron to coincide with "*
-            "a prescribed value. This works well for reference materials that form a "*
-            "well defined isochron. For reference materials that are very radiogenic, "*
-            "it is often better to stick with the default value, which is 1 if the ."*
-            "non-radiogenic isochron isotope is measured directly, or the IUPAC recommended "*
+            "Clicking [Enter] tells Plasmatrace to estimate the mass "*
+            "fractionation factor by forcing the y-intercept of an "*
+            "inverse isochron to coincide with a prescribed value. "*
+            "This works well for reference materials that form a "*
+            "well defined isochron. For reference materials that are "*
+            "very radiogenic, it is often better to stick with the "*
+            "default value, which is 1 if the non-radiogenic isochron "*
+            "isotope is measured directly, or the IUPAC recommended "*
             "ratio if the non-radiogenic isotope is measured by proxy",
             action = TUIsetmf!
         ),
@@ -447,41 +460,47 @@ function tree(ctrl::AbstractDict)
             "x: Exit\n"*
             "?: Help",
             help =
-            "On single collector ICP-MS instruments, low intensity ion beams are "*
-            "measured in 'pulse' (P) mode and high intensity ion beams are measured in "*
-            "'analog' (A) mode. The intercalibration of these two modes is not always perfect. "*
-            "Here you can set or remove the cutoff value between P and A mode, so that you "*
-            "can group samples and standards according to them.",
+            "On single collector ICP-MS instruments, low intensity "*
+            "ion beams are measured in 'pulse' (P) mode and high "*
+            "intensity ion beams are measured in 'analog' (A) mode. "*
+            "The intercalibration of these two modes is not always "*
+            "perfect. Here you can set or remove the cutoff value "*
+            "between P and A mode, so that you can group samples "*
+            "and standards according to them.",
             action = Dict(
                 "l" => TUIPAlist,
                 "p" => "pulse",
                 "a" => "analog",
-                "r" => TUIPAclear!,
-                "x" => "xx"
+                "r" => TUIPAclear!
             )
         ),
         "pulse" => (
             message =
-            "Enter the maximum signal strength in cps (? for help, x to exit):",
+            "Enter the maximum signal strength in cps "*
+            "(? for help, x to exit):",
             help =
-            "After entering this value, only samples below the cutoff will be "*
-            "retained for analysis. All other samples will be ignored.",
+            "After entering this value, only samples below the "*
+            "cutoff will be retained for analysis. All other "*
+            "samples will be ignored.",
             action = TUIpulse!
         ),
         "analog" => (
             message =
-            "Enter the minimum signal strength in cps (? for help, x to exit):",
+            "Enter the minimum signal strength in cps "*
+            "(? for help, x to exit):",
             help =
-            "After entering this value, only samples above the cutoff will be "*
-            "retained for analysis. All other samples will be ignored.",
+            "After entering this value, only samples above the "*
+            "cutoff will be retained for analysis. All other "*
+            "samples will be ignored.",
             action = TUIanalog!
         ),
         "addRefMat" => (
             message =
             "Enter the path to the standards file (? for help, x to exit)",
             help =
-            "Add new isotopic reference materials to Plasmatrace by specifying "*
-            "the path to a .csv file that is formatted as follows:\n\n"*
+            "Add new isotopic reference materials to Plasmatrace "*
+            "by specifying the path to a .csv file that is "*
+            "formatted as follows:\n\n"*
             "method,name,t,y0\n"*
             "Lu-Hf,Hogsbo,1029,3.55\n"*
             "Lu-Hf,BP,1745,3.55\n\n"*
@@ -497,8 +516,9 @@ function tree(ctrl::AbstractDict)
             "?: Help\n"*
             "or enter the prefix of the analyses that you want to select",
             help =
-            "Select some or all of the samples to export to a .csv or .json "*
-            "file for further analysis in higher level data reduction software "*
+            "Select some or all of the samples to export to a "*
+            ".csv or .json file for further analysis in higher "*
+            "level data reduction software "*
             "such as IsoplotR.",
             action = TUIsubset!
         ),
@@ -509,24 +529,28 @@ function tree(ctrl::AbstractDict)
             "x: Exit\n"*
             "?: Help",
             help =
-            "Export to a comma-separated variable format with samples names "*
-            "as row names, for futher processing in Excel, say; or export to"*
-            "a .json format that can be opened in an online or "*
-            "offline instance of IsoplotRgui.",
+            "Export to a comma-separated variable format with "*
+            "samples names as row names, for futher processing "*
+            "in Excel, say; or export to a .json format that "*
+            "can be opened in an online or offline instance "*
+            "of IsoplotRgui.",
             action = Dict(
                 "c" => "csv",
-                "j" => "json",
-                "x" => "xx"
+                "j" => "json"
             )
         ),
         "csv" => (
-            message = "Enter the path and name of the .csv file (? for help, x to exit):",
-            help = "Provide the file name with or without the .csv extension.",
+            message = "Enter the path and name of the .csv "*
+            "file (? for help, x to exit):",
+            help = "Provide the file name with or without "*
+            "the .csv extension.",
             action = TUIexport2csv
         ),
         "json" => (
-            message = "Enter the path and name of the .json file (? for help, x to exit):",
-            help = "Provide the file name with or without the .json extension.",
+            message = "Enter the path and name of the "*
+            ".json file (? for help, x to exit):",
+            help = "Provide the file name with or without "*
+            "the .json extension.",
             action = TUIexport2json
         ),
         "log" => (
@@ -537,23 +561,27 @@ function tree(ctrl::AbstractDict)
             "x: Exit\n"*
             "?: Help",
             help =
-            "Session logs are an easy and useful way to save intermediate results, "*
-            "save default settings, increase throughput, develop FAIR data processing "*
+            "Session logs are an easy and useful way to "*
+            "save intermediate results, "*
+            "save default settings, increase throughput, "*
+            "develop FAIR data processing "*
             "chains, and report bugs.",
             action = Dict(
                 "i" => "importLog",
-                "e" => "exportLog",
-                "x" => "x"
+                "e" => "exportLog"
             )
         ),
         "importLog" => (
-            message = "Enter the path and name of the log file (? for help, x to exit):",
+            message = "Enter the path and name of the log "*
+            "file (? for help, x to exit):",
             help = "Open a previous log and continue where you left off.",
             action = TUIimportLog!
         ),
         "exportLog" => (
-            message = "Enter the path and name of the log file (? for help, x to exit):",
-            help = "Save the current Plasmatrace so that you can replicate your results later",
+            message = "Enter the path and name of the log "*
+            "file (? for help, x to exit):",
+            help = "Save the current Plasmatrace so that you "*
+            "can replicate your results later",
             action = TUIexportLog
         )
     )    
@@ -605,9 +633,8 @@ function TUIcolumnMessage(ctrl::AbstractDict)
     end
     msg *= "and select the channels corresponding to "*
     "the following isotopes or their proxies:\n"
-    if ctrl["method"]=="Lu-Hf"
-        msg *= "176Lu, 176Hf, 177Hf\n"
-    end
+    i = findfirst(_PT["methods"][:,"method"].==ctrl["method"])
+    msg *= join(_PT["methods"][i,2:end],", ") * "\n"
     msg *= "Specify your selection as a "*
     "comma-separated list of numbers:"
     return msg
@@ -618,16 +645,14 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
     next = "xx"
-    if ctrl["method"]=="Lu-Hf"
-        ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
-        ctrl["priority"]["method"] = false
-        next = "iratio"
-    end
+    ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
+    ctrl["priority"]["method"] = false
+    next = "iratio"
     return next
 end
 
 function TUIiratioMessage(ctrl::AbstractDict)
-    msg = "Which Hf-isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"
+    msg = "Which isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"
     isotopes = keys(_PT["iratio"][ctrl["method"]])
     for i in eachindex(isotopes)
         msg *= string(i)*": "*string(isotopes[i])*"\n"
@@ -648,18 +673,21 @@ function TUItabulate(ctrl::AbstractDict)
     summarise(ctrl["run"][ctrl["PAselection"]])
 end
 
-function TUIaddStandardsByPrefix!(ctrl::AbstractDict,response::AbstractString)
+function TUIaddStandardsByPrefix!(ctrl::AbstractDict,
+                                  response::AbstractString)
     snames = getSnames(ctrl["run"][ctrl["PAselection"]])
     ctrl["selection"] = findall(contains(response),snames)
     return "refmat"
 end
 
-function TUIaddStandardsByNumber!(ctrl::AbstractDict,response::AbstractString)
+function TUIaddStandardsByNumber!(ctrl::AbstractDict,
+                                  response::AbstractString)
     ctrl["selection"] = parse.(Int,split(response,","))
     return "refmat"    
 end
 
-function TUIremoveStandardsByNumber!(ctrl::AbstractDict,response::AbstractString)
+function TUIremoveStandardsByNumber!(ctrl::AbstractDict,
+                                     response::AbstractString)
     selection = parse.(Int,split(response,","))
     resetStandards!(ctrl["run"][ctrl["PAselection"]],selection)
     return "x"
@@ -693,7 +721,8 @@ end
 function TUIsetStandards!(ctrl::AbstractDict,response::AbstractString)
     standards = collect(keys(_PT["refmat"][ctrl["method"]]))
     i = parse(Int,response)
-    setStandards!(ctrl["run"][ctrl["PAselection"]],ctrl["selection"],standards[i])
+    setStandards!(ctrl["run"][ctrl["PAselection"]],
+                  ctrl["selection"],standards[i])
     ctrl["priority"]["standards"] = false
     return "xxx"
 end
@@ -705,13 +734,15 @@ end
 
 function TUIprocess!(ctrl::AbstractDict)
     println("Fitting blanks...")
-    ctrl["blank"] = fitBlanks(ctrl["run"][ctrl["PAselection"]],n=ctrl["options"]["blank"])
+    ctrl["blank"] = fitBlanks(ctrl["run"][ctrl["PAselection"]],
+                              n=ctrl["options"]["blank"])
     groups = unique(getGroups(ctrl["run"][ctrl["PAselection"]]))
     stds = groups[groups.!="sample"]
     ctrl["anchors"] = getAnchor(ctrl["method"],stds)
     println("Fractionation correction...")
     ctrl["par"] = fractionation(ctrl["run"][ctrl["PAselection"]],
-                                blank=ctrl["blank"],channels=ctrl["channels"],
+                                blank=ctrl["blank"],
+                                channels=ctrl["channels"],
                                 anchors=ctrl["anchors"],mf=ctrl["mf"])
     ctrl["priority"]["process"] = false
     println("Done")
@@ -792,7 +823,8 @@ function TUIoneAutoBlankWindow!(ctrl::AbstractDict)
     TUIplotter(ctrl)
 end
 
-function TUIoneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIoneSingleBlankWindow!(ctrl::AbstractDict,
+                                  response::AbstractString)
     samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
     bwin = string2windows(samp,text=response,single=true)
     setBwin!(samp,bwin)
@@ -800,7 +832,8 @@ function TUIoneSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function TUIoneMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIoneMultiBlankWindow!(ctrl::AbstractDict,
+                                 response::AbstractString)
     samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
     bwin = string2windows(samp,text=response,single=false)
     setBwin!(samp,bwin)
@@ -813,7 +846,8 @@ function TUIallAutoBlankWindow!(ctrl::AbstractDict)
     TUIplotter(ctrl)
 end
 
-function TUIallSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIallSingleBlankWindow!(ctrl::AbstractDict,
+                                  response::AbstractString)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         bwin = string2windows(samp,text=response,single=true)
@@ -823,7 +857,8 @@ function TUIallSingleBlankWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function TUIallMultiBlankWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIallMultiBlankWindow!(ctrl::AbstractDict,
+                                 response::AbstractString)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         bwin = string2windows(samp,text=response,single=false)
@@ -838,7 +873,8 @@ function TUIoneAutoSignalWindow!(ctrl::AbstractDict)
     TUIplotter(ctrl)
 end
 
-function TUIoneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIoneSingleSignalWindow!(ctrl::AbstractDict,
+                                   response::AbstractString)
     samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
     swin = string2windows(samp,text=response,single=true)
     setSwin!(samp,swin)
@@ -846,7 +882,8 @@ function TUIoneSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function TUIoneMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIoneMultiSignalWindow!(ctrl::AbstractDict,
+                                  response::AbstractString)
     samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
     swin = string2windows(samp,text=response,single=false)
     setSwin!(samp,swin)
@@ -859,7 +896,8 @@ function TUIallAutoSignalWindow!(ctrl::AbstractDict)
     TUIplotter(ctrl)
 end
 
-function TUIallSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIallSingleSignalWindow!(ctrl::AbstractDict,
+                                   response::AbstractString)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         swin = string2windows(samp,text=response,single=true)
@@ -869,7 +907,8 @@ function TUIallSingleSignalWindow!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function TUIallMultiSignalWindow!(ctrl::AbstractDict,response::AbstractString)
+function TUIallMultiSignalWindow!(ctrl::AbstractDict,
+                                  response::AbstractString)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
         swin = string2windows(samp,text=response,single=false)
@@ -969,7 +1008,8 @@ function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"][ctrl["PAselection"]],channels=ctrl["channels"],
+    ratios = averat(ctrl["run"][ctrl["PAselection"]],
+                    channels=ctrl["channels"],
                     pars=ctrl["par"],blank=ctrl["blank"])
     fname = splitext(response)[1]*".csv"
     CSV.write(fname,ratios[ctrl["selection"],:])
@@ -977,7 +1017,8 @@ function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"][ctrl["PAselection"]],channels=ctrl["channels"],
+    ratios = averat(ctrl["run"][ctrl["PAselection"]],
+                    channels=ctrl["channels"],
                     pars=ctrl["par"],blank=ctrl["blank"])
     fname = splitext(response)[1]*".json"
     export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
