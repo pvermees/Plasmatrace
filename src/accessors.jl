@@ -156,6 +156,6 @@ function getReferenceMaterials(csv::AbstractString=joinpath(@__DIR__,"../setting
 end
 export getReferenceMaterials
 function setReferenceMaterials!(csv::AbstractString=joinpath(@__DIR__,"../settings/standards.csv"))
-    _PT["refmat"] = getReferenceMaterials!(csv)
+    _PT["refmat"] = getReferenceMaterials(csv)
 end
 export setReferenceMaterials!

@@ -386,6 +386,7 @@ function tree(ctrl::AbstractDict)
             "fractionation correction\n"*
             "f: Fix or fit the fractionation factor\n"*
             "p: Subset the data by P/A cutoff\n"*
+            "l: List the available reference materials\n"*
             "r: Define new reference materials\n"*
             "x: Exit\n"*
             "?: Help",
@@ -399,6 +400,7 @@ function tree(ctrl::AbstractDict)
                 "h" => "setNdown",
                 "f" => "setmf",
                 "p" => "setPAcutoff",
+                "l" => TUIRefMatTab,
                 "r" => "addRefMat"
             )
         ),
@@ -501,11 +503,13 @@ function tree(ctrl::AbstractDict)
             "Add new isotopic reference materials to Plasmatrace "*
             "by specifying the path to a .csv file that is "*
             "formatted as follows:\n\n"*
-            "method,name,t,y0\n"*
-            "Lu-Hf,Hogsbo,1029,3.55\n"*
-            "Lu-Hf,BP,1745,3.55\n\n"*
-            "where 't' is the age of the sample and 'y0' is the "*
-            "y-intercept of the inverse isochron.",
+            "method,name,t,st,y0,sy0\n"*
+            "Lu-Hf,Hogsbo,1029,1.7,3.55,0.05\n"*
+            "Lu-Hf,BP,1745,5.0,3.55,0.05\n\n"*
+            "where 't' is the age of the sample, 'y0' is the "*
+            "y-intercept of the inverse isochron, and 'st' and 'sy0' "*
+            "are their standard errors, which are not used for the "*
+            "calculations in this version of the sofware.",
             action = TUIaddRefMat!
         ),
         "export" => (
@@ -935,6 +939,18 @@ end
 
 function TUIsetmf!(ctrl::AbstractDict,response::AbstractString)
     ctrl["mf"] = response=="" ? nothing : parse(Float64,response)
+    return "x"
+end
+
+function TUIRefMatTab(ctrl::AbstractDict)
+    for (key, value) in _PT["refmat"][ctrl["method"]]
+        print(key)
+        print(": t=")
+        print(value.t[1])
+        print(" Ma, y0=")
+        print(value.y0[1])
+        print("\n")
+    end
     return "x"
 end
 
