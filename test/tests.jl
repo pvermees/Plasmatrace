@@ -2,7 +2,7 @@ using Test, CSV
 import Plots
 
 function loadtest(verbatim=false)
-    run = load("data",instrument="Agilent")
+    run = load("data/Lu-Hf",instrument="Agilent")
     if verbatim summarise(run) end
     return run
 end
@@ -80,7 +80,7 @@ function sampletest()
 end
 
 function readmetest()
-    run = load("data",instrument="Agilent")
+    run = load("data/Lu-Hf",instrument="Agilent")
     blk = fitBlanks(run,n=2)
     standards = Dict("Hogsbo" => "hogsbo_ana") # "BP" => "BP"
     setStandards!(run,standards)
@@ -96,7 +96,7 @@ function readmetest()
 end
 
 function PAtest()
-    all = load("data",instrument="Agilent")
+    all = load("data/Lu-Hf",instrument="Agilent")
     channels = Dict("d"=>"Hf178 -> 260",
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
@@ -112,7 +112,8 @@ function exporttest()
 end
 
 function RbSrtest()
-    run = load("/home/pvermees/Documents/MDC",instrument="Agilent")
+    run = load("data/Rb-Sr",instrument="Agilent")
+
     blk = fitBlanks(run,n=2)
     standards = Dict("MDC" => "MDC -")
     setStandards!(run,standards)
@@ -120,24 +121,14 @@ function RbSrtest()
     channels = Dict("d"=>"Sr86 -> 102",
                     "D"=>"Sr87 -> 103",
                     "P"=>"Rb85 -> 85")
+
     fit = fractionation(run,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=1,#mf=8.37861,
+                        anchors=anchors,nf=1,nF=1,mf=1,
                         verbose=true)
-
-    samp = run[1]
-
-    println(fit)
-    println(samp.dat[:,2])
-    println(polyFac(p=fit.down,t=samp.dat[:,2]))
-    
-    #=pred = predict(samp,fit,blk,channels,anchors)
-    p = plot(samp,channels,den="D")
-    plotFitted!(p,samp,fit,blk,channels,anchors,den="D")
-    display(p)=#
     
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
-    selection = subset(ratios,"MDC -")
-    export2IsoplotR("MDC.json",selection,"Rb-Sr")
+    selection = subset(ratios,"EntireCreek")
+    export2IsoplotR("Entire.json",selection,"Rb-Sr")
     return ratios
 end
 
@@ -160,4 +151,4 @@ Plots.closeall()
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
 @testset "TUI" begin TUItest() end
-#=@testset "Rb-Sr" begin RbSrtest() end=#
+@testset "Rb-Sr" begin RbSrtest() end
