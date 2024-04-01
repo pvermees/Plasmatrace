@@ -1,6 +1,9 @@
-function readFile(fname::AbstractString;instrument="Agilent")
+function readFile(fname::AbstractString;
+                  instrument::AbstractString="Agilent",
+                  date_format::AbstractString,
+                  head2name::Bool=false)
     if instrument=="Agilent"
-        sname, datetime, dat = readAgilent(fname)
+        sname, datetime, dat = readAgilent(fname,date_format,head2name)
         bwin = autoWindow(dat[:,2:end],blank=true)
         swin = autoWindow(dat[:,2:end],blank=false)
     else
@@ -9,7 +12,10 @@ function readFile(fname::AbstractString;instrument="Agilent")
     Sample(sname,datetime,dat,bwin,swin,"sample")
 end
 
-function load(dname::AbstractString;instrument="Agilent")
+function load(dname::AbstractString;
+              instrument::AbstractString="Agilent",
+              date_format::AbstractString="d/m/Y H:M:S",
+              head2name::Bool=false)
     fnames = readdir(dname)
     samples = Vector{Sample}(undef,0)
     datetimes = Vector{DateTime}(undef,0)
@@ -19,7 +25,10 @@ function load(dname::AbstractString;instrument="Agilent")
         if occursin(ext,fname)
             try
                 pname = joinpath(dname,fname)
-                samp = readFile(pname,instrument=instrument)
+                samp = readFile(pname,
+                                instrument=instrument,
+                                date_format=date_format,
+                                head2name=head2name)
                 push!(samples,samp)
                 push!(datetimes,samp.datetime)
                 maxT = maximum([maxT,maximum(samp.dat[:,1])])
@@ -43,13 +52,16 @@ function load(dname::AbstractString;instrument="Agilent")
 end
 export load
 
-function readAgilent(fname::AbstractString,date_format="d/m/Y H:M:S")
+function readAgilent(fname::AbstractString,
+                     date_format::AbstractString,
+                     head2name::Bool=false)
     f = open(fname,"r")
     strs = readlines(f)
     nr = size(strs,1)
     
     # read header
-    sname = split.(split(strs[1],"\\"),"/")[end][end]
+    snamestring = head2name ? strs[1] : fname
+    sname = split(snamestring,('\\','/'))[end]
     datetimeline = strs[3]
     from = findfirst(":",datetimeline)[1]+2
     to = findfirst("using",datetimeline)[1]-2

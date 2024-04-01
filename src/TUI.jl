@@ -15,11 +15,11 @@ function PT(logbook="")
     end
     while true
         if length(ctrl["chain"])<1 return end
-        try
+#        try
             dispatch!(ctrl,verbose=false)
-        catch e
-            println(e)
-        end
+#        catch e
+#            println(e)
+#        end
     end
 end
 export PT
@@ -603,7 +603,8 @@ function check(ctrl::AbstractDict,action::AbstractString)
     return ctrl["priority"][action] ? "[*]" : ""
 end
 
-function TUIinstrument!(ctrl::AbstractDict,response::AbstractString)
+function TUIinstrument!(ctrl::AbstractDict,
+                        response::AbstractString)
     if response=="1"
         ctrl["instrument"] = "Agilent"
     else
@@ -613,7 +614,8 @@ function TUIinstrument!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIload!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["run"] = load(response,instrument=ctrl["instrument"])
+    ctrl["run"] = load(response,
+                       instrument=ctrl["instrument"])
     ctrl["PAselection"] = collect(1:length(ctrl["run"]))
     ctrl["priority"]["load"] = false
     return "xx"
@@ -657,10 +659,8 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIiratioMessage(ctrl::AbstractDict)
-    println("TUIiratioMessage")
     msg = "Which isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"
     isotopes = keys(_PT["iratio"][ctrl["method"]])
-    println(isotopes)
     for i in eachindex(isotopes)
         msg *= string(i)*": "*string(isotopes[i])*"\n"
     end
