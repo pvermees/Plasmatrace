@@ -24,7 +24,8 @@ function PT(logbook="")
 end
 export PT
 
-function dispatch!(ctrl::AbstractDict;key=nothing,response=nothing,verbose=false)
+function dispatch!(ctrl::AbstractDict;
+                   key=nothing,response=nothing,verbose=false)
     if (verbose)
         println(ctrl["chain"])
     end
@@ -619,33 +620,33 @@ function TUIload!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUImethod!(ctrl::AbstractDict,response::AbstractString)
-    methods = _PT["methods"][:,"method"]
+    methods = _PT["methods"].method
     i = parse(Int,response)
-    if i in 1:length(methods)
-        ctrl["method"] = methods[i]
-    else
+    if i > length(methods)
         return "x"
+    else
+        ctrl["method"] = methods[i]
     end
     return "columns"
 end
 
 function TUIcolumnMessage(ctrl::AbstractDict)
     msg = "Choose from the following list of channels:\n"
-    labels = names(ctrl["run"][1].dat)[3:end]
+    labels = names(getDat(ctrl["run"][1]))
     for i in eachindex(labels)
         msg *= string(i)*". "*labels[i]*"\n"
     end
     msg *= "and select the channels corresponding to "*
     "the following isotopes or their proxies:\n"
-    i = findfirst(_PT["methods"][:,"method"].==ctrl["method"])
-    msg *= join(_PT["methods"][i,2:end],", ") * "\n"
+    P, D, d = getPDd(ctrl["method"])
+    msg *= P *", "* D *", "* d *"\n"
     msg *= "Specify your selection as a "*
     "comma-separated list of numbers:"
     return msg
 end
 
 function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
-    labels = names(ctrl["run"][1].dat)[3:end]
+    labels = names(getDat(ctrl["run"][1]))
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
     next = "xx"
@@ -656,8 +657,10 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIiratioMessage(ctrl::AbstractDict)
+    println("TUIiratioMessage")
     msg = "Which isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"
     isotopes = keys(_PT["iratio"][ctrl["method"]])
+    println(isotopes)
     for i in eachindex(isotopes)
         msg *= string(i)*": "*string(isotopes[i])*"\n"
     end
@@ -666,8 +669,7 @@ function TUIiratioMessage(ctrl::AbstractDict)
 end
 
 function TUIiratio!(ctrl::AbstractDict,response::AbstractString)
-    method = ctrl["method"]
-    iratios = _PT["iratio"][method]
+    iratios = _PT["iratio"][ctrl["method"]]
     i = parse(Int,response)
     ctrl["mf"] = iratios[i]
     return "xxx"
@@ -703,7 +705,7 @@ function TUIresetStandards!(ctrl::AbstractDict)
 end
 
 function TUIshowMethods(ctrl::AbstractDict)
-    methods = _PT["methods"][:,"method"]
+    methods = _PT["methods"].method
     msg = ""
     for i in eachindex(methods)
         msg *= string(i)*": "*methods[i]*"\n"
@@ -747,7 +749,8 @@ function TUIprocess!(ctrl::AbstractDict)
     ctrl["par"] = fractionation(ctrl["run"][ctrl["PAselection"]],
                                 blank=ctrl["blank"],
                                 channels=ctrl["channels"],
-                                anchors=ctrl["anchors"],mf=ctrl["mf"])
+                                anchors=ctrl["anchors"],
+                                mf=ctrl["mf"])
     ctrl["priority"]["process"] = false
     println("Done")
 end

@@ -89,7 +89,7 @@ function readmetest()
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
     fit = fractionation(run,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=0,#mf=1.4671,
+                        anchors=anchors,nf=1,nF=0,mf=1.4671,
                         verbose=true)
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
     return ratios
@@ -123,7 +123,7 @@ function RbSrtest()
                     "P"=>"Rb85 -> 85")
 
     fit = fractionation(run,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=1,mf=1,
+                        anchors=anchors,nf=1,nF=0,mf=1,
                         verbose=true)
     
     ratios = averat(run,channels=channels,pars=fit,blank=blk)
@@ -150,5 +150,5 @@ Plots.closeall()
 @testset "readme example" begin readmetest() end 
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
-@testset "TUI" begin TUItest() end
 @testset "Rb-Sr" begin RbSrtest() end
+@testset "TUI" begin TUItest() end
