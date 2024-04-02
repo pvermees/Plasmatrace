@@ -1,10 +1,10 @@
 function getD(Pm,Dm,dm,x0,y0,y1,ft,FT,mf,bPt,bDt,bdt)
-    D = @. -((((FT*bPt-FT*Pm)*ft*mf^2+(FT*Pm-FT*bPt)*ft*mf)*x0+(bDt-Dm)*mf^2)*y1^2+((((2*FT*Pm-2*FT*bPt)*ft*mf^2+(FT*bPt-FT*Pm)*ft*mf)*x0+(2*Dm-2*bDt)*mf^2)*y0+((FT^2*dm-FT^2*bdt)*ft^2*mf+(FT^2*bdt-FT^2*dm)*ft^2)*x0^2)*y1+((FT*bPt-FT*Pm)*ft*mf^2*x0+(bDt-Dm)*mf^2)*y0^2+(FT^2*bdt-FT^2*dm)*ft^2*mf*x0^2*y0+(FT^2*bDt-Dm*FT^2)*ft^2*x0^2)/(((FT^2*ft^2*mf^2-2*FT^2*ft^2*mf+FT^2*ft^2)*x0^2+mf^2)*y1^2+((2*FT^2*ft^2*mf-2*FT^2*ft^2*mf^2)*x0^2-2*mf^2)*y0*y1+(FT^2*ft^2*mf^2*x0^2+mf^2)*y0^2+FT^2*ft^2*x0^2)
+    D = @. -((bDt-Dm)*mf^2*y1^2+((FT*Pm-FT*bPt)*ft*mf^2*x0+(2*Dm-2*bDt)*mf^2)*y0*y1+((FT*bPt-FT*Pm)*ft*mf^2*x0+(bDt-Dm)*mf^2)*y0^2+(FT^2*bdt-FT^2*dm)*ft^2*mf*x0^2*y0+(FT^2*bDt-Dm*FT^2)*ft^2*x0^2)/(mf^2*y1^2-2*mf^2*y0*y1+(FT^2*ft^2*mf^2*x0^2+mf^2)*y0^2+FT^2*ft^2*x0^2)
     return D
 end
 export getD
 function getp(Pm,Dm,dm,x0,y0,y1,ft,FT,mf,bPt,bDt,bdt)
-    p = @. ((((FT*bPt-FT*Pm)*ft*mf+(FT*Pm-FT*bPt)*ft)*x0+(bDt-Dm)*mf)*y1^2+(((FT*Pm-FT*bPt)*ft*mf*x0+(Dm-bDt)*mf)*y0+((FT^2*dm-FT^2*bdt)*ft^2*mf+(FT^2*bdt-FT^2*dm)*ft^2)*x0^2+(dm-bdt)*mf)*y1+((FT^2*bdt-FT^2*dm)*ft^2*mf*x0^2+(bdt-dm)*mf)*y0+(FT^2*bDt-Dm*FT^2)*ft^2*x0^2+(FT*Pm-FT*bPt)*ft*x0)/((((FT*bPt-FT*Pm)*ft*mf^2+(FT*Pm-FT*bPt)*ft*mf)*x0+(bDt-Dm)*mf^2)*y1^2+((((2*FT*Pm-2*FT*bPt)*ft*mf^2+(FT*bPt-FT*Pm)*ft*mf)*x0+(2*Dm-2*bDt)*mf^2)*y0+((FT^2*dm-FT^2*bdt)*ft^2*mf+(FT^2*bdt-FT^2*dm)*ft^2)*x0^2)*y1+((FT*bPt-FT*Pm)*ft*mf^2*x0+(bDt-Dm)*mf^2)*y0^2+(FT^2*bdt-FT^2*dm)*ft^2*mf*x0^2*y0+(FT^2*bDt-Dm*FT^2)*ft^2*x0^2)
+    p = @. ((bDt-Dm)*mf^2*y1^2+(((FT*Pm-FT*bPt)*ft*mf^2*x0+(Dm-bDt)*mf^2)*y0+(dm-bdt)*mf)*y1+((FT^2*bdt-FT^2*dm)*ft^2*mf*x0^2+(bdt-dm)*mf)*y0+(FT^2*bDt-Dm*FT^2)*ft^2*x0^2+(FT*Pm-FT*bPt)*ft*x0)/((bDt-Dm)*mf^2*y1^2+((FT*Pm-FT*bPt)*ft*mf^2*x0+(2*Dm-2*bDt)*mf^2)*y0*y1+((FT*bPt-FT*Pm)*ft*mf^2*x0+(bDt-Dm)*mf^2)*y0^2+(FT^2*bdt-FT^2*dm)*ft^2*mf*x0^2*y0+(FT^2*bDt-Dm*FT^2)*ft^2*x0^2)
     return p
 end
 export getp
@@ -25,7 +25,7 @@ function predict(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
     p = getp(Pm,Dm,dm,x0,y0,y1,ft,FT,mf,bPt,bDt,bdt)
     Pf = @. D*x0*(1-p)*ft*FT + bPt
     Df = @. D + bDt
-    df = @. D*(y0-y1)*p*mf + D*y1 + bdt
+    df = @. D*(y1+(y0-y1)*p)*mf + bdt
     return DataFrame(P=Pf,D=Df,d=df)
 end
 function predict(samp::Sample,
@@ -47,7 +47,7 @@ function predict(dat::AbstractDataFrame,
                  channels::AbstractDict,
                  x0::AbstractFloat,
                  y0::AbstractFloat,
-                 y1::AbstractFloat=0.0)
+                 y1::AbstractFloat)
     t = dat.t
     T = dat.T
     Pm = dat[:,channels["P"]]

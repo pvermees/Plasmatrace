@@ -104,7 +104,7 @@ export summarise, summarize
 function autoWindow(signals::AbstractDataFrame;blank=false)
     total = sum.(eachrow(signals))
     q = Statistics.quantile(total,[0.05,0.95])
-    mid = (q[2]+q[1])/10
+    mid = (q[2]+q[1])/20
     low = total.<mid
     blk = findall(low)
     sig = findall(.!low)
@@ -169,7 +169,7 @@ function string2windows(samp::Sample;text::AbstractString,single=false)
         nw = Int(round(size(parts,1)/4))
     end
     windows = Vector{Window}(undef,nw)
-    t = samp.dat[:,2]
+    t = samp.dat[:,1]
     nt = size(t,1)
     maxt = t[end]
     for i in 1:nw

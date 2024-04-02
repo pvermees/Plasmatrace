@@ -8,7 +8,7 @@ function PT(logbook="")
         "i" => 1,
         "den" => nothing,
         "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
-        "mf" => nothing
+        "mf" => 1
     )
     if logbook != ""
         TUIimportLog!(ctrl,logbook)

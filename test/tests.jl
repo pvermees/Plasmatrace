@@ -133,32 +133,24 @@ function RbSrtest()
 end
 
 function UPbtest()
-    myrun = load("data/U-Pb",instrument="Agilent",
-               date_format="m/d/y II:MM:SS p")
     
-    blk = fitBlanks(myrun,n=2)
+    myrun = load("data/U-Pb",instrument="Agilent")
+    
+    blank = fitBlanks(myrun,n=2)
     standards = Dict("Plesovice" => "STDCZ",
                      "91500" => "91500")
     setStandards!(myrun,standards)
     anchors = getAnchor("U-Pb",standards)
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
 
-    fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=0,mf=1,
-                        verbose=true)
+    pars = fractionation(myrun,blank=blank,channels=channels,
+                         anchors=anchors,nf=2,nF=2,mf=1,
+                         verbose=true)
     
-    samp = myrun[1]
-    
-    pred = predict(samp,fit,blk,channels,anchors)
-    p = plot(samp,channels,den="D")
-    plotFitted!(p,samp,fit,blk,channels,anchors,den="D")
-    display(p)
-    
-    #=ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
-    println(ratios)
-    selection = subset(ratios,"GJ-1")
-    export2IsoplotR("GJ-1.json",selection,"U-Pb")
-    return ratios=#
+    ratios = averat(myrun,channels=channels,pars=pars,blank=blank)
+    selection = subset(ratios,"GJ1")
+    export2IsoplotR("GJ1.json",selection,"U-Pb")
+    return ratios
 end
 
 function TUItest()
@@ -180,5 +172,5 @@ Plots.closeall()
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
 @testset "Rb-Sr" begin RbSrtest() end
-#=@testset "U-Pb" begin UPbtest() end=#
+@testset "U-Pb" begin UPbtest() end
 @testset "TUI" begin TUItest() end
