@@ -2,7 +2,7 @@ using Test, CSV
 import Plots
 
 function loadtest(verbatim=false)
-    myrun = load("data/Lu-Hf",instrument="Agilent")
+    myrun = load("data/Lu-Hf",instrument="Agilent",head2name=true)
     if verbatim summarise(myrun) end
     return myrun
 end
@@ -147,11 +147,18 @@ function UPbtest()
                         anchors=anchors,nf=1,nF=0,mf=1,
                         verbose=true)
     
-    ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
+    samp = myrun[1]
+    
+    pred = predict(samp,fit,blk,channels,anchors)
+    p = plot(samp,channels,den="D")
+    plotFitted!(p,samp,fit,blk,channels,anchors,den="D")
+    display(p)
+    
+    #=ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
     println(ratios)
     selection = subset(ratios,"GJ-1")
     export2IsoplotR("GJ-1.json",selection,"U-Pb")
-    return ratios
+    return ratios=#
 end
 
 function TUItest()
@@ -173,5 +180,5 @@ Plots.closeall()
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
 @testset "Rb-Sr" begin RbSrtest() end
-#@testset "U-Pb" begin UPbtest() end
+#=@testset "U-Pb" begin UPbtest() end=#
 @testset "TUI" begin TUItest() end

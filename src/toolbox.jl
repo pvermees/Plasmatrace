@@ -211,3 +211,26 @@ function PAselect(run::Vector{Sample};channels::AbstractDict,cutoff::AbstractFlo
     return A
 end
 export PAselect
+
+function automatic_datetime(datetime_string::AbstractString)
+    if occursin(r"-", datetime_string) == true
+        date_delim = '-'
+    elseif occursin(r"/", datetime_string) == true
+        date_delim = '/'
+    end
+    if occursin(r"(?i:AM|PM)", datetime_string) == true
+        time_format = "H:M:S p"
+    else
+        time_format = "H:M:S"
+    end
+    datetime_vector = split(datetime_string, r"[-\/ ]")
+    if length(datetime_vector[1]) == 4
+        date_format = "Y$(date_delim)m$(date_delim)d"
+    elseif parse(Int,datetime_vector[1]) > 12
+        date_format = "d$(date_delim)m$(date_delim)Y"
+    else
+        date_format = "m$(date_delim)d$(date_delim)Y"
+    end
+    datetime_format = DateFormat(date_format * " " * time_format)
+    return Dates.DateTime(datetime_string,datetime_format)
+end

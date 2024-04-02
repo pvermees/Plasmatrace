@@ -15,11 +15,11 @@ function PT(logbook="")
     end
     while true
         if length(ctrl["chain"])<1 return end
-#        try
+        try
             dispatch!(ctrl,verbose=false)
-#        catch e
-#            println(e)
-#        end
+        catch e
+            println(e)
+        end
     end
 end
 export PT
@@ -651,10 +651,13 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
     labels = names(getDat(ctrl["run"][1]))
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
-    next = "xx"
     ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
     ctrl["priority"]["method"] = false
-    next = "iratio"
+    if ctrl["method"]=="U-Pb"
+        next = "xx"
+    else
+        next = "iratio"
+    end
     return next
 end
 
@@ -676,7 +679,8 @@ function TUIiratio!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUItabulate(ctrl::AbstractDict)
-    summarise(ctrl["run"][ctrl["PAselection"]])
+    summary_table = summarise(ctrl["run"][ctrl["PAselection"]])
+    println(summary_table)
 end
 
 function TUIaddStandardsByPrefix!(ctrl::AbstractDict,
@@ -782,7 +786,6 @@ function TUIplotter(ctrl::AbstractDict)
         channels = ctrl["channels"]
     else
         channels = names(samp.dat)[3:end]
-        println(channels)
     end
     p = plot(samp,channels,den=ctrl["den"])
     if samp.group!="sample"
