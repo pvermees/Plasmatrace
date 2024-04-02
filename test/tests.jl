@@ -89,8 +89,7 @@ function readmetest()
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
     fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=0,mf=1.4671,
-                        verbose=true)
+                        anchors=anchors,nf=1,nF=0,mf=1.4671)
     ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
     return ratios
 end

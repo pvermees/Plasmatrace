@@ -21,7 +21,7 @@ Here is an example of a menu-driven Plasmatrace session:
 julia> using Plasmatrace
 julia> PT()
 -------------------
- Plasmatrace 0.3.0 
+ Plasmatrace 0.3.3 
 -------------------
 
 r: Read data files[*]
@@ -34,15 +34,16 @@ e: Export the isotope ratios
 l: Import/export a session log
 o: Options
 x: Exit
+?: Help
 r
 
-Choose a file format:
-1. Agilent
-x. Exit
+1: Agilent
+x: Exit
+?: Help
 1
 
-Enter the full path of the data directory:
-data
+Enter the full path of the data directory (? for help, x to exit):
+data/Lu-Hf
 
 r: Read data files
 m: Specify the method[*]
@@ -54,11 +55,14 @@ e: Export the isotope ratios
 l: Import/export a session log
 o: Options
 x: Exit
+?: Help
 m
 
-Choose a method:
-1. Lu-Hf
-x. Exit
+1: Lu-Hf
+2: Rb-Sr
+3: U-Pb
+x: Exit
+?: Help
 1
 
 Choose from the following list of channels:
@@ -81,18 +85,18 @@ Choose from the following list of channels:
 17. Hf176 -> 258
 18. Hf178 -> 260
 and select the channels corresponding to the following isotopes or their proxies:
-176Lu, 176Hf, 177Hf
+Lu176, Hf176, Hf177
 Specify your selection as a comma-separated list of numbers:
-
 15,17,18
 
-Which Hf-isotope is measured as Hf178 -> 260?
-1. 174Hf
-2. 177Hf
-3. 178Hf
-4. 179Hf
-5. 180Hf
-
+Which isotope is measured as "Hf178 -> 260"?
+1: Hf174
+2: Hf177
+3: Hf178
+4: Hf179
+5: Hf180
+x: Exit
+?: Help
 3
 
 r: Read data files
@@ -105,23 +109,26 @@ e: Export the isotope ratios
 l: Import/export a session log
 o: Options
 x: Exit
+?: Help
 s
 
-Choose an option:
-t. Tabulate all the samples
-p. Add a standard by prefix
-n. Add a standard by number
-N. Remove a standard by number
-r. Remove all standards
-x. Exit
+t: Tabulate all the samples
+p: Add a standard by prefix
+n: Add a standard by number
+N: Remove a standard by number
+r: Remove all standards
+x: Exit
+?: Help
 p
 
-Specify the prefix of the standard:
+Specify the prefix of the standard (? for help, x to exit):
 BP
 
 Which of the following standards did you select?
-1. Hogsbo
-2. BP
+1: Hogsbo
+2: BP
+x: Exit
+?: Help
 2
 
 r: Read data files
@@ -134,6 +141,7 @@ e: Export the isotope ratios
 l: Import/export a session log
 o: Options
 x: Exit
+?: Help
 p
 Fitting blanks...
 Fractionation correction...
@@ -149,16 +157,24 @@ e: Export the isotope ratios
 l: Import/export a session log
 o: Options
 x: Exit
+?: Help
 e
 
-Choose an option:
-c. Export to .csv
-j. Export to .json
-x. Exit
-c
+a: All analyses
+s: Samples only (no standards)
+x: Exit
+?: Help
+or enter the prefix of the analyses that you want to select
+s
 
-Enter the path and name of the .csv file:
-output/test.csv
+c: Export to .csv
+j: Export to .json
+x: Exit
+?: Help
+j
+
+Enter the path and name of the .json file (? for help, x to exit):
+output/test.json
 
 r: Read data files
 m: Specify the method
@@ -170,9 +186,10 @@ e: Export the isotope ratios
 l: Import/export a session log
 o: Options
 x: Exit
+?: Help
 x
 
-julia>
+julia> 
 ```
 
 ## 2. Command-line API
