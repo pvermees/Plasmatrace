@@ -36,8 +36,8 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
             Pm = dat[:,channels["P"]]
             Dm = dat[:,channels["D"]]
             dm = dat[:,channels["d"]]
-            (x0,y0) = anchors[refmat]
-            out += SS(t,T,Pm,Dm,dm,x0,y0,drift,down,mfrac,bP,bD,bd)
+            (x0,y0,y1) = anchors[refmat]
+            out += SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
         end
         return out
     end
@@ -120,24 +120,27 @@ function export2IsoplotR(fname::AbstractString,
                          ratios::AbstractDataFrame,
                          method::AbstractString)
     json = jsonTemplate()
+
+    P, D, d = getPDd(method)
+
+    datastring = "\"ierr\":1,\"data\":{"*
+    "\""* P *"/"* D *"\":["*     join(ratios[:,2],",")*"],"*
+    "\"err["* P *"/"* D *"]\":["*join(ratios[:,3],",")*"],"*
+    "\""* d *"/"* D *"\":["*     join(ratios[:,4],",")*"],"*
+    "\"err["* d *"/"* D *"]\":["*join(ratios[:,5],",")*"],"*
+    "\"(rho)\":["*join(ratios[:,6],",")*"],"*
+    "\"(C)\":[],\"(omit)\":[],"*
+    "\"(comment)\":[\""*join(ratios[:,1],"\",\"")*"\"]"
+
+    json = replace(json,"\""*method*"\":{}" =>
+                   "\""*method*"\":{"*datastring*"}}")
+
     
-    if method in ["Lu-Hf","Rb-Sr","K-Ca"]
+    if method in ["Lu-Hf","Rb-Sr"]
                         
         old = "\"geochronometer\":\"U-Pb\",\"plotdevice\":\"concordia\""
         new = "\"geochronometer\":\""*method*"\",\"plotdevice\":\"isochron\""
         json = replace(json, old => new)
-
-        P, D, d = getPDd(method)
-        datastring = "\"ierr\":1,\"data\":{"*
-        "\""* P *"/"* D *"\":["*     join(ratios[:,2],",")*"],"*
-        "\"err["* P *"/"* D *"]\":["*join(ratios[:,3],",")*"],"*
-        "\""* d *"/"* D *"\":["*     join(ratios[:,4],",")*"],"*
-        "\"err["* d *"/"* D *"]\":["*join(ratios[:,5],",")*"],"*
-        "\"(rho)\":["*join(ratios[:,6],",")*"],"*
-        "\"(C)\":[],\"(omit)\":[],"*
-        "\"(comment)\":[\""*join(ratios[:,1],"\",\"")*"\"]"
-        json = replace(json,"\""*method*"\":{}" =>
-                       "\""*method*"\":{"*datastring*"}}")
         
         old = "\""*method*"\":{\"format\":1,\"i2i\":true,\"projerr\":false,\"inverse\":false}"
         new = "\""*method*"\":{\"format\":2,\"i2i\":true,\"projerr\":false,\"inverse\":true}"

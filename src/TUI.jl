@@ -8,7 +8,7 @@ function PT(logbook="")
         "i" => 1,
         "den" => nothing,
         "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
-        "mf" => nothing
+        "mf" => 1
     )
     if logbook != ""
         TUIimportLog!(ctrl,logbook)
@@ -603,7 +603,8 @@ function check(ctrl::AbstractDict,action::AbstractString)
     return ctrl["priority"][action] ? "[*]" : ""
 end
 
-function TUIinstrument!(ctrl::AbstractDict,response::AbstractString)
+function TUIinstrument!(ctrl::AbstractDict,
+                        response::AbstractString)
     if response=="1"
         ctrl["instrument"] = "Agilent"
     else
@@ -613,7 +614,8 @@ function TUIinstrument!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIload!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["run"] = load(response,instrument=ctrl["instrument"])
+    ctrl["run"] = load(response,
+                       instrument=ctrl["instrument"])
     ctrl["PAselection"] = collect(1:length(ctrl["run"]))
     ctrl["priority"]["load"] = false
     return "xx"
@@ -649,18 +651,19 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
     labels = names(getDat(ctrl["run"][1]))
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
-    next = "xx"
     ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
     ctrl["priority"]["method"] = false
-    next = "iratio"
+    if ctrl["method"]=="U-Pb"
+        next = "xx"
+    else
+        next = "iratio"
+    end
     return next
 end
 
 function TUIiratioMessage(ctrl::AbstractDict)
-    println("TUIiratioMessage")
     msg = "Which isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"
     isotopes = keys(_PT["iratio"][ctrl["method"]])
-    println(isotopes)
     for i in eachindex(isotopes)
         msg *= string(i)*": "*string(isotopes[i])*"\n"
     end
@@ -676,7 +679,8 @@ function TUIiratio!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUItabulate(ctrl::AbstractDict)
-    summarise(ctrl["run"][ctrl["PAselection"]])
+    summary_table = summarise(ctrl["run"][ctrl["PAselection"]])
+    println(summary_table)
 end
 
 function TUIaddStandardsByPrefix!(ctrl::AbstractDict,
@@ -782,7 +786,6 @@ function TUIplotter(ctrl::AbstractDict)
         channels = ctrl["channels"]
     else
         channels = names(samp.dat)[3:end]
-        println(channels)
     end
     p = plot(samp,channels,den=ctrl["den"])
     if samp.group!="sample"

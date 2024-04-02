@@ -104,7 +104,7 @@ export summarise, summarize
 function autoWindow(signals::AbstractDataFrame;blank=false)
     total = sum.(eachrow(signals))
     q = Statistics.quantile(total,[0.05,0.95])
-    mid = (q[2]+q[1])/10
+    mid = (q[2]+q[1])/20
     low = total.<mid
     blk = findall(low)
     sig = findall(.!low)
@@ -169,7 +169,7 @@ function string2windows(samp::Sample;text::AbstractString,single=false)
         nw = Int(round(size(parts,1)/4))
     end
     windows = Vector{Window}(undef,nw)
-    t = samp.dat[:,2]
+    t = samp.dat[:,1]
     nt = size(t,1)
     maxt = t[end]
     for i in 1:nw
@@ -211,3 +211,26 @@ function PAselect(run::Vector{Sample};channels::AbstractDict,cutoff::AbstractFlo
     return A
 end
 export PAselect
+
+function automatic_datetime(datetime_string::AbstractString)
+    if occursin(r"-", datetime_string) == true
+        date_delim = '-'
+    elseif occursin(r"/", datetime_string) == true
+        date_delim = '/'
+    end
+    if occursin(r"(?i:AM|PM)", datetime_string) == true
+        time_format = "H:M:S p"
+    else
+        time_format = "H:M:S"
+    end
+    datetime_vector = split(datetime_string, r"[-\/ ]")
+    if length(datetime_vector[1]) == 4
+        date_format = "Y$(date_delim)m$(date_delim)d"
+    elseif parse(Int,datetime_vector[1]) > 12
+        date_format = "d$(date_delim)m$(date_delim)Y"
+    else
+        date_format = "m$(date_delim)d$(date_delim)Y"
+    end
+    datetime_format = DateFormat(date_format * " " * time_format)
+    return Dates.DateTime(datetime_string,datetime_format)
+end
