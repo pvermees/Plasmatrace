@@ -2,7 +2,7 @@ using Test, CSV
 import Plots
 
 function loadtest(verbatim=false)
-    myrun = load("data/Lu-Hf",instrument="Agilent",head2name=true)
+    myrun = load("data/Lu-Hf",instrument="Agilent")
     if verbatim summarise(myrun) end
     return myrun
 end
@@ -31,7 +31,7 @@ end
 
 function standardtest(verbatim=false)
     myrun, blk = blanktest()
-    standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
+    standards = Dict("BP" => "BP")
     setStandards!(myrun,standards)
     anchors = getAnchor("Lu-Hf",standards)
     if verbatim
@@ -44,7 +44,7 @@ function fractionationtest()
     channels = Dict("d" => "Hf178 -> 260",
                     "D" => "Hf176 -> 258",
                     "P" => "Lu175 -> 175")
-    standards = Dict("Hogsbo" => "hogsbo_ana")#, "BP" => "BP"
+    standards = Dict("Hogsbo" => "hogsbo_ana")
     setStandards!(myrun,standards)
     anchors = getAnchor("Lu-Hf",standards)
     fit = fractionation(myrun,blank=blk,channels=channels,
@@ -55,7 +55,7 @@ end
 
 function predicttest()
     myrun, blk, fit, channels, anchors = fractionationtest()
-    samp = myrun[5]
+    samp = myrun[2]
     pred = predict(samp,fit,blk,channels,anchors)
     p = plot(samp,channels,den="D")
     plotFitted!(p,samp,fit,blk,channels,anchors,den="D")
@@ -82,7 +82,7 @@ end
 function readmetest()
     myrun = load("data/Lu-Hf",instrument="Agilent")
     blk = fitBlanks(myrun,n=2)
-    standards = Dict("Hogsbo" => "hogsbo_ana") # "BP" => "BP"
+    standards = Dict("Hogsbo" => "hogsbo_ana")
     setStandards!(myrun,standards)
     anchors = getAnchor("Lu-Hf",standards)
     channels = Dict("d"=>"Hf178 -> 260",
@@ -133,7 +133,7 @@ end
 
 function UPbtest()
     
-    myrun = load("data/U-Pb",instrument="Agilent")
+    myrun = load("data/U-Pb",instrument="Agilent",head2name=false)
     
     blank = fitBlanks(myrun,n=2)
     standards = Dict("Plesovice" => "STDCZ",
@@ -153,7 +153,7 @@ function UPbtest()
 end
 
 function iCaptest(verbatim=true)
-    myrun = load("data/iCap",instrument="ThermoFisher",head2name=false)
+    myrun = load("data/iCap",instrument="ThermoFisher")
     if verbatim summarise(myrun) end
     return myrun
 end

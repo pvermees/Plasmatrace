@@ -8,7 +8,8 @@ function PT(logbook="")
         "i" => 1,
         "den" => nothing,
         "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
-        "mf" => 1
+        "mf" => 1,
+        "head2name" => true
     )
     if logbook != ""
         TUIimportLog!(ctrl,logbook)
@@ -390,6 +391,7 @@ function tree(ctrl::AbstractDict)
             "p: Subset the data by P/A cutoff\n"*
             "l: List the available reference materials\n"*
             "r: Define new reference materials\n"*
+            "n: Guess samples names from file names\n"*
             "x: Exit\n"*
             "?: Help",
             help =
@@ -403,7 +405,8 @@ function tree(ctrl::AbstractDict)
                 "f" => "setmf",
                 "p" => "setPAcutoff",
                 "l" => TUIRefMatTab,
-                "r" => "addRefMat"
+                "r" => "addRefMat",
+                "n" => "head2name"
             )
         ),
         "setNblank" => (
@@ -514,6 +517,20 @@ function tree(ctrl::AbstractDict)
             "calculations in this version of the sofware.",
             action = TUIaddRefMat!
         ),
+        "head2name" => (
+            message =
+            "h: Extract the sample names from the file headers\n"*
+            "f: Extract the sample names from the file names\n"*
+            "x: Exit\n"*
+            "?: Help",
+            help =
+            "In most cases, the name of each ablation spot is "*
+            "registered in the headers of the input files. However, "*
+            "occasionally, the headers contain generic names (e.g., "*
+            "spot01, spot02, ...) and the spot name must be inferred "*
+            "from the file name (e.g. /path/to/data/Plesovice-01)",
+            action = TUIhead2name!
+        ),
         "export" => (
             message =
             "a: All analyses\n"*
@@ -618,7 +635,8 @@ end
 
 function TUIload!(ctrl::AbstractDict,response::AbstractString)
     ctrl["run"] = load(response,
-                       instrument=ctrl["instrument"])
+                       instrument=ctrl["instrument"],
+                       head2name=ctrl["head2name"])
     ctrl["PAselection"] = collect(1:length(ctrl["run"]))
     ctrl["priority"]["load"] = false
     return "xx"
@@ -995,6 +1013,11 @@ end
 
 function TUIaddRefMat!(ctrl::AbstractDict,response::AbstractString)
     setReferenceMaterials!(response)
+    return "x"
+end
+
+function TUIhead2name!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["head2name"] = response=="h"
     return "x"
 end
 
