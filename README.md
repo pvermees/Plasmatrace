@@ -21,7 +21,7 @@ Here is an example of a menu-driven Plasmatrace session:
 julia> using Plasmatrace
 julia> PT()
 -------------------
- Plasmatrace 0.3.3 
+ Plasmatrace 0.3.4 
 -------------------
 
 r: Read data files[*]
@@ -38,6 +38,7 @@ x: Exit
 r
 
 1: Agilent
+2: ThermoFisher
 x: Exit
 ?: Help
 1

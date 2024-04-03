@@ -103,6 +103,7 @@ function tree(ctrl::AbstractDict)
         "instrument" => (
             message =
             "1: Agilent\n"*
+            "2: ThermoFisher\n"*
             "x: Exit\n"*
             "?: Help",
             help = "Choose a file format. Email us if you don't "*
@@ -607,6 +608,8 @@ function TUIinstrument!(ctrl::AbstractDict,
                         response::AbstractString)
     if response=="1"
         ctrl["instrument"] = "Agilent"
+    elseif response=="2"
+        ctrl["instrument"] = "ThermoFisher"
     else
         return "x"
     end

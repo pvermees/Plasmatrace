@@ -84,7 +84,7 @@ function polyFac(;p,t)
 end
 export polyFac
 
-function summarise(run::Vector{Sample})
+function summarise(run::Vector{Sample},verbose=true)
     ns = length(run)
     snames = getSnames(run)
     groups = fill("sample",ns)
@@ -94,6 +94,7 @@ function summarise(run::Vector{Sample})
         dates[i] = run[i].datetime
     end
     out = DataFrame(name=snames,date=dates,group=groups)
+    if verbose println(out) end
     return out
 end
 function summarize(run::Vector{Sample})
@@ -105,20 +106,12 @@ function autoWindow(signals::AbstractDataFrame;blank=false)
     total = sum.(eachrow(signals))
     q = Statistics.quantile(total,[0.05,0.95])
     mid = (q[2]+q[1])/20
-    low = total.<mid
-    blk = findall(low)
-    sig = findall(.!low)
-    if blank
-        min = minimum(blk)
-        max = maximum(blk)
-        from = floor(Int,min)
-        to = floor(Int,(19*max+min)/20)
-    else
-        min = minimum(sig)
-        max = maximum(sig)
-        from = ceil(Int,(9*min+max)/10)
-        to = ceil(Int,max)
-    end
+    (lovals,lens) = rle(total.<mid)
+    i = blank ? findfirst(lovals) : findfirst(.!lovals)
+    min = i>1 ? sum(lens[1:i-1]) : 1
+    max = sum(lens[1:i])
+    from = ceil(Int,min+(max-min)/10)
+    to = floor(Int,min+(max-min)*9/10)
     return [(from,to)]
 end
 function autoWindow(samp::Sample;blank=false)
@@ -232,5 +225,35 @@ function automatic_datetime(datetime_string::AbstractString)
         date_format = "m$(date_delim)d$(date_delim)Y"
     end
     datetime_format = DateFormat(date_format * " " * time_format)
-    return Dates.DateTime(datetime_string,datetime_format)
+    datetime = Dates.DateTime(datetime_string,datetime_format)
+    if Dates.Year(datetime) < Dates.Year(100)
+        datetime += Dates.Year(2000)
+    end
+    return datetime
+end
+
+# lifted from StatsBase.jl
+function rle(v::AbstractVector{T}) where T
+    n = length(v)
+    vals = T[]
+    lens = Int[]
+    n>0 || return (vals,lens)
+    cv = v[1]
+    cl = 1
+    i = 2
+    @inbounds while i <= n
+        vi = v[i]
+        if isequal(vi, cv)
+            cl += 1
+        else
+            push!(vals, cv)
+            push!(lens, cl)
+            cv = vi
+            cl = 1
+        end
+        i += 1
+    end
+    push!(vals, cv)
+    push!(lens, cl)
+    return (vals, lens)
 end

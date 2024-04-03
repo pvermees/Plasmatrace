@@ -1,3 +1,11 @@
+function getExt(instrument)
+    if instrument in ["Agilent","ThermoFisher"]
+        return ".csv"
+    else
+        PTerror("unknownInstrument")
+    end
+end
+
 function getChannels(run::Vector{Sample})
     return getChannels(run[1])
 end

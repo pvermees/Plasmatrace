@@ -152,6 +152,12 @@ function UPbtest()
     return ratios
 end
 
+function iCaptest(verbatim=true)
+    myrun = load("data/iCap",instrument="ThermoFisher",head2name=false)
+    if verbatim summarise(myrun) end
+    return myrun
+end
+
 function TUItest()
     PT("logs/test.log")
 end
@@ -172,4 +178,5 @@ Plots.closeall()
 @testset "export" begin exporttest() end
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
+@testset "iCap" begin iCaptest() end
 @testset "TUI" begin TUItest() end
