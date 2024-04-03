@@ -84,7 +84,7 @@ function polyFac(;p,t)
 end
 export polyFac
 
-function summarise(run::Vector{Sample})
+function summarise(run::Vector{Sample},verbose=true)
     ns = length(run)
     snames = getSnames(run)
     groups = fill("sample",ns)
@@ -94,6 +94,7 @@ function summarise(run::Vector{Sample})
         dates[i] = run[i].datetime
     end
     out = DataFrame(name=snames,date=dates,group=groups)
+    if verbose println(out) end
     return out
 end
 function summarize(run::Vector{Sample})
@@ -232,5 +233,9 @@ function automatic_datetime(datetime_string::AbstractString)
         date_format = "m$(date_delim)d$(date_delim)Y"
     end
     datetime_format = DateFormat(date_format * " " * time_format)
-    return Dates.DateTime(datetime_string,datetime_format)
+    datetime = Dates.DateTime(datetime_string,datetime_format)
+    if Dates.Year(datetime) < Dates.Year(100)
+        datetime += Dates.Year(2000)
+    end
+    return datetime
 end
