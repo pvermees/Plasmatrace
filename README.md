@@ -21,7 +21,7 @@ Here is an example of a menu-driven Plasmatrace session:
 julia> using Plasmatrace
 julia> PT()
 -------------------
- Plasmatrace 0.3.4 
+ Plasmatrace 0.4.0 
 -------------------
 
 r: Read data files[*]
@@ -33,6 +33,7 @@ p: Process the data[*]
 e: Export the isotope ratios
 l: Import/export a session log
 o: Options
+R: Refresh
 x: Exit
 ?: Help
 r
@@ -55,6 +56,7 @@ p: Process the data[*]
 e: Export the isotope ratios
 l: Import/export a session log
 o: Options
+R: Refresh
 x: Exit
 ?: Help
 m
@@ -109,6 +111,7 @@ p: Process the data[*]
 e: Export the isotope ratios
 l: Import/export a session log
 o: Options
+R: Refresh
 x: Exit
 ?: Help
 s
@@ -141,6 +144,7 @@ p: Process the data[*]
 e: Export the isotope ratios
 l: Import/export a session log
 o: Options
+R: Refresh
 x: Exit
 ?: Help
 p
@@ -157,6 +161,7 @@ p: Process the data
 e: Export the isotope ratios
 l: Import/export a session log
 o: Options
+R: Refresh
 x: Exit
 ?: Help
 e
@@ -186,6 +191,7 @@ p: Process the data
 e: Export the isotope ratios
 l: Import/export a session log
 o: Options
+R: Refresh
 x: Exit
 ?: Help
 x
