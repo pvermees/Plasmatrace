@@ -155,7 +155,6 @@ end
 function iCaptest(verbatim=true)
     myrun = load("data/iCap",instrument="ThermoFisher")
     if verbatim summarise(myrun) end
-    return myrun
 end
 
 function TUItest()

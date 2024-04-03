@@ -10,7 +10,7 @@ function getChannels(run::Vector{Sample})
     return getChannels(run[1])
 end
 function getChannels(samp::Sample)
-    return names(samp.dat)[3:end]
+    return names(getDat(samp))
 end
 export getChannels
 

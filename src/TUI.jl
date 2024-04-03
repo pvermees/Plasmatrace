@@ -9,7 +9,14 @@ function PT(logbook="")
         "den" => nothing,
         "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
         "mf" => 1,
-        "head2name" => true
+        "head2name" => true,
+        "refresher" => Dict(
+            "dname" => "",
+            "prefixes" => AbstractString[],
+            "refmats" => AbstractString[],
+            "PAoption" => 0,
+            "PAcutoff" => ""
+        )
     )
     if logbook != ""
         TUIimportLog!(ctrl,logbook)
@@ -85,10 +92,12 @@ function tree(ctrl::AbstractDict)
             "e: Export the isotope ratios\n"*
             "l: Import/export a session log\n"*
             "o: Options\n"*
+            "R: Refresh\n"*
             "x: Exit\n"*
             "?: Help",
             help = "This is the top-level menu. Asterisks (*) "*
-            "mark compulsory steps.",
+            "mark compulsory steps. Refresh reloads the data directory "*
+            "and only works if the asterisks are gone.",
             action = Dict(
                 "r" => "instrument",
                 "m" => "method",
@@ -98,7 +107,8 @@ function tree(ctrl::AbstractDict)
                 "p" => TUIprocess!,
                 "e" => "export",
                 "l" => "log",
-                "o" => "options"
+                "o" => "options",
+                "R" => TUIrefresh!
             )
         ),
         "instrument" => (
@@ -639,6 +649,7 @@ function TUIload!(ctrl::AbstractDict,response::AbstractString)
                        head2name=ctrl["head2name"])
     ctrl["PAselection"] = collect(1:length(ctrl["run"]))
     ctrl["priority"]["load"] = false
+    ctrl["refresher"]["dname"] = response
     return "xx"
 end
 
@@ -708,6 +719,12 @@ function TUIaddStandardsByPrefix!(ctrl::AbstractDict,
                                   response::AbstractString)
     snames = getSnames(ctrl["run"][ctrl["PAselection"]])
     ctrl["selection"] = findall(contains(response),snames)
+    if response in ctrl["refresher"]["prefixes"] # overwrite
+        ctrl["refresher"]["prefixes"] = [response]
+        ctrl["refresher"]["refmats"] = AbstractString[]
+    else # append
+        push!(ctrl["refresher"]["prefixes"],response)
+    end
     return "refmat"
 end
 
@@ -726,6 +743,8 @@ end
 
 function TUIresetStandards!(ctrl::AbstractDict)
     setStandards!(ctrl["run"],"sample")
+    ctrl["refresher"]["prefixes"] = AbstractString[]
+    ctrl["refresher"]["refmats"] = AbstractString[]
     return "x"
 end
 
@@ -755,6 +774,11 @@ function TUIsetStandards!(ctrl::AbstractDict,response::AbstractString)
     setStandards!(ctrl["run"][ctrl["PAselection"]],
                   ctrl["selection"],standards[i])
     ctrl["priority"]["standards"] = false
+    nr = length(ctrl["refresher"]["refmats"])
+    np = length(ctrl["refresher"]["prefixes"])
+    if nr < np
+        push!(ctrl["refresher"]["refmats"],standards[i])
+    end
     return "xxx"
 end
 
@@ -996,6 +1020,8 @@ function TUIpulse!(ctrl::AbstractDict,response::AbstractString)
     cutoff = parse(Float64,response)
     analog = PAselect(ctrl["run"],channels=ctrl["channels"],cutoff=cutoff)
     ctrl["PAselection"] = collect(1:length(ctrl["run"]))[.!analog]
+    ctrl["refresher"]["PAoption"] = 1
+    ctrl["refresher"]["PAcutoff"] = response
     return "x"
 end
 
@@ -1003,11 +1029,15 @@ function TUIanalog!(ctrl::AbstractDict,response::AbstractString)
     cutoff = parse(Float64,response)
     analog = PAselect(ctrl["run"],channels=ctrl["channels"],cutoff=cutoff)
     ctrl["PAselection"] = collect(1:length(ctrl["run"]))[analog]
+    ctrl["refresher"]["PAoption"] = 2
+    ctrl["refresher"]["PAcutoff"] = response
     return "x"
 end
 
 function TUIPAclear!(ctrl::AbstractDict)
     ctrl["PAselection"] = collect(1:length(ctrl["run"]))
+    ctrl["refresher"]["PAoption"] = 0
+    ctrl["refresher"]["PAcutoff"] = ""
     return "x"
 end
 
@@ -1071,4 +1101,24 @@ function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
     fname = splitext(response)[1]*".json"
     export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
     return "xxx"
+end
+
+function TUIrefresh!(ctrl::AbstractDict)
+    R = ctrl["refresher"]
+    TUIload!(ctrl,R["dname"])
+    snames = getSnames(ctrl["run"][ctrl["PAselection"]])
+    for i in eachindex(R["prefixes"])
+        ctrl["selection"] = findall(contains(R["prefixes"][i]),snames)
+        setStandards!(ctrl["run"][ctrl["PAselection"]],
+                      ctrl["selection"],R["refmats"][i])
+    end
+    if R["PAoption"]==0
+        TUIPAclear!(ctrl)
+    elseif R["PAoption"]==1
+        TUIpulse!(ctrl,R["PAcutoff"])
+    elseif R["PAoption"]==2
+        TUIanalog!(ctrl,R["PAcutoff"])
+    end
+    TUIprocess!(ctrl)
+    return nothing
 end
