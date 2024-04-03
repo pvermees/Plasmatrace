@@ -7,7 +7,6 @@ function load(dname::AbstractString;
     ext = getExt(instrument)
     maxT = 0.0
     for fname in fnames
-        println(fname)
         if occursin(ext,fname)
             try
                 pname = joinpath(dname,fname)
@@ -65,7 +64,7 @@ function readAgilent(fname::AbstractString,
     lines = readlines(f)
     close(f)
     snamestring = head2name ? lines[1] : fname
-    sname = split(snamestring,r"[\\/]")[end]
+    sname = split(snamestring,r"[\\/.]")[end-1]
     datetimeline = lines[3]
     from = findfirst(":",datetimeline)[1]+2
     to = findfirst("using",datetimeline)[1]-2
@@ -83,7 +82,7 @@ function readThermoFisher(fname::AbstractString,
     lines = readlines(f)
     close(f)
     snamestring = head2name ? split(lines[1],":")[1] : fname
-    sname = split(snamestring,r"[\\/]")[end]
+    sname = split(snamestring,r"[\\/.]")[end-1]
     datetimeline = lines[1]
     from = findfirst(":",datetimeline)[1]+1
     to = findfirst(";",datetimeline)[1]-1

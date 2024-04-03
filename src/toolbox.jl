@@ -106,20 +106,12 @@ function autoWindow(signals::AbstractDataFrame;blank=false)
     total = sum.(eachrow(signals))
     q = Statistics.quantile(total,[0.05,0.95])
     mid = (q[2]+q[1])/20
-    low = total.<mid
-    blk = findall(low)
-    sig = findall(.!low)
-    if blank
-        min = minimum(blk)
-        max = maximum(blk)
-        from = floor(Int,min)
-        to = floor(Int,(19*max+min)/20)
-    else
-        min = minimum(sig)
-        max = maximum(sig)
-        from = ceil(Int,(9*min+max)/10)
-        to = ceil(Int,max)
-    end
+    (lovals,lens) = rle(total.<mid)
+    i = blank ? findfirst(lovals) : findfirst(.!lovals)
+    min = i>1 ? sum(lens[1:i-1]) : 1
+    max = sum(lens[1:i])
+    from = ceil(Int,min+(max-min)/10)
+    to = floor(Int,min+(max-min)*9/10)
     return [(from,to)]
 end
 function autoWindow(samp::Sample;blank=false)
@@ -238,4 +230,30 @@ function automatic_datetime(datetime_string::AbstractString)
         datetime += Dates.Year(2000)
     end
     return datetime
+end
+
+# lifted from StatsBase.jl
+function rle(v::AbstractVector{T}) where T
+    n = length(v)
+    vals = T[]
+    lens = Int[]
+    n>0 || return (vals,lens)
+    cv = v[1]
+    cl = 1
+    i = 2
+    @inbounds while i <= n
+        vi = v[i]
+        if isequal(vi, cv)
+            cl += 1
+        else
+            push!(vals, cv)
+            push!(lens, cl)
+            cv = vi
+            cl = 1
+        end
+        i += 1
+    end
+    push!(vals, cv)
+    push!(lens, cl)
+    return (vals, lens)
 end
