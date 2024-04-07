@@ -401,7 +401,7 @@ function tree(ctrl::AbstractDict)
             "p: Subset the data by P/A cutoff\n"*
             "l: List the available reference materials\n"*
             "r: Define new reference materials\n"*
-            "n: Guess samples names from file names\n"*
+            "n: Guess sample names from file names\n"*
             "x: Exit\n"*
             "?: Help",
             help =
@@ -538,7 +538,7 @@ function tree(ctrl::AbstractDict)
             "registered in the headers of the input files. However, "*
             "occasionally, the headers contain generic names (e.g., "*
             "spot01, spot02, ...) and the spot name must be inferred "*
-            "from the file name (e.g. /path/to/data/Plesovice-01)",
+            "from the file name (e.g. /path/to/data/Plesovice-01.csv)",
             action = TUIhead2name!
         ),
         "export" => (
