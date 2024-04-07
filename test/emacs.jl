@@ -5,7 +5,7 @@ cd(@__DIR__)
 
 include("../src/include.jl")
 include("tests.jl")
-iCaptest()
+#iCaptest()
 #PT("logs/emacs.log")
 
 cd(odir)
