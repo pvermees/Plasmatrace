@@ -1080,15 +1080,6 @@ function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
     return "xxx"
 end
 
-function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"],channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"],
-                    PAcutoff=ctrl["PAcutoff"])
-    fname = splitext(response)[1]*".json"
-    export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
-    return "xxx"
-end
-
 function TUIrefresh!(ctrl::AbstractDict)
     R = ctrl["refresher"]
     TUIload!(ctrl,R["dname"])
