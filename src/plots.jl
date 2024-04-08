@@ -15,7 +15,7 @@ function plot(samp::Sample,channels::Vector{String};
     meas = samp.dat[:,channels]
     y = (isnothing(num) && isnothing(den)) ? meas : formRatios(meas,num,den)
     ty = (transformation=="") ? y : eval(Symbol(transformation)).(y)
-    ratsig = den=="" ? "signal" : "ratio"
+    ratsig = isnothing(den) ? "signal" : "ratio"
     ylab = transformation=="" ? ratsig : transformation*"("*ratsig*")"
     p = Plots.plot(x,Matrix(ty),seriestype=seriestype,
                    ms=ms,ma=ma,label=permutedims(names(y)),

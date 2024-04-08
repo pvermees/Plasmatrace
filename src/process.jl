@@ -61,16 +61,17 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
 
         out = Pars(drift,down,mfrac)
     else
-        out = Pars[]
+        out = Array{Pars}(undef,2)
         analog = isAnalog(run,channels=channels,cutoff=PAcutoff)
-        push!(out,fractionation(run[analog],
-                                blank=blank,channels=channels,
-                                anchors=anchors,nf=nf,nF=nF,mf=mf,
-                                verbose=verbose))
-        push!(out,fractionation(run[.!analog],
-                                blank=blank,channels=channels,
-                                anchors=anchors,nf=nf,nF=nF,mf=mf,
-                                verbose=verbose))
+        out[1] = fractionation(run[analog],
+                               blank=blank,channels=channels,
+                               anchors=anchors,nf=nf,nF=nF,mf=mf,
+                               verbose=verbose)
+        
+        out[2] = fractionation(run[.!analog],
+                               blank=blank,channels=channels,
+                               anchors=anchors,nf=nf,nF=nF,mf=mf,
+                               verbose=verbose)
     end
     return out
 end

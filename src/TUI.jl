@@ -407,7 +407,7 @@ function tree(ctrl::AbstractDict)
             "p: Subset the data by P/A cutoff\n"*
             "l: List the available reference materials\n"*
             "r: Define new reference materials\n"*
-            "n: Guess sample names from file names\n"*
+            "n: Configure the file name reader\n"*
             "x: Exit\n"*
             "?: Help",
             help =
@@ -837,7 +837,20 @@ function TUIplotter(ctrl::AbstractDict)
         plotFitted!(p,samp,par,ctrl["blank"],ctrl["channels"],
                     ctrl["anchors"],den=ctrl["den"])
     end
+    if !isnothing(ctrl["PAcutoff"])
+        addPAline!(p,ctrl["PAcutoff"])
+    end
     display(p)
+end
+
+function addPAline!(p,cutoff::AbstractFloat)
+    ylim = Plots.ylims(p)
+    if  sqrt(cutoff) < 1.1*ylim[2]
+        Plots.plot!(p,collect(Plots.xlims(p)),
+                    fill(sqrt(cutoff),2),
+                    seriestype=:line,label="",
+                    linewidth=2,linestyle=:dash)
+    end
 end
 
 function TUIratioMessage(ctrl::AbstractDict)
@@ -1019,12 +1032,12 @@ end
 function TUIsetPAcutoff!(ctrl::AbstractDict,response::AbstractString)
     cutoff = tryparse(Float64,response)
     ctrl["PAcutoff"] = cutoff
-    return "x"
+    return "xx"
 end
 
 function TUIclearPAcutoff!(ctrl::AbstractDict)
     ctrl["PAcutoff"] = nothing
-    return "x"
+    return "xx"
 end
 
 function TUIaddRefMat!(ctrl::AbstractDict,response::AbstractString)
