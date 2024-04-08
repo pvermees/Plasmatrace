@@ -818,8 +818,7 @@ function TUIgoto!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIplotter(ctrl::AbstractDict)
-    i = ctrl["i"]
-    samp = ctrl["run"][i]
+    samp = ctrl["run"][ctrl["i"]]
     if haskey(ctrl,"channels")
         channels = ctrl["channels"]
     else
@@ -832,7 +831,7 @@ function TUIplotter(ctrl::AbstractDict)
         else
             analog = isAnalog(samp,channels=ctrl["channels"],
                               cutoff=ctrl["PAcutoff"])
-            j = analog ? 2 : 1
+            j = analog ? 1 : 2
             par = ctrl["par"][j]
         end
         plotFitted!(p,samp,par,ctrl["blank"],ctrl["channels"],
@@ -1077,6 +1076,15 @@ function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
                     PAcutoff=ctrl["PAcutoff"])
     fname = splitext(response)[1]*".csv"
     CSV.write(fname,ratios[ctrl["selection"],:])
+    return "xxx"
+end
+
+function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
+    ratios = averat(ctrl["run"],channels=ctrl["channels"],
+                    pars=ctrl["par"],blank=ctrl["blank"],
+                    PAcutoff=ctrl["PAcutoff"])
+    fname = splitext(response)[1]*".json"
+    export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
     return "xxx"
 end
 

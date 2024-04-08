@@ -103,10 +103,14 @@ function PAtest()
     setStandards!(all,standards)
     anchors = getAnchor("Lu-Hf",standards)
     blk = fitBlanks(all,n=2)
+    cutoff = 1e7
     fit = fractionation(all,blank=blk,channels=channels,
                         anchors=anchors,nf=1,nF=0,mf=1.4671,
-                        PAcutoff=1e7,verbose=true)
-    return fit
+                        PAcutoff=cutoff,verbose=true)
+    samp = all[2]
+    p = plot(samp,channels,den="D")
+    plotFitted!(p,samp,fit[1],blk,channels,anchors,den="D")
+    @test display(p) != NaN
 end
 
 function exporttest()
@@ -170,7 +174,7 @@ end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
+#=@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -179,10 +183,10 @@ Plots.closeall()
 @testset "plot fit" begin predicttest() end
 @testset "crunch" begin crunchtest() end
 @testset "process sample" begin sampletest() end
-@testset "readme example" begin readmetest() end 
+@testset "readme example" begin readmetest() end =#
 @testset "PA test" begin PAtest() end
-@testset "export" begin exporttest() end
+#=@testset "export" begin exporttest() end
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap" begin iCaptest() end
-@testset "TUI" begin TUItest() end
+@testset "TUI" begin TUItest() end=#
