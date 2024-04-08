@@ -8,6 +8,11 @@ columns,"15,17,18"
 iratio,3
 top,s
 standards,p
-addStandardsByPrefix,BP
-refmat,2
+addStandardsByPrefix,hogsbo
+refmat,1
+top,o
+options,p
+PA,a
+setPAcutoff,1e7
+options,x
 top,p

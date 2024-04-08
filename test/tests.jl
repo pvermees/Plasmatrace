@@ -99,8 +99,18 @@ function PAtest()
     channels = Dict("d"=>"Hf178 -> 260",
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
-    analog = PAselect(all,channels=channels,cutoff=1e7)
-    blk = fitBlanks(all[analog],n=2)
+    standards = Dict("Hogsbo" => "hogsbo")
+    setStandards!(all,standards)
+    anchors = getAnchor("Lu-Hf",standards)
+    blk = fitBlanks(all,n=2)
+    cutoff = 1e7
+    fit = fractionation(all,blank=blk,channels=channels,
+                        anchors=anchors,nf=1,nF=0,mf=1.4671,
+                        PAcutoff=cutoff,verbose=true)
+    samp = all[2]
+    p = plot(samp,channels)#,den="D")
+    plotFitted!(p,samp,fit[1],blk,channels,anchors)#,den="D")
+    @test display(p) != NaN
 end
 
 function exporttest()
@@ -150,6 +160,7 @@ function UPbtest()
     selection = subset(ratios,"GJ1")
     export2IsoplotR("GJ1.json",selection,"U-Pb")
     return ratios
+    
 end
 
 function iCaptest(verbatim=true)
@@ -172,7 +183,7 @@ Plots.closeall()
 @testset "plot fit" begin predicttest() end
 @testset "crunch" begin crunchtest() end
 @testset "process sample" begin sampletest() end
-@testset "readme example" begin readmetest() end 
+@testset "readme example" begin readmetest() end
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
 @testset "Rb-Sr" begin RbSrtest() end

@@ -12,54 +12,68 @@ export fitBlanks
 
 function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
                        channels::AbstractDict,anchors::AbstractDict,
-                       nf=1,nF=0,mf=nothing,verbose=false)
+                       nf=1,nF=0,mf=nothing,PAcutoff=nothing,verbose=false)
 
-    if nf<1 PTerror("nfzero") end
+    if isnothing(PAcutoff)
+        if nf<1 PTerror("nfzero") end
 
-    dats = Dict()
-    for (refmat,anchor) in anchors
-        dats[refmat] = pool(run,signal=true,group=refmat)
-    end
-
-    bD = blank[:,channels["D"]]
-    bd = blank[:,channels["d"]]
-    bP = blank[:,channels["P"]]
-    
-    function misfit(par)
-        drift = par[1:nf]
-        down = vcat(0.0,par[nf+1:nf+nF])
-        mfrac = isnothing(mf) ? par[end] : log(mf)
-        out = 0.0
-        for (refmat,dat) in dats
-            t = dat.t
-            T = dat.T
-            Pm = dat[:,channels["P"]]
-            Dm = dat[:,channels["D"]]
-            dm = dat[:,channels["d"]]
-            (x0,y0,y1) = anchors[refmat]
-            out += SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
+        dats = Dict()
+        for (refmat,anchor) in anchors
+            dats[refmat] = pool(run,signal=true,group=refmat)
         end
-        return out
-    end
 
-    init = fill(0.0,nf)
-    if (nF>0) init = vcat(init,fill(0.0,nF)) end
-    if isnothing(mf) init = vcat(init,0.0) end
+        bD = blank[:,channels["D"]]
+        bd = blank[:,channels["d"]]
+        bP = blank[:,channels["P"]]
+        
+        function misfit(par)
+            drift = par[1:nf]
+            down = vcat(0.0,par[nf+1:nf+nF])
+            mfrac = isnothing(mf) ? par[end] : log(mf)
+            out = 0.0
+            for (refmat,dat) in dats
+                t = dat.t
+                T = dat.T
+                Pm = dat[:,channels["P"]]
+                Dm = dat[:,channels["D"]]
+                dm = dat[:,channels["d"]]
+                (x0,y0,y1) = anchors[refmat]
+                out += SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
+            end
+            return out
+        end
 
-    if length(init)>0
-        fit = Optim.optimize(misfit,init)
-        if verbose println(fit) end
-        pars = Optim.minimizer(fit)
+        init = fill(0.0,nf)
+        if (nF>0) init = vcat(init,fill(0.0,nF)) end
+        if isnothing(mf) init = vcat(init,0.0) end
+
+        if length(init)>0
+            fit = Optim.optimize(misfit,init)
+            if verbose println(fit) end
+            pars = Optim.minimizer(fit)
+        else
+            pars = 0.0
+        end
+        drift = pars[1:nf]
+        down = vcat(0.0,pars[nf+1:nf+nF])
+
+        mfrac = isnothing(mf) ? pars[end] : log(mf)
+
+        out = Pars(drift,down,mfrac)
     else
-        pars = 0.0
+        out = Array{Pars}(undef,2)
+        analog = isAnalog(run,channels=channels,cutoff=PAcutoff)
+        out[1] = fractionation(run[analog],
+                               blank=blank,channels=channels,
+                               anchors=anchors,nf=nf,nF=nF,mf=mf,
+                               verbose=verbose)
+        
+        out[2] = fractionation(run[.!analog],
+                               blank=blank,channels=channels,
+                               anchors=anchors,nf=nf,nF=nF,mf=mf,
+                               verbose=verbose)
     end
-    drift = pars[1:nf]
-    down = vcat(0.0,pars[nf+1:nf+nF])
-
-    mfrac = isnothing(mf) ? pars[end] : log(mf)
-
-    return Pars(drift,down,mfrac)
-    
+    return out
 end
 export fractionation
 
@@ -103,14 +117,24 @@ function averat(samp::Sample;
     return [x sx y sy rxy]
 end
 function averat(run::Vector{Sample};
-                channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+                channels::AbstractDict,
+                pars::Union{Pars,AbstractVector},
+                blank::AbstractDataFrame,
+                PAcutoff=nothing)
     ns = length(run)
     out = DataFrame(name=fill("",ns),x=fill(0.0,ns),sx=fill(0.0,ns),
                     y=fill(0.0,ns),sy=fill(0.0,ns),rxy=fill(0.0,ns))
+    analog = isAnalog(run,channels=channels,cutoff=PAcutoff)
     for i in 1:ns
         out[i,1] = run[i].sname
-        out[i,2:end] = averat(run[i],channels=channels,
-                              pars=pars,blank=blank)
+        if isa(pars,Pars)
+            out[i,2:end] = averat(run[i],channels=channels,
+                                  pars=pars,blank=blank)
+        else
+            j = analog ? 1 : 2
+            out[i,2:end] = averat(run[i],channels=channels,
+                                  pars=pars[j],blank=blank)
+        end
     end
     return out
 end
