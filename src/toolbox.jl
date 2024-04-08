@@ -194,16 +194,23 @@ function subset(ratios::AbstractDataFrame,
 end
 export subset
 
-function PAselect(run::Vector{Sample};channels::AbstractDict,cutoff::AbstractFloat)
+function isAnalog(samp::Sample;channels::AbstractDict,cutoff=nothing)
+    out = true
+    if !isnothing(cutoff)
+        dat = getDat(samp,channels)
+        out = true in Matrix(dat .> cutoff)
+    end
+    return out
+end
+function isAnalog(run::Vector{Sample};channels::AbstractDict,cutoff=nothing)
     ns = length(run)
-    A = fill(false,ns)
+    A = fill(true,ns)
     for i in eachindex(A)
-        dat = getDat(run[i],channels)
-        A[i] = (false in Matrix(dat .< cutoff))
+        A[i] = isAnalog(run[i],channels=channels,cutoff=cutoff)
     end
     return A
 end
-export PAselect
+export isAnalog
 
 function automatic_datetime(datetime_string::AbstractString)
     if occursin(r"-", datetime_string) == true

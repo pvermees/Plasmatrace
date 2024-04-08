@@ -8,14 +8,20 @@ function PT(logbook="")
         "i" => 1,
         "den" => nothing,
         "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
-        "mf" => 1,
+        "mf" => 1.0,
         "head2name" => true,
+        "PAcutoff" => nothing,
+        "par" => Pars[],
+        "anchors" => NamedTuple(),
+        "blank" => DataFrame(),
+        "instrument" => "",
+        "method" => "",
+        "channels" => Dict(),
+        "selection" => Int[],
         "refresher" => Dict(
             "dname" => "",
             "prefixes" => AbstractString[],
-            "refmats" => AbstractString[],
-            "PAoption" => 0,
-            "PAcutoff" => ""
+            "refmats" => AbstractString[]
         )
     )
     if logbook != ""
@@ -413,7 +419,7 @@ function tree(ctrl::AbstractDict)
                 "d" => "setNdrift",
                 "h" => "setNdown",
                 "f" => "setmf",
-                "p" => "setPAcutoff",
+                "p" => "PA",
                 "l" => TUIRefMatTab,
                 "r" => "addRefMat",
                 "n" => "head2name"
@@ -468,11 +474,10 @@ function tree(ctrl::AbstractDict)
             "ratio if the non-radiogenic isotope is measured by proxy",
             action = TUIsetmf!
         ),
-        "setPAcutoff" => (
+        "PA" => (
             message =
             "l: List the maximum signal strength for each file\n"*
-            "p: Select samples measured in pulse mode\n"*
-            "a: Select samples measured in analog mode\n"*
+            "a: Add a pulse/analog cutoff\n"*
             "r: Remove the pulse/analog cutoff\n"*
             "x: Exit\n"*
             "?: Help",
@@ -486,30 +491,20 @@ function tree(ctrl::AbstractDict)
             "and standards according to them.",
             action = Dict(
                 "l" => TUIPAlist,
-                "p" => "pulse",
-                "a" => "analog",
-                "r" => TUIPAclear!
+                "a" => "setPAcutoff",
+                "r" => TUIclearPAcutoff!
             )
         ),
-        "pulse" => (
+        "setPAcutoff" => (
             message =
-            "Enter the maximum signal strength in cps "*
+            "Enter the cutoff between pulse and analog mode in cps "*
             "(? for help, x to exit):",
             help =
-            "After entering this value, only samples below the "*
-            "cutoff will be retained for analysis. All other "*
-            "samples will be ignored.",
-            action = TUIpulse!
-        ),
-        "analog" => (
-            message =
-            "Enter the minimum signal strength in cps "*
-            "(? for help, x to exit):",
-            help =
-            "After entering this value, only samples above the "*
-            "cutoff will be retained for analysis. All other "*
-            "samples will be ignored.",
-            action = TUIanalog!
+            "After entering this value, samples and standards will be "*
+            "split into two groups, corresponding to pulse mode (maximum "*
+            "signal below the cutoff) and analog mode (maximum signal "*
+            "above the cutoff).",
+            action = TUIsetPAcutoff!
         ),
         "addRefMat" => (
             message =
@@ -647,7 +642,6 @@ function TUIload!(ctrl::AbstractDict,response::AbstractString)
     ctrl["run"] = load(response,
                        instrument=ctrl["instrument"],
                        head2name=ctrl["head2name"])
-    ctrl["PAselection"] = collect(1:length(ctrl["run"]))
     ctrl["priority"]["load"] = false
     ctrl["refresher"]["dname"] = response
     return "xx"
@@ -711,13 +705,13 @@ function TUIiratio!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUItabulate(ctrl::AbstractDict)
-    summary_table = summarise(ctrl["run"][ctrl["PAselection"]])
+    summary_table = summarise(ctrl["run"])
     println(summary_table)
 end
 
 function TUIaddStandardsByPrefix!(ctrl::AbstractDict,
                                   response::AbstractString)
-    snames = getSnames(ctrl["run"][ctrl["PAselection"]])
+    snames = getSnames(ctrl["run"])
     ctrl["selection"] = findall(contains(response),snames)
     if response in ctrl["refresher"]["prefixes"] # overwrite
         ctrl["refresher"]["prefixes"] = [response]
@@ -737,7 +731,7 @@ end
 function TUIremoveStandardsByNumber!(ctrl::AbstractDict,
                                      response::AbstractString)
     selection = parse.(Int,split(response,","))
-    resetStandards!(ctrl["run"][ctrl["PAselection"]],selection)
+    resetStandards!(ctrl["run"],selection)
     return "x"
 end
 
@@ -771,8 +765,7 @@ end
 function TUIsetStandards!(ctrl::AbstractDict,response::AbstractString)
     standards = collect(keys(_PT["refmat"][ctrl["method"]]))
     i = parse(Int,response)
-    setStandards!(ctrl["run"][ctrl["PAselection"]],
-                  ctrl["selection"],standards[i])
+    setStandards!(ctrl["run"],ctrl["selection"],standards[i])
     ctrl["priority"]["standards"] = false
     nr = length(ctrl["refresher"]["refmats"])
     np = length(ctrl["refresher"]["prefixes"])
@@ -789,37 +782,37 @@ end
 
 function TUIprocess!(ctrl::AbstractDict)
     println("Fitting blanks...")
-    ctrl["blank"] = fitBlanks(ctrl["run"][ctrl["PAselection"]],
-                              n=ctrl["options"]["blank"])
-    groups = unique(getGroups(ctrl["run"][ctrl["PAselection"]]))
+    ctrl["blank"] = fitBlanks(ctrl["run"],n=ctrl["options"]["blank"])
+    groups = unique(getGroups(ctrl["run"]))
     stds = groups[groups.!="sample"]
     ctrl["anchors"] = getAnchor(ctrl["method"],stds)
     println("Fractionation correction...")
-    ctrl["par"] = fractionation(ctrl["run"][ctrl["PAselection"]],
+    ctrl["par"] = fractionation(ctrl["run"],
                                 blank=ctrl["blank"],
                                 channels=ctrl["channels"],
                                 anchors=ctrl["anchors"],
-                                mf=ctrl["mf"])
+                                mf=ctrl["mf"],
+                                PAcutoff=ctrl["PAcutoff"])
     ctrl["priority"]["process"] = false
     println("Done")
 end
 
 function TUInext!(ctrl::AbstractDict)
     ctrl["i"] += 1
-    if ctrl["i"]>length(ctrl["run"][ctrl["PAselection"]]) ctrl["i"] = 1 end
+    if ctrl["i"]>length(ctrl["run"]) ctrl["i"] = 1 end
     TUIplotter(ctrl)
 end
 
 function TUIprevious!(ctrl::AbstractDict)
     ctrl["i"] -= 1
-    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"][ctrl["PAselection"]]) end
+    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
     TUIplotter(ctrl)
 end
 
 function TUIgoto!(ctrl::AbstractDict,response::AbstractString)
     ctrl["i"] = parse(Int,response)
-    if ctrl["i"]>length(ctrl["run"][ctrl["PAselection"]]) ctrl["i"] = 1 end
-    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"][ctrl["PAselection"]]) end
+    if ctrl["i"]>length(ctrl["run"]) ctrl["i"] = 1 end
+    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
     TUIplotter(ctrl)
     return "x"
 end
@@ -834,8 +827,16 @@ function TUIplotter(ctrl::AbstractDict)
     end
     p = plot(samp,channels,den=ctrl["den"])
     if samp.group!="sample"
-        plotFitted!(p,samp,ctrl["par"],ctrl["blank"],
-                    ctrl["channels"],ctrl["anchors"],den=ctrl["den"])
+        if isnothing(ctrl["PAcutoff"])
+            par = ctrl["par"]
+        else
+            analog = isAnalog(samp,channels=ctrl["channels"],
+                              cutoff=ctrl["PAcutoff"])
+            j = analog ? 2 : 1
+            par = ctrl["par"][j]
+        end
+        plotFitted!(p,samp,par,ctrl["blank"],ctrl["channels"],
+                    ctrl["anchors"],den=ctrl["den"])
     end
     display(p)
 end
@@ -874,13 +875,13 @@ function TUIratios!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIoneAutoBlankWindow!(ctrl::AbstractDict)
-    setBwin!(ctrl["run"][ctrl["PAselection"]][ctrl["i"]])
+    setBwin!(ctrl["run"][ctrl["i"]])
     TUIplotter(ctrl)
 end
 
 function TUIoneSingleBlankWindow!(ctrl::AbstractDict,
                                   response::AbstractString)
-    samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
+    samp = ctrl["run"][ctrl["i"]]
     bwin = string2windows(samp,text=response,single=true)
     setBwin!(samp,bwin)
     TUIplotter(ctrl)
@@ -889,7 +890,7 @@ end
 
 function TUIoneMultiBlankWindow!(ctrl::AbstractDict,
                                  response::AbstractString)
-    samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
+    samp = ctrl["run"][ctrl["i"]]
     bwin = string2windows(samp,text=response,single=false)
     setBwin!(samp,bwin)
     TUIplotter(ctrl)
@@ -924,13 +925,13 @@ function TUIallMultiBlankWindow!(ctrl::AbstractDict,
 end
 
 function TUIoneAutoSignalWindow!(ctrl::AbstractDict)
-    setSwin!(ctrl["run"][ctrl["PAselection"]][ctrl["i"]])
+    setSwin!(ctrl["run"][ctrl["i"]])
     TUIplotter(ctrl)
 end
 
 function TUIoneSingleSignalWindow!(ctrl::AbstractDict,
                                    response::AbstractString)
-    samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
+    samp = ctrl["run"][ctrl["i"]]
     swin = string2windows(samp,text=response,single=true)
     setSwin!(samp,swin)
     TUIplotter(ctrl)
@@ -939,7 +940,7 @@ end
 
 function TUIoneMultiSignalWindow!(ctrl::AbstractDict,
                                   response::AbstractString)
-    samp = ctrl["run"][ctrl["PAselection"]][ctrl["i"]]
+    samp = ctrl["run"][ctrl["i"]]
     swin = string2windows(samp,text=response,single=false)
     setSwin!(samp,swin)
     TUIplotter(ctrl)
@@ -1016,28 +1017,14 @@ function TUIPAlist(ctrl::AbstractDict)
     return "x"
 end
 
-function TUIpulse!(ctrl::AbstractDict,response::AbstractString)
-    cutoff = parse(Float64,response)
-    analog = PAselect(ctrl["run"],channels=ctrl["channels"],cutoff=cutoff)
-    ctrl["PAselection"] = collect(1:length(ctrl["run"]))[.!analog]
-    ctrl["refresher"]["PAoption"] = 1
-    ctrl["refresher"]["PAcutoff"] = response
+function TUIsetPAcutoff!(ctrl::AbstractDict,response::AbstractString)
+    cutoff = tryparse(Float64,response)
+    ctrl["PAcutoff"] = cutoff
     return "x"
 end
 
-function TUIanalog!(ctrl::AbstractDict,response::AbstractString)
-    cutoff = parse(Float64,response)
-    analog = PAselect(ctrl["run"],channels=ctrl["channels"],cutoff=cutoff)
-    ctrl["PAselection"] = collect(1:length(ctrl["run"]))[analog]
-    ctrl["refresher"]["PAoption"] = 2
-    ctrl["refresher"]["PAcutoff"] = response
-    return "x"
-end
-
-function TUIPAclear!(ctrl::AbstractDict)
-    ctrl["PAselection"] = collect(1:length(ctrl["run"]))
-    ctrl["refresher"]["PAoption"] = 0
-    ctrl["refresher"]["PAcutoff"] = ""
+function TUIclearPAcutoff!(ctrl::AbstractDict)
+    ctrl["PAcutoff"] = nothing
     return "x"
 end
 
@@ -1072,32 +1059,31 @@ function TUIexportLog(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
-    run = ctrl["run"][ctrl["PAselection"]]
     if response=="a"
-        ctrl["selection"] = 1:length(run)
+        ctrl["selection"] = 1:length(ctrl["run"])
     elseif response=="s"
-        ctrl["selection"] = findall(contains("sample"),getGroups(run))
+        ctrl["selection"] = findall(contains("sample"),getGroups(ctrl["run"]))
     elseif response=="x"
         return "x"
     else
-        ctrl["selection"] = findall(contains(response),getSnames(run))
+        ctrl["selection"] = findall(contains(response),getSnames(ctrl["run"]))
     end
     return "format"
 end
 
 function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"][ctrl["PAselection"]],
-                    channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"])
+    ratios = averat(ctrl["run"],channels=ctrl["channels"],
+                    pars=ctrl["par"],blank=ctrl["blank"],
+                    PAcutoff=ctrl["PAcutoff"])
     fname = splitext(response)[1]*".csv"
     CSV.write(fname,ratios[ctrl["selection"],:])
     return "xxx"
 end
 
 function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"][ctrl["PAselection"]],
-                    channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"])
+    ratios = averat(ctrl["run"],channels=ctrl["channels"],
+                    pars=ctrl["par"],blank=ctrl["blank"],
+                    PAcutoff=ctrl["PAcutoff"])
     fname = splitext(response)[1]*".json"
     export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
     return "xxx"
@@ -1106,18 +1092,10 @@ end
 function TUIrefresh!(ctrl::AbstractDict)
     R = ctrl["refresher"]
     TUIload!(ctrl,R["dname"])
-    snames = getSnames(ctrl["run"][ctrl["PAselection"]])
+    snames = getSnames(ctrl["run"])
     for i in eachindex(R["prefixes"])
         ctrl["selection"] = findall(contains(R["prefixes"][i]),snames)
-        setStandards!(ctrl["run"][ctrl["PAselection"]],
-                      ctrl["selection"],R["refmats"][i])
-    end
-    if R["PAoption"]==0
-        TUIPAclear!(ctrl)
-    elseif R["PAoption"]==1
-        TUIpulse!(ctrl,R["PAcutoff"])
-    elseif R["PAoption"]==2
-        TUIanalog!(ctrl,R["PAcutoff"])
+        setStandards!(ctrl["run"],ctrl["selection"],R["refmats"][i])
     end
     TUIprocess!(ctrl)
     return nothing
