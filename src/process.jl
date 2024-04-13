@@ -102,15 +102,21 @@ function averat(samp::Sample;
                 channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
     t, T, P, D, d = atomic(samp,channels=channels,pars=pars,blank=blank)
     nr = length(t)
-    sumP = sum(P)
-    sumD = sum(D)
-    sumd = sum(d)
-    E = Statistics.cov(hcat(P,D,d))*nr
-    x = sumP/sumD
-    y = sumd/sumD
-    J = [1/sumD -sumP/sumD^2 0;
-         0 -sumd/sumD^2 1/sumD]
-    covmat = J * E * transpose(J)
+    muP = Statistics.mean(P)
+    muD = Statistics.mean(D)
+    mud = Statistics.mean(d)
+    E = Statistics.cov(hcat(P,D,d))
+    if mud < 0.0
+        mud = 0.0
+        E[1,3] = E[3,1] = sum((P.-muP).*d)/(nr-1)
+        E[2,3] = E[3,2] = sum((D.-muD).*d)/(nr-1)
+        E[3,3] = Statistics.mean(d.^2)
+    end
+    x = muP/muD
+    y = mud/muD
+    J = [1/muD -muP/muD^2 0;
+         0 -mud/muD^2 1/muD]
+    covmat = J * (E/nr) * transpose(J)
     sx = sqrt(covmat[1,1])
     sy = sqrt(covmat[2,2])
     rxy = covmat[1,2]/(sx*sy)
