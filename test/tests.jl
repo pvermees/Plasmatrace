@@ -174,7 +174,7 @@ end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -189,4 +189,4 @@ Plots.closeall()
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap" begin iCaptest() end
-@testset "TUI" begin TUItest() end=#
+@testset "TUI" begin TUItest() end
