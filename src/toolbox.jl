@@ -286,6 +286,27 @@ function getOffset(df::AbstractDataFrame;transformation::AbstractString)
     end
     return out
 end
+function getOffset(samp::Sample,
+                   channels::AbstractDict,
+                   blank::AbstractDataFrame,
+                   pars::Pars,
+                   anchors::AbstractDict;
+                   num=nothing,den=nothing,
+                   transformation::AbstractString)
+    ions = collect(values(channels))
+    obs = windowData(samp,signal=true)[:,ions]
+    yobs = formRatios(obs,num,den)
+    pred = predict(samp,pars,blank,channels,anchors)
+    rename!(pred,channels)
+    ypred = formRatios(pred,num,den)
+    offset_obs = getOffset(obs,transformation=transformation)
+    offset_pred = getOffset(pred,transformation=transformation)
+    out = zeros(length(ions))
+    for i in eachindex(out)
+        out[i] = minimum([offset_obs[i],offset_pred[i]])
+    end
+    return out
+end
     
 function transformeer(df::AbstractDataFrame;transformation="",offset=zeros(size(df,2)))
     if transformation==""

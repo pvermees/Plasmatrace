@@ -56,7 +56,12 @@ end
 function predicttest()
     myrun, blk, fit, channels, anchors = fractionationtest()
     samp = myrun[2]
-    pred = predict(samp,fit,blk,channels,anchors)
+    if isStandard(samp)
+        pred = predict(samp,fit,blk,channels,anchors)
+    else
+        print("Not a standard")
+    end
+    return pred
 end
 
 function crunchtest()
@@ -83,9 +88,11 @@ function processtest()
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
     standards = Dict("Hogsbo" => "hogsbo_ana")
-    process!(myrun,method,channels,standards,
-             nb=2,nf=1,nF=0,mf=1.4671,
-             PAcutoff=nothing,verbose=false)
+    blk, anchors, fit = process!(myrun,method,channels,standards,
+                                 nb=2,nf=1,nF=0,mf=1.4671,
+                                 PAcutoff=nothing,verbose=false)
+    p = plot(myrun[2],channels,blk,fit,anchors)
+    @test display(p) != NaN
 end
 
 function readmetest()
