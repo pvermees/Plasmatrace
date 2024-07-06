@@ -782,7 +782,7 @@ end
 
 function TUIprocess!(ctrl::AbstractDict)
     println("Fitting blanks...")
-    ctrl["blank"] = fitBlanks(ctrl["run"],n=ctrl["options"]["blank"])
+    ctrl["blank"] = fitBlanks(ctrl["run"],nb=ctrl["options"]["blank"])
     groups = unique(getGroups(ctrl["run"]))
     stds = groups[groups.!="sample"]
     ctrl["anchors"] = getAnchor(ctrl["method"],stds)

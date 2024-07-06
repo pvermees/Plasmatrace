@@ -6,7 +6,46 @@ transformation = "sqrt", "log" or ""
 seriestype = :scatter or :path
 titlefontsize, ms, xlim, ylim = see the generic Plot.plot function
 """
-function plot(samp::Sample,channels::Vector{String};
+function plot(samp::Sample,
+              channels::AbstractDict,
+              pars::Pars,
+              blank::AbstractDataFrame,
+              anchors::AbstractDict;
+              num=nothing,den=nothing,transformation="sqrt",
+              seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto)
+    if isStandard(samp)
+        pred = predict(samp,pars,blank,channels,anchors)
+        # TODO: replace with offset version
+        plot(samp,channels,num,den,transformation,
+              seriestype=seriestype,titlefontsize=titlefontsize,
+              ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+    else
+        plot(samp,channels,num,den,transformation,
+              seriestype=seriestype,titlefontsize=titlefontsize,
+              ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+    end
+end
+function plot(samp::Sample,
+              channels::AbstractDict;
+              num=nothing,den=nothing,transformation="sqrt",
+              seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
+    D = isnothing(den) ? nothing : channels[den]
+    plot(samp,collect(values(channels)),num=num,den=D,
+         transformation=transformation,seriestype=seriestype,
+         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+end
+function plot(samp::Sample;
+              num=nothing,den=nothing,transformation="sqrt",
+              seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto)
+    plot(samp,getChannels(samp),num=num,den=den,
+         transformation=transformation,seriestype=seriestype,
+         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=lim,ylim=ylim)
+end
+function plot(samp::Sample,
+              channels::AbstractVector;
               num=nothing,den=nothing,transformation="sqrt",
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto)
@@ -35,22 +74,6 @@ function plot(samp::Sample,channels::Vector{String};
         end
     end
     return p
-end
-function plot(samp::Sample;
-              num=nothing,den=nothing,transformation="sqrt",
-              seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto)
-    plot(samp,getChannels(samp),num=num,den=den,
-         transformation=transformation,seriestype=seriestype,
-         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=lim,ylim=ylim)
-end
-function plot(samp::Sample,channels::AbstractDict;num=nothing,den=nothing,
-              transformation="sqrt",seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
-    D = isnothing(den) ? nothing : channels[den]
-    plot(samp,collect(values(channels)),num=num,den=D,
-         transformation=transformation,seriestype=seriestype,
-         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=xlim,ylim=ylim)
 end
 export plot
 

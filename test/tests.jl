@@ -8,10 +8,10 @@ function loadtest(verbatim=false)
 end
 
 function plottest()
-    mymyrun = loadtest()
-    p = plot(mymyrun[1],["Hf176 -> 258","Hf178 -> 260"])
+    myrun = loadtest()
+    p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"])
     @test display(p) != NaN
-    p = plot(mymyrun[1],["Hf176 -> 258","Hf178 -> 260"], den="Hf178 -> 260")
+    p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"], den="Hf178 -> 260")
     @test display(p) != NaN
 end
 
@@ -25,7 +25,7 @@ end
 
 function blanktest()
     myrun = loadtest()
-    blk = fitBlanks(myrun,n=2)
+    blk = fitBlanks(myrun,nb=2)
     return myrun, blk
 end
 
@@ -57,9 +57,6 @@ function predicttest()
     myrun, blk, fit, channels, anchors = fractionationtest()
     samp = myrun[2]
     pred = predict(samp,fit,blk,channels,anchors)
-    p = plot(samp,channels,den="D")
-    plotFitted!(p,samp,fit,blk,channels,anchors,den="D")
-    @test display(p) != NaN
 end
 
 function crunchtest()
@@ -79,9 +76,21 @@ function sampletest()
     return ratios
 end
 
+function processtest()
+    myrun = load("data/Lu-Hf",instrument="Agilent")
+    method = "Lu-Hf"
+    channels = Dict("d"=>"Hf178 -> 260",
+                    "D"=>"Hf176 -> 258",
+                    "P"=>"Lu175 -> 175")
+    standards = Dict("Hogsbo" => "hogsbo_ana")
+    process!(myrun,method,channels,standards,
+             nb=2,nf=1,nF=0,mf=1.4671,
+             PAcutoff=nothing,verbose=false)
+end
+
 function readmetest()
     myrun = load("data/Lu-Hf",instrument="Agilent")
-    blk = fitBlanks(myrun,n=2)
+    blk = fitBlanks(myrun,nb=2)
     standards = Dict("Hogsbo" => "hogsbo_ana")
     setStandards!(myrun,standards)
     anchors = getAnchor("Lu-Hf",standards)
@@ -102,7 +111,7 @@ function PAtest()
     standards = Dict("Hogsbo" => "hogsbo")
     setStandards!(all,standards)
     anchors = getAnchor("Lu-Hf",standards)
-    blk = fitBlanks(all,n=2)
+    blk = fitBlanks(all,nb=2)
     cutoff = 1e7
     fit = fractionation(all,blank=blk,channels=channels,
                         anchors=anchors,nf=1,nF=0,mf=1.4671,
@@ -123,7 +132,7 @@ end
 function RbSrtest()
     myrun = load("data/Rb-Sr",instrument="Agilent")
 
-    blk = fitBlanks(myrun,n=2)
+    blk = fitBlanks(myrun,nb=2)
     standards = Dict("MDC" => "MDC -")
     setStandards!(myrun,standards)
     anchors = getAnchor("Rb-Sr",standards)
@@ -145,7 +154,7 @@ function UPbtest()
     
     myrun = load("data/U-Pb",instrument="Agilent",head2name=false)
     
-    blank = fitBlanks(myrun,n=2)
+    blank = fitBlanks(myrun,nb=2)
     standards = Dict("Plesovice" => "STDCZ",
                      "91500" => "91500")
     setStandards!(myrun,standards)
@@ -155,6 +164,11 @@ function UPbtest()
     pars = fractionation(myrun,blank=blank,channels=channels,
                          anchors=anchors,nf=2,nF=2,mf=1,
                          verbose=true)
+
+    samp = myrun[29]
+    pred = predict(samp,pars,blank,channels,anchors)
+    p = plot(samp,channels,pred,den=nothing,transformation="log")
+    @test display(p) != NaN
     
     ratios = averat(myrun,channels=channels,pars=pars,blank=blank)
     selection = subset(ratios,"GJ1")
@@ -183,6 +197,7 @@ Plots.closeall()
 @testset "plot fit" begin predicttest() end
 @testset "crunch" begin crunchtest() end
 @testset "process sample" begin sampletest() end
+@testset "process run" begin processtest() end
 @testset "readme example" begin readmetest() end
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
