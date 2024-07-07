@@ -175,8 +175,7 @@ function UPbtest()
                          verbose=true)
 
     samp = myrun[29]
-    pred = predict(samp,pars,blank,channels,anchors)
-    p = plot(samp,channels,pred,den=nothing,transformation="log")
+    p = plot(samp,channels,blank,pars,anchors,den="Pb206",transformation="log")
     @test display(p) != NaN
     
     ratios = averat(myrun,channels=channels,pars=pars,blank=blank)
@@ -197,7 +196,7 @@ end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -205,12 +204,12 @@ Plots.closeall()
 @testset "fit fractionation" begin fractionationtest() end
 @testset "plot fit" begin predicttest() end
 @testset "crunch" begin crunchtest() end
-@testset "process sample" begin sampletest() end=#
+@testset "process sample" begin sampletest() end
 @testset "process run" begin processtest() end
-#=@testset "readme example" begin readmetest() end
+@testset "readme example" begin readmetest() end
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap" begin iCaptest() end
-@testset "TUI" begin TUItest() end=#
+@testset "TUI" begin TUItest() end

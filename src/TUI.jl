@@ -824,7 +824,6 @@ function TUIplotter(ctrl::AbstractDict)
     else
         channels = names(samp.dat)[3:end]
     end
-    p = plot(samp,channels,den=ctrl["den"])
     if samp.group!="sample"
         if isnothing(ctrl["PAcutoff"])
             par = ctrl["par"]
@@ -834,8 +833,9 @@ function TUIplotter(ctrl::AbstractDict)
             j = analog ? 1 : 2
             par = ctrl["par"][j]
         end
-        plotFitted!(p,samp,par,ctrl["blank"],ctrl["channels"],
-                    ctrl["anchors"],den=ctrl["den"])
+        p = plot(samp,channels,ctrl["blank"],par,ctrl["anchors"],den=ctrl["den"])
+    else
+        p = plot(samp,channels,den=ctrl["den"])
     end
     if !isnothing(ctrl["PAcutoff"])
         addPAline!(p,ctrl["PAcutoff"])
@@ -876,7 +876,7 @@ function TUIratios!(ctrl::AbstractDict,response::AbstractString)
     else
         i = parse(Int,response)
         if haskey(ctrl,"channels")
-            channels = collect(keys(ctrl["channels"]))
+            channels = collect(values(ctrl["channels"]))
         else
             channels = names(ctrl["run"][1].dat)[3:end]
         end

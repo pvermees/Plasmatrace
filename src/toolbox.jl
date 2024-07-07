@@ -299,11 +299,11 @@ function getOffset(samp::Sample,
     pred = predict(samp,pars,blank,channels,anchors)
     rename!(pred,channels)
     ypred = formRatios(pred,num,den)
-    offset_obs = getOffset(obs,transformation=transformation)
-    offset_pred = getOffset(pred,transformation=transformation)
+    offset_obs = getOffset(yobs,transformation=transformation)
+    offset_pred = getOffset(ypred,transformation=transformation)
     out = zeros(size(yobs,2))
     for i in eachindex(out)
-        out[i] = minimum([offset_obs[i],offset_pred[i]])
+        out[i] = maximum([offset_obs[i],offset_pred[i]])
     end
     return out
 end

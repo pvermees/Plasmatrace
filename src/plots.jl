@@ -112,4 +112,3 @@ function plotFitted!(p,samp::Sample,pars::Pars,blank::AbstractDataFrame,
                     linestyle=linestyle,label="")
     end
 end
-export plotFitted!
