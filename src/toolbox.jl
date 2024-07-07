@@ -301,7 +301,7 @@ function getOffset(samp::Sample,
     ypred = formRatios(pred,num,den)
     offset_obs = getOffset(obs,transformation=transformation)
     offset_pred = getOffset(pred,transformation=transformation)
-    out = zeros(length(ions))
+    out = zeros(size(yobs,2))
     for i in eachindex(out)
         out[i] = minimum([offset_obs[i],offset_pred[i]])
     end

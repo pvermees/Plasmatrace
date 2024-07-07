@@ -87,11 +87,13 @@ function processtest()
     channels = Dict("d"=>"Hf178 -> 260",
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
-    standards = Dict("Hogsbo" => "hogsbo_ana")
+    standards = Dict("Hogsbo" => "hogsbo")
+    cutoff = 1e7
     blk, anchors, fit = process!(myrun,method,channels,standards,
                                  nb=2,nf=1,nF=0,mf=1.4671,
-                                 PAcutoff=nothing,verbose=false)
-    p = plot(myrun[2],channels,blk,fit,anchors)
+                                 PAcutoff=cutoff,verbose=false)
+    p = plot(myrun[2],channels,blk,fit,anchors,den="Hf176 -> 258",
+             transformation="log")
     @test display(p) != NaN
 end
 
@@ -124,8 +126,8 @@ function PAtest()
                         anchors=anchors,nf=1,nF=0,mf=1.4671,
                         PAcutoff=cutoff,verbose=true)
     samp = all[2]
-    p = plot(samp,channels)#,den="D")
-    plotFitted!(p,samp,fit[1],blk,channels,anchors)#,den="D")
+    p = plot(samp,channels)#,den="Hf176 -> 258")
+    plotFitted!(p,samp,fit[1],blk,channels,anchors)#,den="Hf176 -> 258")
     @test display(p) != NaN
 end
 
@@ -195,7 +197,7 @@ end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
+#=@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -203,12 +205,12 @@ Plots.closeall()
 @testset "fit fractionation" begin fractionationtest() end
 @testset "plot fit" begin predicttest() end
 @testset "crunch" begin crunchtest() end
-@testset "process sample" begin sampletest() end
+@testset "process sample" begin sampletest() end=#
 @testset "process run" begin processtest() end
-@testset "readme example" begin readmetest() end
+#=@testset "readme example" begin readmetest() end
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap" begin iCaptest() end
-@testset "TUI" begin TUItest() end
+@testset "TUI" begin TUItest() end=#

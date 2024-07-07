@@ -14,7 +14,8 @@ function plot(samp::Sample,
               num=nothing,den=nothing,
               transformation="sqrt",
               seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto)
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+              linecol="black",linestyle=:solid)
 
     if isStandard(samp)
 
@@ -25,10 +26,17 @@ function plot(samp::Sample,
                  transformation=transformation,offset=offset,
                  seriestype=seriestype,titlefontsize=titlefontsize,
                  ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+
+        plotFitted!(p,samp,pars,blank,channels,anchors,
+                     num=num,den=den,transformation=transformation,
+                     offset=offset,linecolor=linecol,linestyle=linestyle)
+        
     else
+        
         p = plot(samp,channels,num=num,den=den,transformation=transformation,
                  seriestype=seriestype,titlefontsize=titlefontsize,
                  ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+        
     end
     return p
 end
@@ -38,8 +46,7 @@ function plot(samp::Sample,
               transformation="sqrt",offset=nothing,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
-    D = isnothing(den) ? nothing : channels[den]
-    plot(samp,collect(values(channels)),num=num,den=D,
+    plot(samp,collect(values(channels)),num=num,den=den,
          transformation=transformation,offset=offset,seriestype=seriestype,
          titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=xlim,ylim=ylim)
 end
@@ -93,19 +100,15 @@ export plot
 function plotFitted!(p,samp::Sample,pars::Pars,blank::AbstractDataFrame,
                      channels::AbstractDict,anchors::AbstractDict;
                      num=nothing,den=nothing,transformation="sqrt",
+                     offset=zeros(length(channels)),
                      linecolor="black",linestyle=:solid)
-    pred = predict(samp,pars,blank,channels,anchors)
-    plotdat = formRatios(pred,num,den)
     x = windowData(samp,signal=true)[:,1]
-    for y in eachcol(plotdat)
-        if transformation==""
-            ty = y
-        else
-            ty = fill(NaN,length(y))
-            pos = (y.>0.0)
-            ty[pos] = eval(Symbol(transformation)).(y[pos])
-        end
-        Plots.plot!(p,x,ty,linecolor=linecolor,
+    pred = predict(samp,pars,blank,channels,anchors)
+    rename!(pred,channels)
+    y = formRatios(pred,num,den)
+    ty = transformeer(y,transformation=transformation,offset=offset)
+    for tyi in eachcol(ty)
+        Plots.plot!(p,x,tyi,linecolor=linecolor,
                     linestyle=linestyle,label="")
     end
 end
