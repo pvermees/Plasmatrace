@@ -1,10 +1,29 @@
-function fitBlanks(run::Vector{Sample};n=2)
+"""
+modifies run (adds standards to it)
+returns blk, anchors, fit
+"""
+function process!(run::Vector{Sample},
+                  method::AbstractString,
+                  channels::AbstractDict,
+                  standards::AbstractDict;
+                  nb=2,nf=1,nF=1,mf=nothing,PAcutoff=nothing,verbose=false)
+    blk = fitBlanks(run,nb=nb)
+    setStandards!(run,standards)
+    anchors = getAnchor(method,standards)
+    fit = fractionation(run,blank=blk,channels=channels,
+                        anchors=anchors,nf=nf,nF=nF,
+                        mf=mf,verbose=verbose)
+    return blk, anchors, fit
+end
+export process!
+
+function fitBlanks(run::Vector{Sample};nb=2)
     blk = pool(run,blank=true)
     channels = getChannels(run)
     nc = length(channels)
-    bpar = DataFrame(zeros(n,nc),channels)
+    bpar = DataFrame(zeros(nb,nc),channels)
     for channel in channels
-        bpar[:,channel] = polyFit(t=blk.t,y=blk[:,channel],n=n)
+        bpar[:,channel] = polyFit(t=blk.t,y=blk[:,channel],n=nb)
     end
     return bpar
 end

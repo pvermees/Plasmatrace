@@ -142,11 +142,16 @@ function windowData(samp::Sample;blank=false,signal=false)
     else
         windows = [(1,size(samp,1))]
     end
+    selection = windows2selection(windows)
+    return samp.dat[selection,:]
+end
+
+function windows2selection(windows)
     selection = Integer[]
     for w in windows
         append!(selection, w[1]:w[2])
     end
-    return samp.dat[selection,:]
+    return selection
 end
 
 function string2windows(samp::Sample;text::AbstractString,single=false)
@@ -263,4 +268,54 @@ function rle(v::AbstractVector{T}) where T
     push!(vals, cv)
     push!(lens, cl)
     return (vals, lens)
+end
+
+function getOffset(df::AbstractDataFrame;transformation::AbstractString)
+    nc = size(df,2)
+    out = zeros(nc)
+    for i in 1:nc
+        m = minimum(df[:,i])
+        offset = m<0 ? abs(m) : 0.0
+        if transformation=="log"
+            M = maximum(df[:,i])
+            padding = m<0 ? (M-m)/100 : 0.0
+        else
+            padding = 0.0
+        end
+        out[i] = offset + padding
+    end
+    return out
+end
+function getOffset(samp::Sample,
+                   channels::AbstractDict,
+                   blank::AbstractDataFrame,
+                   pars::Pars,
+                   anchors::AbstractDict;
+                   num=nothing,den=nothing,
+                   transformation::AbstractString)
+    ions = collect(values(channels))
+    obs = windowData(samp,signal=true)[:,ions]
+    yobs = formRatios(obs,num,den)
+    pred = predict(samp,pars,blank,channels,anchors)
+    rename!(pred,channels)
+    ypred = formRatios(pred,num,den)
+    offset_obs = getOffset(yobs,transformation=transformation)
+    offset_pred = getOffset(ypred,transformation=transformation)
+    out = zeros(size(yobs,2))
+    for i in eachindex(out)
+        out[i] = maximum([offset_obs[i],offset_pred[i]])
+    end
+    return out
+end
+    
+function transformeer(df::AbstractDataFrame;transformation="",offset=zeros(size(df,2)))
+    if transformation==""
+        out = df
+    else
+        out = copy(df)
+        for i in 1:length(offset)
+            out[:,i] = eval(Symbol(transformation)).(df[:,i] .+ offset[i])
+        end
+    end
+    return out
 end

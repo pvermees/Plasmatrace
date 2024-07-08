@@ -54,6 +54,10 @@ function setStandards!(run::Vector{Sample},refmat::AbstractString)
 end
 export setStandards!
 
+function isStandard(samp::Sample)
+    samp.group != "sample"
+end
+
 function setBwin!(samp::Sample,bwin=nothing)
     if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
     samp.bwin = bwin

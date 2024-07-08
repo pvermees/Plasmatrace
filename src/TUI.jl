@@ -781,16 +781,18 @@ function TUIviewer!(ctrl::AbstractDict)
 end
 
 function TUIprocess!(ctrl::AbstractDict)
-    println("Fitting blanks...")
-    ctrl["blank"] = fitBlanks(ctrl["run"],n=ctrl["options"]["blank"])
     groups = unique(getGroups(ctrl["run"]))
     stds = groups[groups.!="sample"]
     ctrl["anchors"] = getAnchor(ctrl["method"],stds)
+    println("Fitting blanks...")
+    ctrl["blank"] = fitBlanks(ctrl["run"],nb=ctrl["options"]["blank"])
     println("Fractionation correction...")
     ctrl["par"] = fractionation(ctrl["run"],
                                 blank=ctrl["blank"],
                                 channels=ctrl["channels"],
                                 anchors=ctrl["anchors"],
+                                nf=ctrl["options"]["drift"],
+                                nF=ctrl["options"]["down"],
                                 mf=ctrl["mf"],
                                 PAcutoff=ctrl["PAcutoff"])
     ctrl["priority"]["process"] = false
@@ -824,7 +826,6 @@ function TUIplotter(ctrl::AbstractDict)
     else
         channels = names(samp.dat)[3:end]
     end
-    p = plot(samp,channels,den=ctrl["den"])
     if samp.group!="sample"
         if isnothing(ctrl["PAcutoff"])
             par = ctrl["par"]
@@ -834,8 +835,9 @@ function TUIplotter(ctrl::AbstractDict)
             j = analog ? 1 : 2
             par = ctrl["par"][j]
         end
-        plotFitted!(p,samp,par,ctrl["blank"],ctrl["channels"],
-                    ctrl["anchors"],den=ctrl["den"])
+        p = plot(samp,channels,ctrl["blank"],par,ctrl["anchors"],den=ctrl["den"])
+    else
+        p = plot(samp,channels,den=ctrl["den"])
     end
     if !isnothing(ctrl["PAcutoff"])
         addPAline!(p,ctrl["PAcutoff"])
@@ -876,7 +878,7 @@ function TUIratios!(ctrl::AbstractDict,response::AbstractString)
     else
         i = parse(Int,response)
         if haskey(ctrl,"channels")
-            channels = collect(keys(ctrl["channels"]))
+            channels = collect(values(ctrl["channels"]))
         else
             channels = names(ctrl["run"][1].dat)[3:end]
         end

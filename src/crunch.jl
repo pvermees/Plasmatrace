@@ -33,7 +33,7 @@ function predict(samp::Sample,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
                  anchors::AbstractDict)
-    if haskey(anchors,samp.group)
+    if isStandard(samp)
         dat = windowData(samp,signal=true)
         (x0,y0,y1) = anchors[samp.group]
         return predict(dat,pars,blank,channels,x0,y0,y1)
