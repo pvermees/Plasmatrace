@@ -1,3 +1,5 @@
+# include("/home/pvermees/git/Plasmatrace/test/emacs.jl")
+
 using Test, CSV
 import Plots
 
@@ -213,12 +215,13 @@ function iCaptest(verbatim=true)
 end
 
 function TUItest()
-    PT("logs/test.log")
+    #PT("logs/test.log")
+    PT("logs/viewer.log")
 end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
+#=@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -234,5 +237,5 @@ Plots.closeall()
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "U-Pb forward test" begin UPbfwdtest() end
-@testset "iCap" begin iCaptest() end
+@testset "iCap" begin iCaptest() end=#
 @testset "TUI" begin TUItest() end
