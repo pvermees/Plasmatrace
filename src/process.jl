@@ -6,7 +6,7 @@ function process!(run::Vector{Sample},
                   method::AbstractString,
                   channels::AbstractDict,
                   standards::AbstractDict;
-                  nb=2,nf=1,nF=0,mf=nothing,PAcutoff=nothing,verbose=false)
+                  nb=2,nf=1,nF=1,mf=nothing,PAcutoff=nothing,verbose=false)
     blk = fitBlanks(run,nb=nb)
     setStandards!(run,standards)
     anchors = getAnchor(method,standards)

@@ -781,16 +781,18 @@ function TUIviewer!(ctrl::AbstractDict)
 end
 
 function TUIprocess!(ctrl::AbstractDict)
-    println("Fitting blanks...")
-    ctrl["blank"] = fitBlanks(ctrl["run"],nb=ctrl["options"]["blank"])
     groups = unique(getGroups(ctrl["run"]))
     stds = groups[groups.!="sample"]
     ctrl["anchors"] = getAnchor(ctrl["method"],stds)
+    println("Fitting blanks...")
+    ctrl["blank"] = fitBlanks(ctrl["run"],nb=ctrl["options"]["blank"])
     println("Fractionation correction...")
     ctrl["par"] = fractionation(ctrl["run"],
                                 blank=ctrl["blank"],
                                 channels=ctrl["channels"],
                                 anchors=ctrl["anchors"],
+                                nf=ctrl["options"]["drift"],
+                                nF=ctrl["options"]["down"],
                                 mf=ctrl["mf"],
                                 PAcutoff=ctrl["PAcutoff"])
     ctrl["priority"]["process"] = false

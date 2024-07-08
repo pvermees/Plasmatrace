@@ -5,7 +5,7 @@ head2name,f
 options,x
 top,r
 instrument,1
-load,/home/pvermees/git/Plasmatrace/test/data/U-Pb
+load,data/U-Pb
 top,m
 method,3
 columns,"10,6,7"

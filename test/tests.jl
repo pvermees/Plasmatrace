@@ -185,6 +185,28 @@ function UPbtest()
     
 end
 
+function UPbfwdtest()
+
+    myrun = load("data/U-Pb",instrument="Agilent",head2name=false)
+
+    standards = Dict("Plesovice" => "STDCZ",
+                     "91500" => "91500")
+
+    channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
+
+    anchors = getAnchor("U-Pb",standards)
+
+    blk, anchors, fit = process!(myrun,"U-Pb",channels,standards,
+                                 nb=2,nf=1,nF=1,mf=1)
+    
+    p = plot(myrun[1],channels,blk,fit,anchors,transformation="sqrt")#,den="Pb206"
+
+    println(fit)
+
+    @test display(p) != NaN
+    
+end
+
 function iCaptest(verbatim=true)
     myrun = load("data/iCap",instrument="ThermoFisher")
     if verbatim summarise(myrun) end
@@ -211,5 +233,6 @@ Plots.closeall()
 @testset "export" begin exporttest() end
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
+@testset "U-Pb forward test" begin UPbfwdtest() end
 @testset "iCap" begin iCaptest() end
 @testset "TUI" begin TUItest() end
