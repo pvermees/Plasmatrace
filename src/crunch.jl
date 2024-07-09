@@ -33,12 +33,12 @@ function predict(samp::Sample,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
                  anchors::AbstractDict)
-    if isStandard(samp)
+    if samp.group == "sample"
+        PTerror("notStandard")
+    else
         dat = windowData(samp,signal=true)
         (x0,y0,y1) = anchors[samp.group]
-        return predict(dat,pars,blank,channels,x0,y0,y1)
-    else
-        PTerror("notStandard")
+        return predict(dat,pars,blank,channels,x0,y0,y1)        
     end
 end
 function predict(dat::AbstractDataFrame,

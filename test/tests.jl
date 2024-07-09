@@ -58,10 +58,10 @@ end
 function predicttest()
     myrun, blk, fit, channels, anchors = fractionationtest()
     samp = myrun[2]
-    if isStandard(samp)
-        pred = predict(samp,fit,blk,channels,anchors)
-    else
+    if samp.group == "sample"
         print("Not a standard")
+    else
+        pred = predict(samp,fit,blk,channels,anchors)
     end
     return pred
 end
@@ -120,16 +120,11 @@ function PAtest()
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
     standards = Dict("Hogsbo" => "hogsbo")
-    setStandards!(all,standards)
-    anchors = getAnchor("Lu-Hf",standards)
-    blk = fitBlanks(all,nb=2)
     cutoff = 1e7
-    fit = fractionation(all,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=0,mf=1.4671,
-                        PAcutoff=cutoff,verbose=true)
-    samp = all[2]
-    p = plot(samp,channels)#,den="Hf176 -> 258")
-    plotFitted!(p,samp,fit[1],blk,channels,anchors)#,den="Hf176 -> 258")
+    blk, anchors, fit = process!(all,"Lu-Hf",channels,standards,
+                                 nb=2,nf=1,nF=1,PAcutoff=cutoff)
+    p = plot(all[1],channels,blk,fit,anchors,
+              transformation="log")#,den="Hf176 -> 258")
     @test display(p) != NaN
 end
 
@@ -215,13 +210,12 @@ function iCaptest(verbatim=true)
 end
 
 function TUItest()
-    #PT("logs/test.log")
-    PT("logs/viewer.log")
+    PT("logs/test.log")
 end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -237,5 +231,5 @@ Plots.closeall()
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "U-Pb forward test" begin UPbfwdtest() end
-@testset "iCap" begin iCaptest() end=#
+@testset "iCap" begin iCaptest() end
 @testset "TUI" begin TUItest() end
