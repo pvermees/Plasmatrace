@@ -12,12 +12,13 @@ function PT(logbook="")
         "head2name" => true,
         "PAcutoff" => nothing,
         "par" => Pars[],
-        "anchors" => NamedTuple(),
-        "blank" => DataFrame(),
+        "anchors" => nothing,
+        "blank" => nothing,
         "instrument" => "",
         "method" => "",
         "channels" => Dict(),
         "selection" => Int[],
+        "transformation" => "sqrt",
         "refresher" => Dict(
             "dname" => "",
             "prefixes" => AbstractString[],
@@ -228,6 +229,7 @@ function tree(ctrl::AbstractDict)
             "r: Plot signals or ratios?\n"*
             "b: Select blank window(s)\n"*
             "s: Select signal window(s)\n"*
+            "T: Choose a data transformation\n"*
             "x: Exit\n"*
             "?: Help",
             help =
@@ -241,7 +243,8 @@ function tree(ctrl::AbstractDict)
                 "t" => TUItabulate,
                 "r" => "setDen",
                 "b" => "Bwin",
-                "s" => "Swin"
+                "s" => "Swin",
+                "T" => "transformation"
             )
         ),
         "goto" => (
@@ -308,6 +311,20 @@ function tree(ctrl::AbstractDict)
                 "S" => "allSingleSignalWindow",
                 "M" => "allMultiSignalWindow"
             )
+        ),
+        "transformation" => (
+            message =
+            "Choose a data transformation for the y-axis:\n"*
+            "l: Linear\n"*
+            "L: Logarithmic\n"*
+            "s: Square root\n"*
+            "x: Exit\n"*
+            "?: Help",
+            help =
+            "Using a square root or log-transform makes it easier to compare "*
+            "signal strengths or signal ratios that vary over several "*
+            "orders of magnitude.",
+            action = TUItransformation!
         ),
         "oneSingleBlankWindow" => (
             message =
@@ -826,7 +843,9 @@ function TUIplotter(ctrl::AbstractDict)
     else
         channels = names(samp.dat)[3:end]
     end
-    if samp.group!="sample"
+    if isnothing(ctrl["blank"]) | isnothing(ctrl["anchors"]) | (samp.group=="sample")
+        p = plot(samp,channels,den=ctrl["den"],transformation=ctrl["transformation"])
+    else
         if isnothing(ctrl["PAcutoff"])
             par = ctrl["par"]
         else
@@ -835,9 +854,8 @@ function TUIplotter(ctrl::AbstractDict)
             j = analog ? 1 : 2
             par = ctrl["par"][j]
         end
-        p = plot(samp,channels,ctrl["blank"],par,ctrl["anchors"],den=ctrl["den"])
-    else
-        p = plot(samp,channels,den=ctrl["den"])
+        p = plot(samp,channels,ctrl["blank"],par,ctrl["anchors"],
+                 den=ctrl["den"],transformation=ctrl["transformation"])
     end
     if !isnothing(ctrl["PAcutoff"])
         addPAline!(p,ctrl["PAcutoff"])
@@ -986,6 +1004,19 @@ function TUIallMultiSignalWindow!(ctrl::AbstractDict,
     end
     TUIplotter(ctrl)
     return "xx"
+end
+
+function TUItransformation!(ctrl::AbstractDict,
+                            response::AbstractString)
+    if response=="L"
+        ctrl["transformation"] = "log"
+    elseif response=="s"
+        ctrl["transformation"] = "sqrt"
+    else
+        ctrl["transformation"] = ""
+    end
+    TUIplotter(ctrl)
+    return "x"
 end
 
 function TUIsetNblank!(ctrl::AbstractDict,response::AbstractString)

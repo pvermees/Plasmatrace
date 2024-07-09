@@ -17,8 +17,14 @@ function plot(samp::Sample,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,
               linecol="black",linestyle=:solid)
 
-    if isStandard(samp)
+    if samp.group == "sample"
 
+        p = plot(samp,channels,num=num,den=den,transformation=transformation,
+                 seriestype=seriestype,titlefontsize=titlefontsize,
+                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+        
+    else
+        
         offset = getOffset(samp,channels,blank,pars,anchors,
                            num=num,den=den,transformation=transformation)
 
@@ -30,12 +36,6 @@ function plot(samp::Sample,
         plotFitted!(p,samp,pars,blank,channels,anchors,
                      num=num,den=den,transformation=transformation,
                      offset=offset,linecolor=linecol,linestyle=linestyle)
-        
-    else
-        
-        p = plot(samp,channels,num=num,den=den,transformation=transformation,
-                 seriestype=seriestype,titlefontsize=titlefontsize,
-                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
         
     end
     return p

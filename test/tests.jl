@@ -1,3 +1,5 @@
+# include("/home/pvermees/git/Plasmatrace/test/emacs.jl")
+
 using Test, CSV
 import Plots
 
@@ -56,10 +58,10 @@ end
 function predicttest()
     myrun, blk, fit, channels, anchors = fractionationtest()
     samp = myrun[2]
-    if isStandard(samp)
-        pred = predict(samp,fit,blk,channels,anchors)
-    else
+    if samp.group == "sample"
         print("Not a standard")
+    else
+        pred = predict(samp,fit,blk,channels,anchors)
     end
     return pred
 end
@@ -118,16 +120,11 @@ function PAtest()
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
     standards = Dict("Hogsbo" => "hogsbo")
-    setStandards!(all,standards)
-    anchors = getAnchor("Lu-Hf",standards)
-    blk = fitBlanks(all,nb=2)
     cutoff = 1e7
-    fit = fractionation(all,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=0,mf=1.4671,
-                        PAcutoff=cutoff,verbose=true)
-    samp = all[2]
-    p = plot(samp,channels)#,den="Hf176 -> 258")
-    plotFitted!(p,samp,fit[1],blk,channels,anchors)#,den="Hf176 -> 258")
+    blk, anchors, fit = process!(all,"Lu-Hf",channels,standards,
+                                 nb=2,nf=1,nF=1,PAcutoff=cutoff)
+    p = plot(all[1],channels,blk,fit,anchors,
+              transformation="log")#,den="Hf176 -> 258")
     @test display(p) != NaN
 end
 
