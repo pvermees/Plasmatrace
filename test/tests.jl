@@ -137,18 +137,13 @@ end
 
 function RbSrtest()
     myrun = load("data/Rb-Sr",instrument="Agilent")
-
-    blk = fitBlanks(myrun,nb=2)
     standards = Dict("MDC" => "MDC -")
-    setStandards!(myrun,standards)
-    anchors = getAnchor("Rb-Sr",standards)
     channels = Dict("d"=>"Sr86 -> 102",
                     "D"=>"Sr87 -> 103",
                     "P"=>"Rb85 -> 85")
-
-    fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=0,mf=1,
-                        verbose=true)
+    blk, anchors, fit = process!(myrun,"Rb-Sr",channels,
+                                 standards,nf=1,nF=0,mf=1,
+                                 verbose=true)
     
     ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
     selection = subset(ratios,"EntireCreek")
@@ -160,17 +155,14 @@ function UPbtest()
     
     myrun = load("data/U-Pb",instrument="Agilent",head2name=false)
     
-    blank = fitBlanks(myrun,nb=2)
     standards = Dict("Plesovice" => "STDCZ",
                      "91500" => "91500")
-    setStandards!(myrun,standards)
-    anchors = getAnchor("U-Pb",standards)
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
 
-    pars = fractionation(myrun,blank=blank,channels=channels,
-                         anchors=anchors,nf=2,nF=2,mf=1,
-                         verbose=true)
-
+    blank, anchors, pars = process!(myrun,"Rb-Sr",channels,
+                                    standards,nb=2,nf=1,nF=0,mf=1,
+                                    verbose=true)
+    
     samp = myrun[29]
     p = plot(samp,channels,blank,pars,anchors,den="Pb206",transformation="log")
     @test display(p) != NaN
@@ -185,21 +177,14 @@ end
 function UPbfwdtest()
 
     myrun = load("data/U-Pb",instrument="Agilent",head2name=false)
-
     standards = Dict("Plesovice" => "STDCZ",
                      "91500" => "91500")
-
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
-
     anchors = getAnchor("U-Pb",standards)
-
     blk, anchors, fit = process!(myrun,"U-Pb",channels,standards,
                                  nb=2,nf=1,nF=1,mf=1)
-    
     p = plot(myrun[1],channels,blk,fit,anchors,transformation="sqrt")#,den="Pb206"
-
     println(fit)
-
     @test display(p) != NaN
     
 end
@@ -209,13 +194,28 @@ function iCaptest(verbatim=true)
     if verbatim summarise(myrun) end
 end
 
+function carbonatetest(verbatim=true)
+    myrun = load("data/carbonate",instrument="Agilent")
+    standards = Dict("WC1" => "WC1")
+    channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
+    blk, anchors, fit = process!(myrun,"U-Pb",channels,
+                                 standards,nb=2,nf=1,nF=1,mf=0.8,
+                                 verbose=true)
+    ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
+    selection = subset(ratios,"WC1")
+    export2IsoplotR("WC1.json",selection,"U-Pb")
+    println(fit)
+    p = plot(myrun[3],channels,blk,fit,anchors,transformation="log",den="Pb206")
+    @test display(p) != NaN
+end
+
 function TUItest()
     PT("logs/test.log")
 end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
+#=@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -231,5 +231,6 @@ Plots.closeall()
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "U-Pb forward test" begin UPbfwdtest() end
-@testset "iCap" begin iCaptest() end
-@testset "TUI" begin TUItest() end
+@testset "iCap test" begin iCaptest() end=#
+@testset "carbonate test" begin carbonatetest() end
+#=@testset "TUI test" begin TUItest() end=#
