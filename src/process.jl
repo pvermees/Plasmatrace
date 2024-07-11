@@ -111,8 +111,8 @@ function atomic(samp::Sample;
     bPt = polyVal(p=blank[:,channels["P"]],t=t)
     bDt = polyVal(p=blank[:,channels["D"]],t=t)
     bdt = polyVal(p=blank[:,channels["d"]],t=t)
-    P = @. (Pm-bPt)/(ft*FT)
     D = @. (Dm-bDt)
+    P = @. (Pm-bPt)/(ft*FT)
     d = @. (dm-bdt)/mf
     return t, T, P, D, d
 end
