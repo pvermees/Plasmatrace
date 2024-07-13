@@ -6,8 +6,9 @@ function process!(run::Vector{Sample},
                   method::AbstractString,
                   channels::AbstractDict,
                   standards::AbstractDict;
-                  nb=2,nf=1,nF=1,mf=nothing,
-                  PAcutoff=nothing,verbose=false)
+                  nb::Integer=2,nf::Integer=1,nF::Integer=1,
+                  mf=nothing,PAcutoff=nothing,
+                  verbose::Bool=false)
     blk = fitBlanks(run,nb=nb)
     setStandards!(run,standards)
     anchors = getAnchor(method,standards)
@@ -30,9 +31,19 @@ function fitBlanks(run::Vector{Sample};nb=2)
 end
 export fitBlanks
 
+function glass2mf!(run::Vector{Sample};
+                   blank::AbstractDataFrame,
+                   channels::AbstractDict,
+                   glass::AbstractDict)
+    setStandards!(run,glass)
+    # TODO
+end
+export glass2mf
+
 function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
                        channels::AbstractDict,anchors::AbstractDict,
-                       nf=1,nF=0,mf=nothing,PAcutoff=nothing,verbose=false)
+                       glass::AbstractDict,nf::Integer=1,nF::Integer=0,
+                       mf=nothing,PAcutoff=nothing,verbose::Bool=false)
 
     if isnothing(PAcutoff)
         if nf<1 PTerror("nfzero") end
