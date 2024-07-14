@@ -182,24 +182,27 @@ function carbonatetest(verbatim=true)
     standards = Dict("WC1"=>"WC1")
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
     blk, anchors, fit = process!(myrun,"U-Pb",channels,
-                                 standards,nb=2,nf=1,nF=1,mf=nothing,
+                                 standards,nb=2,nf=1,nF=1,mf=1.0,
                                  verbose=false)
-    println(fit)
-    ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
-    selection = subset(ratios,"MEX")
-    export2IsoplotR("MEX.json",selection,"U-Pb")
-    #p = plot(myrun[3],channels,blk,fit,anchors,
-    #         transformation="",num=["Pb207"],den="Pb206",ylim=[-0.02,0.3])
-    #@test display(p) != NaN
+    p = plot(myrun[3],channels,blk,fit,anchors,
+             transformation="",num=["Pb207"],den="Pb206",ylim=[-0.02,0.3])
+    @test display(p) != NaN
 end
 
 function mftest()
-    all = load("data/carbonate",instrument="Agilent")
-    standards = Dict("WC1" => "WC1")
-    glass = Dict("NIST612" => "612")
-    channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
-    blk = fitBlanks(all,nb=2)
-    mf = glass2mf!(all,blank=blk,channels=channels,glass=glass)
+    myrun = load("data/carbonate",instrument="Agilent")
+    channels = Dict("d" => "Pb207",
+                    "D" => "Pb206",
+                    "P" => "U238")
+    standards = Dict("WC1" => "WC1",
+                     "NIST612" => "NIST612")
+    blank, anchors, pars = process!(myrun,"U-Pb",channels,
+                                    standards,nb=2,nf=1,nF=1,mf=1.0)
+    println(pars)
+    ratios = averat(myrun,channels=channels,pars=pars,blank=blank)
+    selection = subset(ratios,"WC1")
+    export2IsoplotR("WC1.json",selection,"U-Pb")
+
 end
 
 function TUItest()

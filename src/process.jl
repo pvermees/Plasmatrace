@@ -31,18 +31,9 @@ function fitBlanks(run::Vector{Sample};nb=2)
 end
 export fitBlanks
 
-function glass2mf!(run::Vector{Sample};
-                   blank::AbstractDataFrame,
-                   channels::AbstractDict,
-                   glass::AbstractDict)
-    setStandards!(run,glass)
-    # TODO
-end
-export glass2mf
-
-function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
-                       channels::AbstractDict,anchors::AbstractDict,
-                       glass::AbstractDict,nf::Integer=1,nF::Integer=0,
+function fractionation(run::Vector{Sample};
+                       blank::AbstractDataFrame,channels::AbstractDict,
+                       anchors::AbstractDict,nf::Integer=1,nF::Integer=0,
                        mf=nothing,PAcutoff=nothing,verbose::Bool=false)
 
     if isnothing(PAcutoff)
@@ -56,7 +47,7 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
         bD = blank[:,channels["D"]]
         bd = blank[:,channels["d"]]
         bP = blank[:,channels["P"]]
-        
+
         function misfit(par)
             drift = par[1:nf]
             down = vcat(0.0,par[nf+1:nf+nF])
@@ -69,7 +60,11 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
                 Dm = dat[:,channels["D"]]
                 dm = dat[:,channels["d"]]
                 (x0,y0,y1) = anchors[refmat]
-                out += SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
+                if ismissing(x0)
+                    out += SS(t,Dm,dm,y0,mfrac,bD,bd)
+                else
+                    out += SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
+                end
             end
             return out
         end

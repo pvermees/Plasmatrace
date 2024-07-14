@@ -78,21 +78,21 @@ export setSwin!
 
 function getx0y0y1(method::AbstractString,
                    refmat::AbstractString)
-    if method=="U-Pb"
+    t = _PT["refmat"][method][refmat].t[1]
+    if ismissing(t)
+        x0 = y1 = missing
+    elseif method=="U-Pb"
         L8 = _PT["lambda"]["U238-Pb206"][1]
         L5 = _PT["lambda"]["U235-Pb207"][1]
         U58 = _PT["iratio"]["U-Pb"].U235/_PT["iratio"]["U-Pb"].U238
-        t = _PT["refmat"][method][refmat].t[1]
         x0 = 1/(exp(L8*t)-1)
-        y0 = _PT["refmat"][method][refmat].y0[1]
         y1 = U58*(exp(L5*t)-1)/(exp(L8*t)-1)
     else
         L = _PT["lambda"][method][1]
-        t = _PT["refmat"][method][refmat].t[1]
         x0 = 1/(exp(L*t)-1)
-        y0 = _PT["refmat"][method][refmat].y0[1]
         y1 = 0.0
     end
+    y0 = _PT["refmat"][method][refmat].y0[1]
     return (x0=x0,y0=y0,y1=y1)
 end
 
@@ -166,6 +166,15 @@ function getiratios(csv::AbstractString=joinpath(@__DIR__,"../settings/iratio.cs
     return out
 end
 export getiratios
+function getGlass(csv::AbstractString=joinpath(@__DIR__,"../settings/glass.csv"))
+    tab = CSV.read(csv, DataFrame)
+    out = Dict()
+    for row in eachrow(tab)
+        out[row["SRM"]] = row[2:end]
+    end
+    return out
+end
+export getGlass
 function getReferenceMaterials(csv::AbstractString=joinpath(@__DIR__,"../settings/standards.csv"))
     tab = CSV.read(csv, DataFrame)
     out = Dict()
