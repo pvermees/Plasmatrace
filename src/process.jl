@@ -6,7 +6,9 @@ function process!(run::Vector{Sample},
                   method::AbstractString,
                   channels::AbstractDict,
                   standards::AbstractDict;
-                  nb=2,nf=1,nF=1,mf=nothing,PAcutoff=nothing,verbose=false)
+                  nb::Integer=2,nf::Integer=1,nF::Integer=1,
+                  mf=nothing,PAcutoff=nothing,
+                  verbose::Bool=false)
     blk = fitBlanks(run,nb=nb)
     setStandards!(run,standards)
     anchors = getAnchor(method,standards)
@@ -29,9 +31,10 @@ function fitBlanks(run::Vector{Sample};nb=2)
 end
 export fitBlanks
 
-function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
-                       channels::AbstractDict,anchors::AbstractDict,
-                       nf=1,nF=0,mf=nothing,PAcutoff=nothing,verbose=false)
+function fractionation(run::Vector{Sample};
+                       blank::AbstractDataFrame,channels::AbstractDict,
+                       anchors::AbstractDict,nf::Integer=1,nF::Integer=0,
+                       mf=nothing,PAcutoff=nothing,verbose::Bool=false)
 
     if isnothing(PAcutoff)
         if nf<1 PTerror("nfzero") end
@@ -44,7 +47,7 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
         bD = blank[:,channels["D"]]
         bd = blank[:,channels["d"]]
         bP = blank[:,channels["P"]]
-        
+
         function misfit(par)
             drift = par[1:nf]
             down = vcat(0.0,par[nf+1:nf+nF])
@@ -57,7 +60,11 @@ function fractionation(run::Vector{Sample};blank::AbstractDataFrame,
                 Dm = dat[:,channels["D"]]
                 dm = dat[:,channels["d"]]
                 (x0,y0,y1) = anchors[refmat]
-                out += SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
+                if ismissing(x0)
+                    out += SS(t,Dm,dm,y0,mfrac,bD,bd)
+                else
+                    out += SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
+                end
             end
             return out
         end
@@ -110,8 +117,8 @@ function atomic(samp::Sample;
     bPt = polyVal(p=blank[:,channels["P"]],t=t)
     bDt = polyVal(p=blank[:,channels["D"]],t=t)
     bdt = polyVal(p=blank[:,channels["d"]],t=t)
-    P = @. (Pm-bPt)/(ft*FT)
     D = @. (Dm-bDt)
+    P = @. (Pm-bPt)/(ft*FT)
     d = @. (dm-bdt)/mf
     return t, T, P, D, d
 end

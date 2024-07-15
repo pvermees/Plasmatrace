@@ -25,5 +25,6 @@ function init_PT!()
     _PT["lambda"] = getLambdas()
     _PT["iratio"] = getiratios()
     _PT["refmat"] = getReferenceMaterials()
+    _PT["glass"] = getGlass()
 end
 export init_PT!
