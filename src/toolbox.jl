@@ -102,20 +102,17 @@ function summarize(run::Vector{Sample})
 end
 export summarise, summarize
 
-function autoWindow(signals::AbstractDataFrame;blank=false)
-    total = sum.(eachrow(signals))
-    q = Statistics.quantile(total,[0.05,0.95])
-    mid = (q[2]+q[1])/20
-    (lovals,lens) = rle(total.<mid)
-    i = blank ? findfirst(lovals) : findfirst(.!lovals)
-    min = i>1 ? sum(lens[1:i-1]) : 1
-    max = sum(lens[1:i])
-    from = ceil(Int,min+(max-min)/10)
-    to = floor(Int,min+(max-min)*9/10)
-    return [(from,to)]
-end
 function autoWindow(samp::Sample;blank=false)
-    autoWindow(getDat(samp),blank=blank)
+    i0 = samp.i0
+    nr = size(samp.dat,1)
+    if blank
+        from = 1
+        to = ceil(Int,i0*9/10)
+    else
+        from = floor(Int,i0+(nr-i0)/10)
+        to = nr
+    end
+    return [(from,to)]
 end
 
 function pool(run::Vector{Sample};blank=false,signal=false,group=nothing)
@@ -143,7 +140,11 @@ function windowData(samp::Sample;blank=false,signal=false)
         windows = [(1,size(samp,1))]
     end
     selection = windows2selection(windows)
-    return samp.dat[selection,:]
+    out =  samp.dat[selection,:]
+    if signal
+        out.T = (out[:,1] .- samp.t0)./60 # in minutes, for numerical stability
+    end
+    return out
 end
 
 function windows2selection(windows)

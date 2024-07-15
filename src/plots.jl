@@ -83,8 +83,11 @@ function plot(samp::Sample,
     Plots.ylabel!(ylab)
     title = samp.sname*" ["*samp.group*"]"
     Plots.title!(title,titlefontsize=titlefontsize)
-    # plot selection windows:
     dy = Plots.ylims(p)
+    # plot t0:
+    Plots.plot!(p,[samp.t0,samp.t0],collect(dy[[1,2]]),
+                linecolor="grey",linestyle=:dot,label="")
+    # plot selection windows:
     for win in [samp.bwin,samp.swin]
         for w in win
             from = x[w[1]]

@@ -55,7 +55,7 @@ function fractionation(run::Vector{Sample};
             out = 0.0
             for (refmat,dat) in dats
                 t = dat.t
-                T = dat.T
+                T = dat.T 
                 Pm = dat[:,channels["P"]]
                 Dm = dat[:,channels["D"]]
                 dm = dat[:,channels["d"]]
