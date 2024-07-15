@@ -92,8 +92,8 @@ function processtest()
     standards = Dict("Hogsbo" => "hogsbo")
     cutoff = 1e7
     blk, anchors, fit = process!(myrun,method,channels,standards,
-                                 nb=2,nf=1,nF=0,mf=1.4671,
-                                 PAcutoff=cutoff,verbose=false)
+                                 nb=2,nf=2,nF=2,mf=1.4671,
+                                 PAcutoff=cutoff,verbose=true)
     p = plot(myrun[2],channels,blk,fit,anchors,den="Hf176 -> 258",
              transformation="log")
     @test display(p) != NaN
@@ -119,12 +119,15 @@ function PAtest()
     channels = Dict("d"=>"Hf178 -> 260",
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
-    standards = Dict("Hogsbo" => "hogsbo")
+    standards = Dict("Hogsbo" => "hogsbo",
+                     "NIST612" => "NIST612")
     cutoff = 1e7
     blk, anchors, fit = process!(all,"Lu-Hf",channels,standards,
-                                 nb=2,nf=1,nF=1,PAcutoff=cutoff)
-    p = plot(all[1],channels,blk,fit,anchors,
-              transformation="log")#,den="Hf176 -> 258")
+                                 nb=2,nf=1,nF=1,mf=nothing,
+                                 PAcutoff=cutoff)
+    print(fit)
+    p = plot(all[2],channels,blk,fit,anchors,
+              transformation="log",den="Hf176 -> 258")
     @test display(p) != NaN
 end
 
@@ -142,8 +145,10 @@ function RbSrtest()
                     "D"=>"Sr87 -> 103",
                     "P"=>"Rb85 -> 85")
     blk, anchors, fit = process!(myrun,"Rb-Sr",channels,
-                                 standards,nf=1,nF=1,mf=1.0)
-    println(fit)
+                                 standards,nf=1,nF=2,mf=1.0)
+    p = plot(myrun[2],channels,blk,fit,anchors,
+             transformation="log",den="Sr86 -> 102")
+    @test display(p) != NaN
     ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
     selection = subset(ratios,"Entire")
     export2IsoplotR("Entire.json",selection,"Rb-Sr")
@@ -157,7 +162,7 @@ function UPbtest()
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
     
     blank, anchors, pars = process!(myrun,"U-Pb",channels,
-                                    standards,nb=2,nf=1,nF=1,mf=1,
+                                    standards,nb=2,nf=1,nF=2,mf=1,
                                     verbose=true)
 
     samp = myrun[29]
@@ -182,7 +187,7 @@ function carbonatetest(verbatim=true)
     standards = Dict("WC1"=>"WC1")
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
     blk, anchors, fit = process!(myrun,"U-Pb",channels,
-                                 standards,nb=2,nf=1,nF=1,mf=1.0,
+                                 standards,nb=2,nf=2,nF=2,mf=1.0,
                                  verbose=false)
     p = plot(myrun[3],channels,blk,fit,anchors,
              transformation="",num=["Pb207"],den="Pb206",ylim=[-0.02,0.3])
@@ -197,12 +202,11 @@ function mftest()
     standards = Dict("WC1" => "WC1",
                      "NIST612" => "NIST612")
     blank, anchors, pars = process!(myrun,"U-Pb",channels,
-                                    standards,nb=2,nf=1,nF=1,mf=1.0)
+                                    standards,nb=2,nf=1,nF=1,mf=nothing)
     println(pars)
     ratios = averat(myrun,channels=channels,pars=pars,blank=blank)
     selection = subset(ratios,"WC1")
     export2IsoplotR("WC1.json",selection,"U-Pb")
-
 end
 
 function TUItest()
@@ -211,7 +215,7 @@ end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -227,6 +231,6 @@ Plots.closeall()
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
-@testset "carbonate test" begin carbonatetest() end=#
+@testset "carbonate test" begin carbonatetest() end
 @testset "mass fractionation test" begin mftest() end
-#=@testset "TUI test" begin TUItest() end=#
+@testset "TUI test" begin TUItest() end

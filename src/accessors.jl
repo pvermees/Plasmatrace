@@ -76,6 +76,23 @@ function setSwin!(run::Vector{Sample},swin=nothing)
 end
 export setSwin!
 
+function geti0(signals::AbstractDataFrame)
+    total = sum.(eachrow(signals))
+    q = Statistics.quantile(total,[0.05,0.95])
+    mid = (q[2]+q[1])/2
+    (lovals,lens) = rle(total.<mid)
+    i = findfirst(lovals)
+    return sum(lens[1:i])
+end
+export geti0
+
+function sett0!(samp::Sample)
+    dat = getDat(samp)
+    i0 = geti0(dat)
+    samp.t0 = samp.dat[i0,1]
+end
+export sett0!
+
 function getx0y0y1(method::AbstractString,
                    refmat::AbstractString)
     t = _PT["refmat"][method][refmat].t[1]
@@ -124,7 +141,7 @@ end
 export setAnchor!
 
 function getDat(samp::Sample)
-    return samp.dat[:,2:end-2]
+    return samp.dat[:,2:end-1]
 end
 function getDat(samp::Sample,channels::AbstractDict)
     return samp.dat[:,collect(values(channels))]

@@ -5,6 +5,7 @@ mutable struct Sample
     sname::String
     datetime::DateTime
     dat::DataFrame
+    t0::Float64
     bwin::Vector{Window}
     swin::Vector{Window}
     group::String

@@ -20,12 +20,13 @@ function getS(Xm,Sm,a,ft,FT,bXt,bSt)
 end
 export getS
 
-# isotopic ratios
+# isotopic ratios in matrix matched mineral standards
 function SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
     pred = predict(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
     S = @. (pred[:,"P"]-Pm)^2 + (pred[:,"D"]-Dm)^2 + (pred[:,"d"]-dm)^2
     return sum(S)
 end
+# isotopic ratios in glass
 function SS(t,Dm,dm,y0,mfrac,bD,bd)
     pred = predict(t,Dm,dm,y0,mfrac,bD,bd)
     S = @. (pred[:,"D"]-Dm)^2 + (pred[:,"d"]-dm)^2
@@ -84,7 +85,7 @@ function predict(samp::Sample,
     else
         dat = windowData(samp,signal=true)
         (x0,y0,y1) = anchors[samp.group]
-        return predict(dat,pars,blank,channels,x0,y0,y1)        
+        return predict(dat,pars,blank,channels,x0,y0,y1)
     end
 end
 function predict(dat::AbstractDataFrame,
