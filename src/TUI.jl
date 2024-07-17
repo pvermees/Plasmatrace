@@ -147,11 +147,12 @@ function tree(ctrl::AbstractDict)
         ),
         "standards" => (
             message =
-            "t: Tabulate all the samples\n"*
             "p: Add a standard by prefix\n"*
             "n: Add a standard by number\n"*
             "N: Remove a standard by number\n"*
             "r: Remove all standards\n"*
+            "l: List the available reference materials\n"*
+            "t: Tabulate all the samples\n"*
             "x: Exit\n"*
             "?: Help",
             help =
@@ -159,11 +160,12 @@ function tree(ctrl::AbstractDict)
             "Note that secondary reference materials should be "*
             "treated as regular samples.",
             action = Dict(
-                "t" => TUItabulate,
                 "p" => "addStandardsByPrefix",
                 "n" => "addStandardsByNumber",
                 "N" => "removeStandardsByNumber",
-                "r" => TUIresetStandards!
+                "r" => TUIresetGroup!,
+                "l" => TUIRefMatTab,
+                "t" => TUItabulate
             )
         ),
         "addStandardsByPrefix" => (
@@ -215,7 +217,7 @@ function tree(ctrl::AbstractDict)
             "in this list, then you can either specify your own 
             reference material under 'options' in the top menu, or "*
             "you can email us to add the material to the software.",
-            action = TUIsetStandards!
+            action = TUIsetGroup!
         ),
         "view" => (
             message = 
@@ -701,12 +703,12 @@ end
 function TUIremoveStandardsByNumber!(ctrl::AbstractDict,
                                      response::AbstractString)
     selection = parse.(Int,split(response,","))
-    resetStandards!(ctrl["run"],selection)
+    resetGroup!(ctrl["run"],selection)
     return "x"
 end
 
-function TUIresetStandards!(ctrl::AbstractDict)
-    setStandards!(ctrl["run"],"sample")
+function TUIresetGroup!(ctrl::AbstractDict)
+    setGroup!(ctrl["run"],"sample")
     ctrl["refresher"]["prefixes"] = AbstractString[]
     ctrl["refresher"]["refmats"] = AbstractString[]
     return "x"
@@ -732,10 +734,10 @@ function TUIshowRefmats(ctrl::AbstractDict)
     return msg
 end
 
-function TUIsetStandards!(ctrl::AbstractDict,response::AbstractString)
+function TUIsetGroup!(ctrl::AbstractDict,response::AbstractString)
     standards = collect(keys(_PT["refmat"][ctrl["method"]]))
     i = parse(Int,response)
-    setStandards!(ctrl["run"],ctrl["selection"],standards[i])
+    setGroup!(ctrl["run"],ctrl["selection"],standards[i])
     ctrl["priority"]["standards"] = false
     nr = length(ctrl["refresher"]["refmats"])
     np = length(ctrl["refresher"]["prefixes"])
@@ -755,14 +757,14 @@ function TUIprocess!(ctrl::AbstractDict)
     stds = groups[groups.!="sample"]
     ctrl["anchors"] = getAnchor(ctrl["method"],stds)
     println("Fitting blanks...")
-    ctrl["blank"] = fitBlanks(ctrl["run"],nb=ctrl["options"]["blank"])
+    ctrl["blank"] = fitBlanks(ctrl["run"],nblank=ctrl["options"]["blank"])
     println("Fractionation correction...")
     ctrl["par"] = fractionation(ctrl["run"],
                                 blank=ctrl["blank"],
                                 channels=ctrl["channels"],
                                 anchors=ctrl["anchors"],
-                                nf=ctrl["options"]["drift"],
-                                nF=ctrl["options"]["down"],
+                                ndrift=ctrl["options"]["drift"],
+                                ndown=ctrl["options"]["down"],
                                 PAcutoff=ctrl["PAcutoff"])
     ctrl["priority"]["process"] = false
     println("Done")
@@ -989,9 +991,13 @@ end
 function TUIRefMatTab(ctrl::AbstractDict)
     for (key, value) in _PT["refmat"][ctrl["method"]]
         print(key)
-        print(": t=")
-        print(value.t[1])
-        print(" Ma, y0=")
+        print(": ")
+        if !ismissing(value.t[1])
+            print("t=")
+            print(value.t[1])
+            print("Ma, ")
+        end
+        print("y0=")
         print(value.y0[1])
         print("\n")
     end
@@ -1087,7 +1093,7 @@ function TUIrefresh!(ctrl::AbstractDict)
     snames = getSnames(ctrl["run"])
     for i in eachindex(R["prefixes"])
         ctrl["selection"] = findall(contains(R["prefixes"][i]),snames)
-        setStandards!(ctrl["run"],ctrl["selection"],R["refmats"][i])
+        setGroup!(ctrl["run"],ctrl["selection"],R["refmats"][i])
     end
     TUIprocess!(ctrl)
     return nothing

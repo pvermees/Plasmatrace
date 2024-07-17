@@ -98,3 +98,42 @@ function readThermoFisher(fname::AbstractString,
     return sname, datetime, header, skipto, footerskip
     
 end
+
+function export2IsoplotR(fname::AbstractString,
+                         ratios::AbstractDataFrame,
+                         method::AbstractString)
+    json = jsonTemplate()
+
+    P, D, d = getPDd(method)
+
+    datastring = "\"ierr\":1,\"data\":{"*
+    "\""* P *"/"* D *"\":["*     join(ratios[:,2],",")*"],"*
+    "\"err["* P *"/"* D *"]\":["*join(ratios[:,3],",")*"],"*
+    "\""* d *"/"* D *"\":["*     join(ratios[:,4],",")*"],"*
+    "\"err["* d *"/"* D *"]\":["*join(ratios[:,5],",")*"],"*
+    "\"(rho)\":["*join(ratios[:,6],",")*"],"*
+    "\"(C)\":[],\"(omit)\":[],"*
+    "\"(comment)\":[\""*join(ratios[:,1],"\",\"")*"\"]"
+
+    json = replace(json,"\""*method*"\":{}" =>
+                   "\""*method*"\":{"*datastring*"}}")
+
+    
+    if method in ["Lu-Hf","Rb-Sr"]
+                        
+        old = "\"geochronometer\":\"U-Pb\",\"plotdevice\":\"concordia\""
+        new = "\"geochronometer\":\""*method*"\",\"plotdevice\":\"isochron\""
+        json = replace(json, old => new)
+        
+        old = "\""*method*"\":{\"format\":1,\"i2i\":true,\"projerr\":false,\"inverse\":false}"
+        new = "\""*method*"\":{\"format\":2,\"i2i\":true,\"projerr\":false,\"inverse\":true}"
+        json = replace(json, old => new)
+        
+    end
+    
+    file = open(fname,"w")
+    write(file,json)
+    close(file)
+    
+end
+export export2IsoplotR

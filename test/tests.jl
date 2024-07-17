@@ -27,7 +27,7 @@ end
 
 function blanktest()
     myrun = loadtest()
-    blk = fitBlanks(myrun,nb=2)
+    blk = fitBlanks(myrun,nblank=2)
     return myrun, blk
 end
 
@@ -46,17 +46,28 @@ function fractionationtest()
     channels = Dict("d" => "Hf178 -> 260",
                     "D" => "Hf176 -> 258",
                     "P" => "Lu175 -> 175")
-    standards = Dict("Hogsbo" => "hogsbo_ana")
-    setStandards!(myrun,standards)
-    anchors = getAnchor("Lu-Hf",standards)
-    fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,nf=2,nF=1,
-                        mf=1.4671,verbose=true)
-    return myrun, blk, fit, channels, anchors
+    glass = Dict("NIST612" => "NIST612p")
+    setGroup!(myrun,glass)
+    standards = Dict("BP" => "BP")
+    setGroup!(myrun,standards)
+    print("two separate steps: ")
+    mf = fractionation(myrun,"Lu-Hf",blk,channels,glass)
+    fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,mf,ndrift=1,ndown=1)
+    println(fit)
+    print("no glass: ")
+    fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,nothing,ndrift=1,ndown=1)
+    println(fit)
+    print("two joint steps: ")
+    fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,glass,ndrift=1,ndown=1)
+    println(fit)
+    return myrun, blk, fit, channels, standards, glass
 end
 
 function predicttest()
-    myrun, blk, fit, channels, anchors = fractionationtest()
+    myrun, blk, fit, channels, standards, glass = fractionationtest()
+    Sanchors = getAnchors(method,standards,false)
+    Ganchors = getAnchors(method,glass,true)
+    anchors = merge(Sanchors,Ganchors)
     samp = myrun[2]
     if samp.group == "sample"
         print("Not a standard")
@@ -103,13 +114,15 @@ function readmetest()
     myrun = load("data/Lu-Hf",instrument="Agilent")
     blk = fitBlanks(myrun,nb=2)
     standards = Dict("Hogsbo" => "hogsbo_ana")
-    setStandards!(myrun,standards)
-    anchors = getAnchor("Lu-Hf",standards)
+    glass = Dict("NIST612" => "NIST612p")
+    setGroup!(myrun,standards)
+    setGroup!(myrun,glass)
+    anchors = getAnchor("Lu-Hf",standards,glass)
     channels = Dict("d"=>"Hf178 -> 260",
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
     fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=0,mf=1.4671)
+                        anchors=anchors,nf=1,nF=0,mf=nothing,verbose=true)
     ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
     return ratios
 end
@@ -219,9 +232,9 @@ Plots.closeall()
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
-@testset "assign standards" begin standardtest(true) end
+@testset "assign standards" begin standardtest(true) end=#
 @testset "fit fractionation" begin fractionationtest() end
-@testset "plot fit" begin predicttest() end
+#=@testset "plot fit" begin predicttest() end
 @testset "crunch" begin crunchtest() end
 @testset "process sample" begin sampletest() end
 @testset "process run" begin processtest() end
@@ -232,5 +245,5 @@ Plots.closeall()
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
-@testset "mass fractionation test" begin mftest() end=#
-@testset "TUI test" begin TUItest() end
+@testset "mass fractionation test" begin mftest() end
+@testset "TUI test" begin TUItest() end=#

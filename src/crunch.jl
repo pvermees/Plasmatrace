@@ -33,8 +33,8 @@ function SS(t,Dm,dm,y0,mfrac,bD,bd)
     return sum(S)
 end
 # concentrations
-function SS(t,T,Xm,Sm,a,drift,down,bX,bS)
-    pred = predict(t,T,Xm,Sm,a,drift,down,bX,bS)
+function SS(t,T,Xm,Sm,R,drift,down,bX,bS)
+    pred = predict(t,T,Xm,Sm,R,drift,down,bX,bS)
     S = @. (pred[:,"X"]-Xm)^2 + (pred[:,"S"]-Sm)^2
     return sum(S)
 end
@@ -65,13 +65,13 @@ function predict(t,Dm,dm,y0,mfrac,bD,bd)
     return DataFrame(D=Df,d=df)
 end
 # concentrations
-function predict(t,T,Xm,Sm,a,drift,down,bX,bS)
+function predict(t,T,Xm,Sm,R,drift,down,bX,bS)
     ft = polyFac(p=drift,t=t)
     FT = polyFac(p=down,t=T)
     bXt = polyVal(p=bX,t=t)
     bSt = polyVal(p=bS,t=t)
-    S = getS(Xm,Sm,a,ft,FT,bXt,bSt)
-    Xf = @. S*a*ft*FT + bXt
+    S = getS(Xm,Sm,R,ft,FT,bXt,bSt)
+    Xf = @. S*R*ft*FT + bXt
     Sf = @. S + bSt
     return DataFrame(X=Xf,S=Sf)
 end

@@ -1,6 +1,6 @@
 function PTerror(key)
     errormessages = Dict(
-        "nfzero" => "nf must be >0",
+        "ndriftzero" => "ndrift must be >0",
         "notStandard" => "The sample has not been marked as a standard",
         "unknownRefMat" => "Unknown reference material.",
         "unknownMethod" => "Unknown method.",
