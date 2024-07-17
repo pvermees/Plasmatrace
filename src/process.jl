@@ -13,8 +13,8 @@ function process!(run::Vector{Sample},
     setStandards!(run,standards)
     anchors = getAnchor(method,standards)
     fit = fractionation(run,blank=blk,channels=channels,
-                        anchors=anchors,nf=nf,nF=nF,
-                        mf=mf,verbose=verbose)
+                        anchors=anchors,nf=nf,nF=nF,mf=mf,
+                        PAcutoff=PAcutoff,verbose=verbose)
     return blk, anchors, fit
 end
 export process!

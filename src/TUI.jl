@@ -8,7 +8,6 @@ function PT(logbook="")
         "i" => 1,
         "den" => nothing,
         "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
-        "mf" => 1.0,
         "head2name" => true,
         "PAcutoff" => nothing,
         "par" => Pars[],
@@ -96,7 +95,7 @@ function tree(ctrl::AbstractDict)
             "s: Mark standards"*check(ctrl,"standards")*"\n"*
             "v: View and adjust each sample\n"*
             "p: Process the data"*check(ctrl,"process")*"\n"*
-            "e: Export the isotope ratios\n"*
+            "e: Export the results\n"*
             "l: Import/export a session log\n"*
             "o: Options\n"*
             "R: Refresh\n"*
@@ -146,15 +145,6 @@ function tree(ctrl::AbstractDict)
             help = nothing,
             action = TUIcolumns!
         ),
-        "iratio" => (
-            message = TUIiratioMessage,
-            help =
-            "Plasmatrace does not know which data label corresponds to "*
-            "which isotope. Sometimes one non-radiogenic isotope is used "*
-            "as a proxy for another. This must be specified for the "*
-            "proxy conversion to work.",
-            action = TUIiratio!
-        ),
         "standards" => (
             message =
             "t: Tabulate all the samples\n"*
@@ -177,19 +167,26 @@ function tree(ctrl::AbstractDict)
             )
         ),
         "addStandardsByPrefix" => (
-            message = "Specify the prefix of the standard "*
+            message =
+            "Specify the prefix of an age standard or NIST glass "*
             "(? for help, x to exit):",
             help =
             "For example, suppose that Plesovice zircon reference "*
             "materials are named STDCZ01, STDCZ02, ..., then you can "*
             "select all the standards by entering STDCZ here. "*
             "Enter 'x' to go up one level and tabulate the "*
-            "sample if you forgot the exact prefix of your standards.",
+            "sample if you forgot the exact prefix of your standards."*
+            "Note that NIST glass is only used to determine chemical "*
+            "concentrations and mass fractionation factors, but is "*
+            "NOT used as an isotopic ratio standard. Conversely, "*
+            "minerals are only used as isotopic ratio standards "*
+            "but not as concentration standards. Use both to get the "*
+            "best results.",
             action = TUIaddStandardsByPrefix!
         ),
         "addStandardsByNumber" => (
             message =
-            "Select the standards as a comma-separated list of numbers "*
+            "Select the reference materials as a comma-separated list of numbers "*
             "(? for help, x to exit):",
             help =
             "For example, suppose that the analyses are labelled as "*
@@ -418,9 +415,7 @@ function tree(ctrl::AbstractDict)
             message =
             "b: Set the polynomial order of the blank correction\n"*
             "d: Set the polynomial order of the drift correction\n"*
-            "h: Set the polynomial order of the down hole "*
-            "fractionation correction\n"*
-            "f: Fix or fit the fractionation factor\n"*
+            "h: Set the polynomial order of the down hole fractionation correction\n"*
             "p: Subset the data by P/A cutoff\n"*
             "l: List the available reference materials\n"*
             "r: Define new reference materials\n"*
@@ -435,7 +430,6 @@ function tree(ctrl::AbstractDict)
                 "b" => "setNblank",
                 "d" => "setNdrift",
                 "h" => "setNdown",
-                "f" => "setmf",
                 "p" => "PA",
                 "l" => TUIRefMatTab,
                 "r" => "addRefMat",
@@ -471,25 +465,6 @@ function tree(ctrl::AbstractDict)
             "d = exp( a[1]*t + a[2]*t^2 + ... + a[n]*t^n ). "*
             "Here you can specify the value of n.",
             action = TUIsetNdown!
-        ),
-        "setmf" => (
-            message =
-            "Click [Enter] to treat the mass fractionation as a free "*
-            "parameter, or enter a decimal number (currently "*
-            (isnothing(ctrl["mf"]) ?
-             "fitted" : ("fixed at "*string(ctrl["mf"])))*
-            ", ? for help, x to exit)",
-            help =
-            "Clicking [Enter] tells Plasmatrace to estimate the mass "*
-            "fractionation factor by forcing the y-intercept of an "*
-            "inverse isochron to coincide with a prescribed value. "*
-            "This works well for reference materials that form a "*
-            "well defined isochron. For reference materials that are "*
-            "very radiogenic, it is often better to stick with the "*
-            "default value, which is 1 if the non-radiogenic isochron "*
-            "isotope is measured directly, or the IUPAC recommended "*
-            "ratio if the non-radiogenic isotope is measured by proxy",
-            action = TUIsetmf!
         ),
         "PA" => (
             message =
@@ -696,29 +671,7 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
     PDd = labels[selected]
     ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
     ctrl["priority"]["method"] = false
-    if ctrl["method"]=="U-Pb"
-        next = "xx"
-    else
-        next = "iratio"
-    end
-    return next
-end
-
-function TUIiratioMessage(ctrl::AbstractDict)
-    msg = "Which isotope is measured as \""*ctrl["channels"]["d"]*"\"?\n"
-    isotopes = keys(_PT["iratio"][ctrl["method"]])
-    for i in eachindex(isotopes)
-        msg *= string(i)*": "*string(isotopes[i])*"\n"
-    end
-    msg *= "x: Exit\n" * "?: Help"
-    return msg
-end
-
-function TUIiratio!(ctrl::AbstractDict,response::AbstractString)
-    iratios = _PT["iratio"][ctrl["method"]]
-    i = parse(Int,response)
-    ctrl["mf"] = iratios[i]
-    return "xxx"
+    return "xx"
 end
 
 function TUItabulate(ctrl::AbstractDict)
@@ -810,7 +763,6 @@ function TUIprocess!(ctrl::AbstractDict)
                                 anchors=ctrl["anchors"],
                                 nf=ctrl["options"]["drift"],
                                 nF=ctrl["options"]["down"],
-                                mf=ctrl["mf"],
                                 PAcutoff=ctrl["PAcutoff"])
     ctrl["priority"]["process"] = false
     println("Done")
@@ -1032,11 +984,6 @@ end
 function TUIsetNdown!(ctrl::AbstractDict,response::AbstractString)
     ctrl["options"]["down"] = parse(Int,response)
     return "x"    
-end
-
-function TUIsetmf!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["mf"] = response=="" ? nothing : parse(Float64,response)
-    return "x"
 end
 
 function TUIRefMatTab(ctrl::AbstractDict)
