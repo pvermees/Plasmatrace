@@ -34,11 +34,35 @@ end
 function standardtest(verbatim=false)
     myrun, blk = blanktest()
     standards = Dict("BP" => "BP")
-    setStandards!(myrun,standards)
-    anchors = getAnchor("Lu-Hf",standards)
+    setGroup!(myrun,standards)
+    anchors = getAnchors("Lu-Hf",standards)
     if verbatim
         summarise(myrun)
     end
+end
+
+function predicttest()
+    myrun, blk = blanktest()
+    channels = Dict("d" => "Hf178 -> 260",
+                    "D" => "Hf176 -> 258",
+                    "P" => "Lu175 -> 175")
+    glass = Dict("NIST612" => "NIST612p")
+    setGroup!(myrun,glass)
+    standards = Dict("BP" => "BP")
+    setGroup!(myrun,standards)
+    fit = Pars([4.2670587703673934], [0.0, 0.05197296298083967], 0.3838697441780825)
+    Sanchors = getAnchors("Lu-Hf",standards,false)
+    Ganchors = getAnchors("Lu-Hf",glass,true)
+    anchors = merge(Sanchors,Ganchors)
+    samp = myrun[4]
+    if samp.group == "sample"
+        println("Not a standard")
+    else
+        pred = predict(samp,fit,blk,channels,anchors)
+        p = plot(samp,channels,blk,fit,anchors,transformation="log")
+        @test display(p) != NaN
+    end
+    return pred
 end
 
 function fractionationtest()
@@ -61,20 +85,6 @@ function fractionationtest()
     fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,glass,ndrift=1,ndown=1)
     println(fit)
     return myrun, blk, fit, channels, standards, glass
-end
-
-function predicttest()
-    myrun, blk, fit, channels, standards, glass = fractionationtest()
-    Sanchors = getAnchors(method,standards,false)
-    Ganchors = getAnchors(method,glass,true)
-    anchors = merge(Sanchors,Ganchors)
-    samp = myrun[2]
-    if samp.group == "sample"
-        print("Not a standard")
-    else
-        pred = predict(samp,fit,blk,channels,anchors)
-    end
-    return pred
 end
 
 function crunchtest()
@@ -233,8 +243,8 @@ Plots.closeall()
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
 @testset "assign standards" begin standardtest(true) end=#
-@testset "fit fractionation" begin fractionationtest() end
-#=@testset "plot fit" begin predicttest() end
+@testset "plot fit" begin predicttest() end
+#=@testset "fit fractionation" begin fractionationtest() end
 @testset "crunch" begin crunchtest() end
 @testset "process sample" begin sampletest() end
 @testset "process run" begin processtest() end

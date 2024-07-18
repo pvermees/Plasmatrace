@@ -84,17 +84,16 @@ function predict(samp::Sample,
         PTerror("notStandard")
     else
         dat = windowData(samp,signal=true)
-        (x0,y0,y1) = anchors[samp.group]
-        return predict(dat,pars,blank,channels,x0,y0,y1)
+        anchor = anchors[samp.group]
+        return predict(dat,pars,blank,channels,anchor)
     end
 end
+# minerals
 function predict(dat::AbstractDataFrame,
                  pars::Pars,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
-                 x0::AbstractFloat,
-                 y0::AbstractFloat,
-                 y1::AbstractFloat)
+                 anchor::NamedTuple)
     t = dat.t
     T = dat.T
     Pm = dat[:,channels["P"]]
@@ -103,8 +102,22 @@ function predict(dat::AbstractDataFrame,
     bP = blank[:,channels["P"]]
     bD = blank[:,channels["D"]]
     bd = blank[:,channels["d"]]
-    return predict(t,T,Pm,Dm,dm,x0,y0,y1,
+    return predict(t,T,Pm,Dm,dm,
+                   anchor.x0,anchor.y0,anchor.y1,
                    pars.drift,pars.down,pars.mfrac,
-                   bP,bD,bd)
+                   bP,bD,bd)    
+end
+# glass
+function predict(dat::AbstractDataFrame,
+                 pars::Pars,
+                 blank::AbstractDataFrame,
+                 channels::AbstractDict,
+                 y0::AbstractFloat)
+    t = dat.t
+    Dm = dat[:,channels["D"]]
+    dm = dat[:,channels["d"]]
+    bD = blank[:,channels["D"]]
+    bd = blank[:,channels["d"]]
+    return predict(t,Dm,dm,y0,pars.mfrac,bD,bd)
 end
 export predict

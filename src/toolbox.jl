@@ -297,14 +297,22 @@ function getOffset(samp::Sample,
     ions = collect(values(channels))
     obs = windowData(samp,signal=true)[:,ions]
     yobs = formRatios(obs,num,den)
-    pred = predict(samp,pars,blank,channels,anchors)
-    rename!(pred,channels)
-    ypred = formRatios(pred,num,den)
     offset_obs = getOffset(yobs,transformation=transformation)
+    
+    pred = predict(samp,pars,blank,channels,anchors)
+    prednames = [channels[i] for i in names(pred)]
+    rename!(pred,prednames)
+    ypred = formRatios(pred,num,den)
     offset_pred = getOffset(ypred,transformation=transformation)
+    
     out = zeros(size(yobs,2))
     for i in eachindex(out)
-        out[i] = maximum([offset_obs[i],offset_pred[i]])
+        j = findfirst(==(ions[i]), prednames)
+        if isnothing(j)
+            out[i] = offset_obs[i]
+        else
+            out[i] = maximum([offset_obs[i],offset_pred[j]])
+        end
     end
     return out
 end

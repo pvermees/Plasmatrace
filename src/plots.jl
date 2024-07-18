@@ -24,7 +24,7 @@ function plot(samp::Sample,
                  ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
         
     else
-        
+
         offset = getOffset(samp,channels,blank,pars,anchors,
                            num=num,den=den,transformation=transformation)
 
@@ -107,9 +107,10 @@ function plotFitted!(p,samp::Sample,pars::Pars,blank::AbstractDataFrame,
                      linecolor="black",linestyle=:solid)
     x = windowData(samp,signal=true)[:,1]
     pred = predict(samp,pars,blank,channels,anchors)
-    rename!(pred,channels)
+    rename!(pred,[channels[i] for i in names(pred)])
     y = formRatios(pred,num,den)
-    ty = transformeer(y,transformation=transformation,offset=offset)
+    j = indexin(names(y),collect(values(channels)))
+    ty = transformeer(y,transformation=transformation,offset=offset[j])
     for tyi in eachcol(ty)
         Plots.plot!(p,x,tyi,linecolor=linecolor,
                     linestyle=linestyle,label="")
