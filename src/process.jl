@@ -5,17 +5,17 @@ returns blk, anchors, fit
 function process!(run::Vector{Sample},
                   method::AbstractString,
                   channels::AbstractDict,
-                  standards::AbstractDict;
+                  standards::AbstractDict,
+                  glass::AbstractDict;
                   nblank::Integer=2,ndrift::Integer=1,ndown::Integer=1,
-                  mf=nothing,PAcutoff=nothing,
-                  verbose::Bool=false)
-    blk = fitBlanks(run,nblank=nblank)
+                  PAcutoff=nothing,verbose::Bool=false)
+    blank = fitBlanks(run,nblank=nblank)
     setGroup!(run,standards)
-    anchors = getAnchor(method,standards)
-    fit = fractionation(run,blank=blk,channels=channels,
-                        anchors=anchors,ndrift=ndrift,ndown=ndown,mf=mf,
+    setGroup!(run,glass)
+    fit = fractionation(run,method,blank,channels,standards,glass,
+                        ndrift=ndrift,ndown=ndown,
                         PAcutoff=PAcutoff,verbose=verbose)
-    return blk, anchors, fit
+    return blank, fit
 end
 export process!
 

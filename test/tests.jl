@@ -41,7 +41,7 @@ function standardtest(verbatim=false)
     end
 end
 
-function predicttest()
+function predictest()
     myrun, blk = blanktest()
     channels = Dict("d" => "Hf178 -> 260",
                     "D" => "Hf176 -> 258",
@@ -65,7 +65,7 @@ function predicttest()
     return pred
 end
 
-function fractionationtest()
+function fractionationtest(all=true)
     myrun, blk = blanktest()
     channels = Dict("d" => "Hf178 -> 260",
                     "D" => "Hf176 -> 258",
@@ -74,33 +74,43 @@ function fractionationtest()
     setGroup!(myrun,glass)
     standards = Dict("BP" => "BP")
     setGroup!(myrun,standards)
-    print("two separate steps: ")
-    mf = fractionation(myrun,"Lu-Hf",blk,channels,glass)
-    fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,mf,ndrift=1,ndown=1)
-    println(fit)
-    print("no glass: ")
-    fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,nothing,ndrift=1,ndown=1)
-    println(fit)
-    print("two joint steps: ")
+    if all
+        print("two separate steps: ")
+        mf = fractionation(myrun,"Lu-Hf",blk,channels,glass)
+        fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,mf,ndrift=1,ndown=1)
+        println(fit)
+        print("no glass: ")
+        fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,nothing,ndrift=1,ndown=1)
+        println(fit)
+        print("two joint steps: ")
+    end
     fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,glass,ndrift=1,ndown=1)
-    println(fit)
-    return myrun, blk, fit, channels, standards, glass
+    if (all)
+        println(fit)
+        return myrun, blk, fit, channels, standards, glass
+    else
+        Sanchors = getAnchors("Lu-Hf",standards,false)
+        Ganchors = getAnchors("Lu-Hf",glass,true)
+        anchors = merge(Sanchors,Ganchors)
+        return myrun, blk, fit, channels, standards, glass, anchors
+    end
 end
 
-function crunchtest()
-    myrun, blk, fit, channels, anchors = fractionationtest()
-    pooled = pool(myrun,signal=true,group="Hogsbo")
-    (x0,y0,y1) = anchors["Hogsbo"]
-    pred = predict(pooled,fit,blk,channels,x0,y0,y1)
+function histest()
+    myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
+    pooled = pool(myrun,signal=true,group="BP")
+    anchor = anchors["BP"]
+    pred = predict(pooled,fit,blk,channels,anchor)
     misfit = @. pooled[:,channels["d"]] - pred[:,"d"]
     p = Plots.histogram(misfit,legend=false)
     @test display(p) != NaN
 end
 
-function sampletest()
-    myrun, blk, fit, channels, anchors = fractionationtest()
+function averatest()
+    myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
     t, T, P, D, d = atomic(myrun[1],channels=channels,pars=fit,blank=blk)
     ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
+    println(first(ratios,5))
     return ratios
 end
 
@@ -111,12 +121,13 @@ function processtest()
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
     standards = Dict("Hogsbo" => "hogsbo")
+    glass = Dict("NIST612" => "NIST612p")
     cutoff = 1e7
-    blk, anchors, fit = process!(myrun,method,channels,standards,
-                                 nb=2,nf=2,nF=2,mf=1.4671,
-                                 PAcutoff=cutoff,verbose=true)
-    p = plot(myrun[2],channels,blk,fit,anchors,den="Hf176 -> 258",
-             transformation="log")
+    blk, fit = process!(myrun,method,channels,standards,glass,
+                        nblank=2,ndrift=2,ndown=2,
+                        PAcutoff=cutoff,verbose=true)
+    p = plot(myrun[2],channels,blk,fit,getAnchors("Lu-Hf",standards,false),
+             den="Hf176 -> 258",transformation="log")
     @test display(p) != NaN
 end
 
@@ -242,13 +253,13 @@ Plots.closeall()
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
-@testset "assign standards" begin standardtest(true) end=#
-@testset "plot fit" begin predicttest() end
-#=@testset "fit fractionation" begin fractionationtest() end
-@testset "crunch" begin crunchtest() end
-@testset "process sample" begin sampletest() end
+@testset "assign standards" begin standardtest(true) end
+@testset "predict" begin predictest() end
+@testset "fit fractionation" begin fractionationtest() end
+@testset "hist" begin histest() end
+@testset "average sample ratios" begin averatest() end=#
 @testset "process run" begin processtest() end
-@testset "readme example" begin readmetest() end
+#=@testset "readme example" begin readmetest() end
 @testset "PA test" begin PAtest() end
 @testset "export" begin exporttest() end
 @testset "Rb-Sr" begin RbSrtest() end
