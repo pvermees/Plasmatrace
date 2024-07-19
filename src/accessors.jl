@@ -125,6 +125,11 @@ function gety0(method::AbstractString,
     return _PT["glass"][refmat][ratio]
 end
 
+function getAnchors(method::AbstractString,standards::AbstractDict,glass::AbstractDict)
+    Sanchors = getAnchors(method,standards,false)
+    Ganchors = getAnchors(method,glass,true)
+    return merge(Sanchors,Ganchors)
+end
 function getAnchors(method::AbstractString,refmats::Vector{String},glass::Bool=false)
     out = Dict()
     for refmat in refmats

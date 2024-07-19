@@ -5,7 +5,7 @@ import Plots
 
 function loadtest(verbose=false)
     myrun = load("data/Lu-Hf",instrument="Agilent")
-    if verbose summarise(myrun) end
+    if verbose summarise(myrun,true,5) end
     return myrun
 end
 
@@ -37,12 +37,14 @@ function standardtest(verbose=false)
     setGroup!(myrun,standards)
     anchors = getAnchors("Lu-Hf",standards)
     if verbose
-        summarise(myrun)
+        println(anchors)
+        summarise(myrun,true,5)
     end
 end
 
 function predictest()
     myrun, blk = blanktest()
+    method = "Lu-Hf"
     channels = Dict("d" => "Hf178 -> 260",
                     "D" => "Hf176 -> 258",
                     "P" => "Lu175 -> 175")
@@ -51,15 +53,12 @@ function predictest()
     standards = Dict("BP" => "BP")
     setGroup!(myrun,standards)
     fit = Pars([4.2670587703673934], [0.0, 0.05197296298083967], 0.3838697441780825)
-    Sanchors = getAnchors("Lu-Hf",standards,false)
-    Ganchors = getAnchors("Lu-Hf",glass,true)
-    anchors = merge(Sanchors,Ganchors)
     samp = myrun[4]
     if samp.group == "sample"
         println("Not a standard")
     else
-        pred = predict(samp,fit,blk,channels,anchors)
-        p = plot(samp,channels,blk,fit,anchors,transformation="log")
+        pred = predict(samp,method,fit,blk,channels,standards,glass)
+        p = plot(samp,method,channels,blk,fit,standards,glass,transformation="log")
         @test display(p) != NaN
     end
     return pred
@@ -109,7 +108,7 @@ end
 function averatest()
     myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
     t, T, P, D, d = atomic(myrun[1],channels=channels,pars=fit,blank=blk)
-    ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
+    ratios = averat(myrun,channels,fit,blk)
     println(first(ratios,5))
     return ratios
 end
@@ -124,8 +123,8 @@ function processtest()
     glass = Dict("NIST612" => "NIST612p")
     blk, fit = process!(myrun,method,channels,standards,glass,
                         nblank=2,ndrift=2,ndown=2)
-    anchors = getAnchors(method,standards,false)
-    p = plot(myrun[2],channels,blk,fit,anchors,den="Hf176 -> 258",transformation="log")
+    p = plot(myrun[2],method,channels,blk,fit,standards,glass,
+             den="Hf176 -> 258",transformation="log")
     @test display(p) != NaN
 end
 
@@ -140,7 +139,7 @@ function PAtest(verbose=false)
     cutoff = 1e7
     blk, fit = process!(myrun,method,channels,standards,glass,
                         PAcutoff=cutoff,nblank=2,ndrift=2,ndown=2)
-    ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
+    ratios = averat(myrun,channels,fit,blk)
     if verbose println(first(ratios,5)) end
     return ratios
 end
@@ -149,78 +148,57 @@ function exporttest()
     ratios = PAtest()
     selection = subset(ratios,"BP") # "hogsbo"
     CSV.write("BP.csv",selection)
-    export2IsoplotR("BP.json",selection,"Lu-Hf")
+    export2IsoplotR(selection,"Lu-Hf",fname="BP.json")
 end
 
 function RbSrtest()
     myrun = load("data/Rb-Sr",instrument="Agilent")
-    standards = Dict("MDC" => "MDC -")
+    method = "Rb-Sr"
     channels = Dict("d"=>"Sr86 -> 102",
                     "D"=>"Sr87 -> 103",
                     "P"=>"Rb85 -> 85")
-    blk, anchors, fit = process!(myrun,"Rb-Sr",channels,
-                                 standards,nf=1,nF=2,mf=1.0)
-    p = plot(myrun[2],channels,blk,fit,anchors,
-             transformation="log",den="Sr86 -> 102")
+    standards = Dict("MDC" => "MDC -")
+    setGroup!(myrun,standards)
+    blank = fitBlanks(myrun,nblank=2)
+    fit = fractionation(myrun,method,blank,channels,standards,1.0;ndrift=1)
+    anchors = getAnchors(method,standards)
+    p = plot(myrun[2],channels,blank,fit,anchors,transformation="log",den="Sr86 -> 102")
+    export2IsoplotR(myrun,method,channels,fit,blank,prefix="Entire",fname="Entire.json")
     @test display(p) != NaN
-    ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
-    selection = subset(ratios,"Entire")
-    export2IsoplotR("Entire.json",selection,"Rb-Sr")
-    return ratios
 end
 
 function UPbtest()
-    
     myrun = load("data/U-Pb",instrument="Agilent",head2name=false)
-    standards = Dict("91500" => "91500")
+    method = "U-Pb"
+    standards = Dict("Plesovice" => "STDCZ",
+                     "91500" => "91500")
+    glass = Dict("NIST610" => "610",
+                 "NIST612" => "612")
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
-    
-    blank, anchors, pars = process!(myrun,"U-Pb",channels,
-                                    standards,nb=2,nf=1,nF=2,mf=1,
-                                    verbose=true)
-
-    samp = myrun[29]
-    p = plot(samp,channels,blank,pars,anchors,transformation="log")
-    
+    blank, pars = process!(myrun,"U-Pb",channels,standards,glass,
+                           nblank=2,ndrift=1,ndown=2)
+    export2IsoplotR(myrun,method,channels,pars,blank,fname="UPb.json")
+    p = plot(myrun[1],method,channels,blank,pars,standards,glass,transformation="log")
     @test display(p) != NaN
-    
-    ratios = averat(myrun,channels=channels,pars=pars,blank=blank)
-    selection = subset(ratios,"91500")
-    export2IsoplotR("91500.json",selection,"U-Pb")
-    return ratios
-    
 end
 
 function iCaptest(verbose=true)
     myrun = load("data/iCap",instrument="ThermoFisher")
-    if verbose summarise(myrun) end
+    if verbose summarise(myrun,true,5) end
 end
 
 function carbonatetest(verbose=false)
+    method = "U-Pb"
     myrun = load("data/carbonate",instrument="Agilent")
     standards = Dict("WC1"=>"WC1")
+    glass = Dict("NIST612"=>"NIST612")
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
-    blk, anchors, fit = process!(myrun,"U-Pb",channels,
-                                 standards,nb=2,nf=2,nF=2,mf=1.0,
-                                 verbose=verbose)
-    p = plot(myrun[3],channels,blk,fit,anchors,
+    blk, fit = process!(myrun,method,channels,standards,glass,
+                        nblank=2,ndrift=1,ndown=1,verbose=verbose)
+    export2IsoplotR(myrun,method,channels,fit,blk,prefix="Duff",fname="Duff.json")
+    p = plot(myrun[3],method,channels,blk,fit,standards,glass,
              transformation="",num=["Pb207"],den="Pb206",ylim=[-0.02,0.3])
     @test display(p) != NaN
-end
-
-function mftest()
-    myrun = load("data/carbonate",instrument="Agilent")
-    channels = Dict("d" => "Pb207",
-                    "D" => "Pb206",
-                    "P" => "U238")
-    standards = Dict("WC1" => "WC1",
-                     "NIST612" => "NIST612")
-    blank, anchors, pars = process!(myrun,"U-Pb",channels,
-                                    standards,nb=2,nf=1,nF=1,mf=nothing)
-    println(pars)
-    ratios = averat(myrun,channels=channels,pars=pars,blank=blank)
-    selection = subset(ratios,"WC1")
-    export2IsoplotR("WC1.json",selection,"U-Pb")
 end
 
 function readmetest()
@@ -244,10 +222,9 @@ Plots.closeall()
 @testset "process run" begin processtest() end
 @testset "PA test" begin PAtest(true) end
 @testset "export" begin exporttest() end
-#=@testset "Rb-Sr" begin RbSrtest() end
+@testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
-@testset "mass fractionation test" begin mftest() end
-@testset "readme example" begin readmetest() end
+#=@testset "readme example" begin readmetest() end
 @testset "TUI test" begin TUItest() end=#

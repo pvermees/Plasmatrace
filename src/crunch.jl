@@ -76,6 +76,16 @@ function predict(t,T,Xm,Sm,R,drift,down,bX,bS)
     return DataFrame(X=Xf,S=Sf)
 end
 function predict(samp::Sample,
+                 method::AbstractString,
+                 pars::Pars,
+                 blank::AbstractDataFrame,
+                 channels::AbstractDict,
+                 standards::AbstractDict,
+                 glass::AbstractDict)
+    anchors = getAnchors(method,standards,glass)
+    return predict(samp,pars,blank,channels,anchors)
+end
+function predict(samp::Sample,
                  pars::Pars,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,

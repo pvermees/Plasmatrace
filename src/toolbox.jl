@@ -84,7 +84,7 @@ function polyFac(;p,t)
 end
 export polyFac
 
-function summarise(run::Vector{Sample},verbose=true)
+function summarise(run::Vector{Sample},verbose=true,n=length(run))
     ns = length(run)
     snames = getSnames(run)
     groups = fill("sample",ns)
@@ -94,11 +94,11 @@ function summarise(run::Vector{Sample},verbose=true)
         dates[i] = run[i].datetime
     end
     out = DataFrame(name=snames,date=dates,group=groups)
-    if verbose println(out) end
+    if verbose println(first(out,n)) end
     return out
 end
-function summarize(run::Vector{Sample})
-    summarise(run)
+function summarize(run::Vector{Sample},verbose=true,n=length(run))
+    summarise(run,verbose,n)
 end
 export summarise, summarize
 

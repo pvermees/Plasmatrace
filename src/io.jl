@@ -99,9 +99,22 @@ function readThermoFisher(fname::AbstractString,
     
 end
 
-function export2IsoplotR(fname::AbstractString,
-                         ratios::AbstractDataFrame,
-                         method::AbstractString)
+function export2IsoplotR(run::Vector{Sample},
+                         method::AbstractString,
+                         channels::AbstractDict,
+                         pars::Union{Pars,NamedTuple},
+                         blank::AbstractDataFrame;
+                         prefix=nothing,fname::AbstractString="PT.json")
+    ratios = averat(run,channels,pars,blank)
+    if isnothing(prefix)
+        export2IsoplotR(ratios,method,fname=fname)
+    else
+        export2IsoplotR(subset(ratios,prefix),method,fname=fname)
+    end
+end
+function export2IsoplotR(ratios::AbstractDataFrame,
+                         method::AbstractString;
+                         fname::AbstractString="PT.json")
     json = jsonTemplate()
 
     P, D, d = getPDd(method)

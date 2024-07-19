@@ -1,10 +1,41 @@
 """
-channels = optional array of names specifying the data columns to plot
+Plot selected channels for a sample or a standard
+
+method = either "U-Pb", "Lu-Hf" or "Rb-Sr"
+channels = dictionary of the type Dict("P" => "parent", "D" => "daughter", "d" => "sister")
+blank = the output of fitBlanks()
+pars = the output of fractionation() or process!()
+standards = dictionary of the type Dict("prefix" => "mineral standard")
+glass = dictionary of the type Dict("prefix" => "reference glass")
 num = optional vector of name of the data column to use as the numerator
 den = optional name of the data column to use as the denominator
 transformation = "sqrt", "log" or ""
 seriestype = :scatter or :path
 titlefontsize, ms, xlim, ylim = see the generic Plot.plot function
+"""
+function plot(samp::Sample,
+              method::AbstractString,
+              channels::AbstractDict,
+              blank::AbstractDataFrame,
+              pars::Pars,
+              standards::AbstractDict,
+              glass::AbstractDict;
+              num=nothing,den=nothing,
+              transformation="sqrt",
+              seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+              linecol="black",linestyle=:solid)
+    Sanchors = getAnchors(method,standards,false)
+    Ganchors = getAnchors(method,glass,true)
+    anchors = merge(Sanchors,Ganchors)
+    return plot(samp,channels,blank,pars,anchors,
+                num=num,den=den,transformation=transformation,
+                seriestype=seriestype,titlefontsize=titlefontsize,
+                ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+end
+"""
+Plot selected channels for a sample or a standard
+anchors = the output of getAnchors()
 """
 function plot(samp::Sample,
               channels::AbstractDict,
@@ -40,28 +71,23 @@ function plot(samp::Sample,
     end
     return p
 end
+"""
+Plot selected channels (provided as a dictionary) from a sample
+"""
 function plot(samp::Sample,
               channels::AbstractDict;
               num=nothing,den=nothing,
               transformation="sqrt",offset=nothing,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
-    p = plot(samp,collect(values(channels)),num=num,den=den,
-             transformation=transformation,offset=offset,seriestype=seriestype,
-             titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=xlim,ylim=ylim)
-    return p
+    return plot(samp,collect(values(channels)),num=num,den=den,
+                transformation=transformation,offset=offset,seriestype=seriestype,
+                titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=xlim,ylim=ylim)
 end
-function plot(samp::Sample;
-              num=nothing,den=nothing,
-              transformation="sqrt",offset=nothing,
-              seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto)
-    p = plot(samp,getChannels(samp),num=num,den=den,
-             transformation=transformation,offset=offset,
-             seriestype=seriestype,titlefontsize=titlefontsize,
-             ms=ms,ma=ma,xlim=lim,ylim=ylim)
-    return p
-end
+"""
+plot selected channels (provided as a vector) from a sample
+channels = a vector of channel names (e.g., the keys of a channels Dict)
+"""
 function plot(samp::Sample,
               channels::AbstractVector;
               num=nothing,den=nothing,
@@ -102,6 +128,17 @@ function plot(samp::Sample,
 end
 export plot
 
+"""
+Add a model fit to an existing sample plot
+
+p = the output of plot()
+samp = a sample
+pars = the output of fractionation() or process!()
+blank = the output of fitBlanks()
+channels = dictionary of the type Dict("P" => "parent", "D" => "daughter", "d" => "sister")
+anchors = output of getAnchors()
+num, den, transformation, offset, linecolor, linestyle = see ?plot
+"""
 function plotFitted!(p,samp::Sample,pars::Pars,blank::AbstractDataFrame,
                      channels::AbstractDict,anchors::AbstractDict;
                      num=nothing,den=nothing,transformation="sqrt",

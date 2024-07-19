@@ -218,10 +218,10 @@ function averat(samp::Sample,
     rxy = covmat[1,2]/(sx*sy)
     return [x sx y sy rxy]
 end
-function averat(run::Vector{Sample};
+function averat(run::Vector{Sample},
                 channels::AbstractDict,
                 pars::Union{Pars,NamedTuple},
-                blank::AbstractDataFrame,
+                blank::AbstractDataFrame;
                 PAcutoff=nothing)
     ns = length(run)
     nul = fill(0.0,ns)
@@ -237,7 +237,7 @@ function averat(run::Vector{Sample};
         else
             samp_pars = pars.pulse
         end
-        out[i,2:end] = averat(samp,channels=channels,pars=samp_pars,blank=blank)
+        out[i,2:end] = averat(samp,channels,samp_pars,blank)
     end
     return out
 end
