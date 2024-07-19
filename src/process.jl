@@ -5,17 +5,17 @@ returns blk, anchors, fit
 function process!(run::Vector{Sample},
                   method::AbstractString,
                   channels::AbstractDict,
-                  standards::AbstractDict;
+                  standards::AbstractDict,
+                  glass::AbstractDict;
                   nblank::Integer=2,ndrift::Integer=1,ndown::Integer=1,
-                  mf=nothing,PAcutoff=nothing,
-                  verbose::Bool=false)
-    blk = fitBlanks(run,nblank=nblank)
+                  PAcutoff=nothing,verbose::Bool=false)
+    blank = fitBlanks(run,nblank=nblank)
     setGroup!(run,standards)
-    anchors = getAnchor(method,standards)
-    fit = fractionation(run,blank=blk,channels=channels,
-                        anchors=anchors,ndrift=ndrift,ndown=ndown,mf=mf,
+    setGroup!(run,glass)
+    fit = fractionation(run,method,blank,channels,standards,glass,
+                        ndrift=ndrift,ndown=ndown,
                         PAcutoff=PAcutoff,verbose=verbose)
-    return blk, anchors, fit
+    return blank, fit
 end
 export process!
 
@@ -120,12 +120,11 @@ function fractionation(run::Vector{Sample},
 
         out = Pars(drift,down,mfrac)
     else
-        out = Array{Pars}(undef,2)
         analog = isAnalog(run,channels=channels,cutoff=PAcutoff)
-        out[1] = fractionation(run[analog],method,blank,channels,standards,mf,
-                               ndrift=ndrift,ndown=ndown,verbose=verbose)
-        out[2] = fractionation(run[.!analog],method,blank,channels,standards,mf,
-                               ndrift=ndrift,ndown=ndown,verbose=verbose)
+        out = (analog = fractionation(run[analog],method,blank,channels,standards,mf,
+                                      ndrift=ndrift,ndown=ndown,verbose=verbose),
+               pulse = fractionation(run[.!analog],method,blank,channels,standards,mf,
+                                     ndrift=ndrift,ndown=ndown,verbose=verbose))
     end
     return out
 end
@@ -193,8 +192,10 @@ function atomic(samp::Sample;
 end
 export atomic
 
-function averat(samp::Sample;
-                channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+function averat(samp::Sample,
+                channels::AbstractDict,
+                pars::Pars,
+                blank::AbstractDataFrame)
     t, T, P, D, d = atomic(samp,channels=channels,pars=pars,blank=blank)
     nr = length(t)
     muP = Statistics.mean(P)
@@ -219,23 +220,24 @@ function averat(samp::Sample;
 end
 function averat(run::Vector{Sample};
                 channels::AbstractDict,
-                pars::Union{Pars,AbstractVector},
+                pars::Union{Pars,NamedTuple},
                 blank::AbstractDataFrame,
                 PAcutoff=nothing)
     ns = length(run)
-    out = DataFrame(name=fill("",ns),x=fill(0.0,ns),sx=fill(0.0,ns),
-                    y=fill(0.0,ns),sy=fill(0.0,ns),rxy=fill(0.0,ns))
+    nul = fill(0.0,ns)
+    out = DataFrame(name=fill("",ns),x=nul,sx=nul,y=nul,sy=nul,rxy=nul)
     analog = isAnalog(run,channels=channels,cutoff=PAcutoff)
     for i in 1:ns
-        out[i,1] = run[i].sname
+        samp = run[i]
+        out[i,1] = samp.sname
         if isa(pars,Pars)
-            out[i,2:end] = averat(run[i],channels=channels,
-                                  pars=pars,blank=blank)
+            samp_pars = pars
+        elseif analog[i]
+            samp_pars = pars.analog
         else
-            j = analog ? 1 : 2
-            out[i,2:end] = averat(run[i],channels=channels,
-                                  pars=pars[j],blank=blank)
+            samp_pars = pars.pulse
         end
+        out[i,2:end] = averat(samp,channels=channels,pars=samp_pars,blank=blank)
     end
     return out
 end

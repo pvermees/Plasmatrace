@@ -273,17 +273,17 @@ end
 
 function getOffset(df::AbstractDataFrame;transformation::AbstractString)
     nc = size(df,2)
-    out = zeros(nc)
-    for i in 1:nc
-        m = minimum(df[:,i])
+    out = Dict{String,Float64}()
+    for col in names(df)
+        m = minimum(df[:,col])
         offset = m<0 ? abs(m) : 0.0
         if transformation=="log"
-            M = maximum(df[:,i])
+            M = maximum(df[:,col])
             padding = m<0 ? (M-m)/100 : 0.0
         else
             padding = 0.0
         end
-        out[i] = offset + padding
+        out[col] = offset + padding
     end
     return out
 end
@@ -305,25 +305,24 @@ function getOffset(samp::Sample,
     ypred = formRatios(pred,num,den)
     offset_pred = getOffset(ypred,transformation=transformation)
     
-    out = zeros(size(yobs,2))
-    for i in eachindex(out)
-        j = findfirst(==(ions[i]), prednames)
-        if isnothing(j)
-            out[i] = offset_obs[i]
+    out = offset_obs
+    for key in keys(out)
+        if key in keys(offset_pred)
+            out[key] = maximum([offset_obs[key],offset_pred[key]])
         else
-            out[i] = maximum([offset_obs[i],offset_pred[j]])
+            out[key] = offset_obs[key]
         end
     end
     return out
 end
     
-function transformeer(df::AbstractDataFrame;transformation="",offset=zeros(size(df,2)))
+function transformeer(df::AbstractDataFrame;transformation="",offset::AbstractDict)
     if transformation==""
         out = df
     else
         out = copy(df)
-        for i in 1:length(offset)
-            out[:,i] = eval(Symbol(transformation)).(df[:,i] .+ offset[i])
+        for key in names(out)
+            out[:,key] = eval(Symbol(transformation)).(df[:,key] .+ offset[key])
         end
     end
     return out

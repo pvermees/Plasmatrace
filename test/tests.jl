@@ -3,9 +3,9 @@
 using Test, CSV
 import Plots
 
-function loadtest(verbatim=false)
+function loadtest(verbose=false)
     myrun = load("data/Lu-Hf",instrument="Agilent")
-    if verbatim summarise(myrun) end
+    if verbose summarise(myrun) end
     return myrun
 end
 
@@ -31,17 +31,17 @@ function blanktest()
     return myrun, blk
 end
 
-function standardtest(verbatim=false)
+function standardtest(verbose=false)
     myrun, blk = blanktest()
     standards = Dict("BP" => "BP")
     setGroup!(myrun,standards)
     anchors = getAnchors("Lu-Hf",standards)
-    if verbatim
+    if verbose
         summarise(myrun)
     end
 end
 
-function predicttest()
+function predictest()
     myrun, blk = blanktest()
     channels = Dict("d" => "Hf178 -> 260",
                     "D" => "Hf176 -> 258",
@@ -65,7 +65,7 @@ function predicttest()
     return pred
 end
 
-function fractionationtest()
+function fractionationtest(all=true)
     myrun, blk = blanktest()
     channels = Dict("d" => "Hf178 -> 260",
                     "D" => "Hf176 -> 258",
@@ -74,33 +74,43 @@ function fractionationtest()
     setGroup!(myrun,glass)
     standards = Dict("BP" => "BP")
     setGroup!(myrun,standards)
-    print("two separate steps: ")
-    mf = fractionation(myrun,"Lu-Hf",blk,channels,glass)
-    fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,mf,ndrift=1,ndown=1)
-    println(fit)
-    print("no glass: ")
-    fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,nothing,ndrift=1,ndown=1)
-    println(fit)
-    print("two joint steps: ")
+    if all
+        print("two separate steps: ")
+        mf = fractionation(myrun,"Lu-Hf",blk,channels,glass)
+        fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,mf,ndrift=1,ndown=1)
+        println(fit)
+        print("no glass: ")
+        fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,nothing,ndrift=1,ndown=1)
+        println(fit)
+        print("two joint steps: ")
+    end
     fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,glass,ndrift=1,ndown=1)
-    println(fit)
-    return myrun, blk, fit, channels, standards, glass
+    if (all)
+        println(fit)
+        return myrun, blk, fit, channels, standards, glass
+    else
+        Sanchors = getAnchors("Lu-Hf",standards,false)
+        Ganchors = getAnchors("Lu-Hf",glass,true)
+        anchors = merge(Sanchors,Ganchors)
+        return myrun, blk, fit, channels, standards, glass, anchors
+    end
 end
 
-function crunchtest()
-    myrun, blk, fit, channels, anchors = fractionationtest()
-    pooled = pool(myrun,signal=true,group="Hogsbo")
-    (x0,y0,y1) = anchors["Hogsbo"]
-    pred = predict(pooled,fit,blk,channels,x0,y0,y1)
+function histest()
+    myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
+    pooled = pool(myrun,signal=true,group="BP")
+    anchor = anchors["BP"]
+    pred = predict(pooled,fit,blk,channels,anchor)
     misfit = @. pooled[:,channels["d"]] - pred[:,"d"]
     p = Plots.histogram(misfit,legend=false)
     @test display(p) != NaN
 end
 
-function sampletest()
-    myrun, blk, fit, channels, anchors = fractionationtest()
+function averatest()
+    myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
     t, T, P, D, d = atomic(myrun[1],channels=channels,pars=fit,blank=blk)
     ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
+    println(first(ratios,5))
     return ratios
 end
 
@@ -111,51 +121,32 @@ function processtest()
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
     standards = Dict("Hogsbo" => "hogsbo")
-    cutoff = 1e7
-    blk, anchors, fit = process!(myrun,method,channels,standards,
-                                 nb=2,nf=2,nF=2,mf=1.4671,
-                                 PAcutoff=cutoff,verbose=true)
-    p = plot(myrun[2],channels,blk,fit,anchors,den="Hf176 -> 258",
-             transformation="log")
+    glass = Dict("NIST612" => "NIST612p")
+    blk, fit = process!(myrun,method,channels,standards,glass,
+                        nblank=2,ndrift=2,ndown=2)
+    anchors = getAnchors(method,standards,false)
+    p = plot(myrun[2],channels,blk,fit,anchors,den="Hf176 -> 258",transformation="log")
     @test display(p) != NaN
 end
 
-function readmetest()
+function PAtest(verbose=false)
     myrun = load("data/Lu-Hf",instrument="Agilent")
-    blk = fitBlanks(myrun,nb=2)
-    standards = Dict("Hogsbo" => "hogsbo_ana")
-    glass = Dict("NIST612" => "NIST612p")
-    setGroup!(myrun,standards)
-    setGroup!(myrun,glass)
-    anchors = getAnchor("Lu-Hf",standards,glass)
+    method = "Lu-Hf"
     channels = Dict("d"=>"Hf178 -> 260",
                     "D"=>"Hf176 -> 258",
                     "P"=>"Lu175 -> 175")
-    fit = fractionation(myrun,blank=blk,channels=channels,
-                        anchors=anchors,nf=1,nF=0,mf=nothing,verbose=true)
+    standards = Dict("Hogsbo" => "hogsbo")
+    glass = Dict("NIST612" => "NIST612p")
+    cutoff = 1e7
+    blk, fit = process!(myrun,method,channels,standards,glass,
+                        PAcutoff=cutoff,nblank=2,ndrift=2,ndown=2)
     ratios = averat(myrun,channels=channels,pars=fit,blank=blk)
+    if verbose println(first(ratios,5)) end
     return ratios
 end
 
-function PAtest()
-    all = load("data/Lu-Hf",instrument="Agilent")
-    channels = Dict("d"=>"Hf178 -> 260",
-                    "D"=>"Hf176 -> 258",
-                    "P"=>"Lu175 -> 175")
-    standards = Dict("Hogsbo" => "hogsbo",
-                     "NIST612" => "NIST612")
-    cutoff = 1e7
-    blk, anchors, fit = process!(all,"Lu-Hf",channels,standards,
-                                 nb=2,nf=1,nF=1,mf=nothing,
-                                 PAcutoff=cutoff)
-    print(fit)
-    p = plot(all[2],channels,blk,fit,anchors,
-              transformation="log",den="Hf176 -> 258")
-    @test display(p) != NaN
-end
-
 function exporttest()
-    ratios = readmetest()
+    ratios = PAtest()
     selection = subset(ratios,"BP") # "hogsbo"
     CSV.write("BP.csv",selection)
     export2IsoplotR("BP.json",selection,"Lu-Hf")
@@ -200,18 +191,18 @@ function UPbtest()
     
 end
 
-function iCaptest(verbatim=true)
+function iCaptest(verbose=true)
     myrun = load("data/iCap",instrument="ThermoFisher")
-    if verbatim summarise(myrun) end
+    if verbose summarise(myrun) end
 end
 
-function carbonatetest(verbatim=true)
+function carbonatetest(verbose=false)
     myrun = load("data/carbonate",instrument="Agilent")
     standards = Dict("WC1"=>"WC1")
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
     blk, anchors, fit = process!(myrun,"U-Pb",channels,
                                  standards,nb=2,nf=2,nF=2,mf=1.0,
-                                 verbose=false)
+                                 verbose=verbose)
     p = plot(myrun[3],channels,blk,fit,anchors,
              transformation="",num=["Pb207"],den="Pb206",ylim=[-0.02,0.3])
     @test display(p) != NaN
@@ -232,28 +223,31 @@ function mftest()
     export2IsoplotR("WC1.json",selection,"U-Pb")
 end
 
+function readmetest()
+end
+
 function TUItest()
     PT("logs/emacs.log")
 end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
-@testset "assign standards" begin standardtest(true) end=#
-@testset "plot fit" begin predicttest() end
-#=@testset "fit fractionation" begin fractionationtest() end
-@testset "crunch" begin crunchtest() end
-@testset "process sample" begin sampletest() end
+@testset "assign standards" begin standardtest(true) end
+@testset "predict" begin predictest() end
+@testset "fit fractionation" begin fractionationtest() end
+@testset "hist" begin histest() end
+@testset "average sample ratios" begin averatest() end
 @testset "process run" begin processtest() end
-@testset "readme example" begin readmetest() end
-@testset "PA test" begin PAtest() end
+@testset "PA test" begin PAtest(true) end
 @testset "export" begin exporttest() end
-@testset "Rb-Sr" begin RbSrtest() end
+#=@testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
 @testset "mass fractionation test" begin mftest() end
+@testset "readme example" begin readmetest() end
 @testset "TUI test" begin TUItest() end=#

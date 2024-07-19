@@ -46,19 +46,21 @@ function plot(samp::Sample,
               transformation="sqrt",offset=nothing,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
-    plot(samp,collect(values(channels)),num=num,den=den,
-         transformation=transformation,offset=offset,seriestype=seriestype,
-         titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+    p = plot(samp,collect(values(channels)),num=num,den=den,
+             transformation=transformation,offset=offset,seriestype=seriestype,
+             titlefontsize=titlefontsize,ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+    return p
 end
 function plot(samp::Sample;
               num=nothing,den=nothing,
               transformation="sqrt",offset=nothing,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto)
-    plot(samp,getChannels(samp),num=num,den=den,
-         transformation=transformation,offset=offset,
-         seriestype=seriestype,titlefontsize=titlefontsize,
-         ms=ms,ma=ma,xlim=lim,ylim=ylim)
+    p = plot(samp,getChannels(samp),num=num,den=den,
+             transformation=transformation,offset=offset,
+             seriestype=seriestype,titlefontsize=titlefontsize,
+             ms=ms,ma=ma,xlim=lim,ylim=ylim)
+    return p
 end
 function plot(samp::Sample,
               channels::AbstractVector;
@@ -71,7 +73,7 @@ function plot(samp::Sample,
     meas = samp.dat[:,channels]
     y = (isnothing(num) && isnothing(den)) ? meas : formRatios(meas,num,den)
     if isnothing(offset)
-        offset = zeros(size(y,2))
+        offset = Dict(zip(names(y),fill(0.0,size(y,2))))
     end
     ty = transformeer(y,transformation=transformation,offset=offset)
     ratsig = isnothing(den) ? "signal" : "ratio"
@@ -103,16 +105,13 @@ export plot
 function plotFitted!(p,samp::Sample,pars::Pars,blank::AbstractDataFrame,
                      channels::AbstractDict,anchors::AbstractDict;
                      num=nothing,den=nothing,transformation="sqrt",
-                     offset=zeros(length(channels)),
-                     linecolor="black",linestyle=:solid)
+                     offset::AbstractDict,linecolor="black",linestyle=:solid)
     x = windowData(samp,signal=true)[:,1]
     pred = predict(samp,pars,blank,channels,anchors)
     rename!(pred,[channels[i] for i in names(pred)])
     y = formRatios(pred,num,den)
-    j = indexin(names(y),collect(values(channels)))
-    ty = transformeer(y,transformation=transformation,offset=offset[j])
+    ty = transformeer(y,transformation=transformation,offset=offset)
     for tyi in eachcol(ty)
-        Plots.plot!(p,x,tyi,linecolor=linecolor,
-                    linestyle=linestyle,label="")
+        Plots.plot!(p,x,tyi,linecolor=linecolor,linestyle=linestyle,label="")
     end
 end
