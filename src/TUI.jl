@@ -1,5 +1,5 @@
 function PT(logbook="")
-    welcome()
+    TUIwelcome()
     ctrl = Dict(
         "priority" => Dict("load" => true, "method" => true,
                            "standards" => true, "glass" => true,
@@ -13,13 +13,13 @@ function PT(logbook="")
         "dname" => "",
         "method" => "",
         "channels" => Dict(),
-        "standards" => Dict(),
-        "glass" => Dict(),
+        "standards" => AbstractString[],
+        "glass" => AbstractString[],
         "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
         "PAcutoff" => nothing,
         "blank" => nothing,
         "par" => nothing,
-        "selection" => Int[],
+        "cache" => nothing,
         "transformation" => "sqrt"
     )
     if logbook != ""
@@ -87,13 +87,13 @@ function tree(ctrl::AbstractDict)
     Dict(
         "top" => (
             message =
-            "r: Read data files"*check(ctrl,"load")*"\n"*
-            "m: Specify the method"*check(ctrl,"method")*"\n"*
+            "r: Read data files"*TUIcheck(ctrl,"load")*"\n"*
+            "m: Specify the method"*TUIcheck(ctrl,"method")*"\n"*
             "t: Tabulate the samples\n"*
-            "s: Mark mineral standards"*check(ctrl,"standards")*"\n"*
-            "g: Mark reference glasses"*check(ctrl,"glass")*"\n"*
+            "s: Mark mineral standards"*TUIcheck(ctrl,"standards")*"\n"*
+            "g: Mark reference glasses"*TUIcheck(ctrl,"glass")*"\n"*
             "v: View and adjust each sample\n"*
-            "p: Process the data"*check(ctrl,"process")*"\n"*
+            "p: Process the data"*TUIcheck(ctrl,"process")*"\n"*
             "e: Export the results\n"*
             "l: Import/export a session log\n"*
             "o: Options\n"*
@@ -147,10 +147,8 @@ function tree(ctrl::AbstractDict)
         ),
         "standards" => (
             message =
-            "p: Add a mineral standard by prefix\n"*
-            "n: Add a mineral standard by number\n"*
-            "N: Remove a mineral standard by number\n"*
-            "r: Remove all reference materials\n"*
+            "a: Add a mineral standard\n"*
+            "r: Remove mineral standards\n"*
             "l: List the available mineral standards\n"*
             "t: Tabulate all the samples\n"*
             "x: Exit\n"*
@@ -160,33 +158,37 @@ function tree(ctrl::AbstractDict)
             "Note that secondary reference materials should be "*
             "treated as regular samples.",
             action = Dict(
-                "p" => "addStandardsByPrefix",
-                "n" => "addStandardsByNumber",
-                "N" => "removeRefmatsByNumber",
-                "r" => TUIresetGroup!,
-                "l" => TUIRefMatTab,
+                "a" => "chooseStandard",
+                "r" => "removeStandard",
+                "l" => TUIrefmatTab,
                 "t" => TUItabulate
             )
         ),
-        "glass" => (
+        "chooseStandard" => (
+            message = TUIchooseStandardMessage,
+            help =
+            "If you do not find your mineral standard in this list, "*
+            "then you can either specify your own reference "*
+            "material under 'options' in the top menu, or "*
+            "you can email us to add the material to the software.",
+            action = TUIchooseStandard!
+        ),
+        "addStandardGroup" => (
             message =
-            "p: Add a reference glass by prefix\n"*
-            "n: Add a reference glass by number\n"*
-            "N: Remove a reference glass by number\n"*
-            "r: Remove all reference materials\n"*
-            "l: List the available reference glasses\n"*
+            "p: Select samples by prefix\n"*
+            "n: Select samples by number\n"*
             "t: Tabulate all the samples\n"*
             "x: Exit\n"*
             "?: Help",
             help =
-            "Choose one or more reference glasses. These will be used "*
-            "to estimate the mass dependent isotope fractionation.",
+            "Select samples to label as primary standards, either "*
+            "by specifying the first few characters of their name, "*
+            "or by providing a comma-separated list of numbers. "*
+            "Enter 't' to remind yourself of the names and "*
+            "order of the samples.",
             action = Dict(
-                "p" => "addGlassByPrefix",
-                "n" => "addGlassByNumber",
-                "N" => "removeRefmatsByNumber",
-                "r" => TUIresetGroup!,
-                "l" => TUIGlassTab,
+                "p" => "addStandardsByPrefix",
+                "n" => "addStandardsByNumber",
                 "t" => TUItabulate
             )
         ),
@@ -213,72 +215,125 @@ function tree(ctrl::AbstractDict)
             "by sequence number (e.g., 1,2,8,9,15,16,...).",
             action = TUIaddStandardsByNumber!
         ),
+        "removeStandard" => (
+            message =
+            "a: Remove all standards\n"*
+            "s: Remove selected standards\n"*
+            "x: Exit\n"*
+            "?: Help",
+            help =
+            "Remove or reset the samples that are marked as primary standards.",
+            action = Dict(
+                "a" => TUIremoveAllStandards!,
+                "s" => "removeStandardsByNumber"
+            )
+        ),
         "removeStandardsByNumber" => (
             message =
-            "Select the standards as a comma-separated list of numbers "*
+            "Select the reference materials as a comma-separated list of numbers "*
             "(? for help, x to exit):",
             help =
-            "'bad' standards can be removed one-by-one, by specifying "*
-            "their number. Enter 'x' to go up one level and tabulate "*
-            "the sample if you forgot the exact prefix of your standards.",
-            action = TUIremoveRefmatsByNumber!
+            "Select the samples that are to be removed as primary "*
+            "standards by providing a list of comma separated numbers "*
+            "(e.g., 1,2,8,9,15,16,...).",
+            action = TUIremoveStandardsByNumber!
         ),
-        "showRefmats" => (
-            message = TUIshowRefmats,
+        "glass" => (
+            message =
+            "a: Add a reference glass\n"*
+            "r: Remove reference glasses\n"*
+            "l: List the available reference glasses\n"*
+            "t: Tabulate all the samples\n"*
+            "x: Exit\n"*
+            "?: Help",
             help =
-            "Even though you may have specified the prefix of your "*
-            "reference materials, Plasmatrace still does not know "*
-            "which standard this refers to. That information can be "*
-            "specified here. If you do not find your mineral standard "*
-            "in this list, then you can either specify your own 
-            reference material under 'options' in the top menu, or "*
-            "you can email us to add the material to the software.",
-            action = TUIsetStandardGroup!
+            "Choose one or more reference glasses. These are used "*
+            "to determine the mass dependent isotope fractionation factor.",
+            action = Dict(
+                "a" => "chooseGlass",
+                "r" => "removeGlass",
+                "l" => TUIglassTab,
+                "t" => TUItabulate
+            )
+        ),
+        "chooseGlass" => (
+            message = TUIchooseGlassMessage,
+            help =
+            "If you do not find your reference glass in this list, "*
+            "then you can either specify your own under 'options' in "*
+            "the top menu, or you can email us to add the material to the software.",
+            action = TUIchooseGlass!
+        ),
+        "addGlassGroup" => (
+            message =
+            "p: Select analyses by prefix\n"*
+            "n: Select analyses by number\n"*
+            "t: Tabulate all the analyses\n"*
+            "x: Exit\n"*
+            "?: Help",
+            help =
+            "Select samples to label as reference glasses, either "*
+            "by specifying the first few characters of their name, "*
+            "or by providing a comma-separated list of numbers. "*
+            "Enter 't' to remind yourself of the names and "*
+            "order of the analyses.",
+            action = Dict(
+                "p" => "addGlassByPrefix",
+                "n" => "addGlassByNumber",
+                "t" => TUItabulate
+            )
         ),
         "addGlassByPrefix" => (
             message =
             "Specify the prefix of a NIST glass "*
             "(? for help, x to exit):",
             help =
-            "For example, suppose that NIST612 glass analyses "*
+            "For example, suppose that NIST-612 reference glasses "*
             "are named GLASS01, GLASS02, ..., then you can "*
             "select all the standards by entering GLASS here. "*
             "Enter 'x' to go up one level and tabulate the "*
-            "sample if you forgot the exact prefix of your glasses.",
+            "sample if you forgot the exact prefix of your glasses."*
+            "Note that NIST glass is only used to determine chemical "*
+            "concentrations and mass fractionation factors, but is "*
+            "NOT used as an isotopic ratio standard. Conversely, "*
+            "minerals are only used as isotopic ratio standards "*
+            "but not as concentration standards. Use both to get the "*
+            "best results.",
             action = TUIaddGlassByPrefix!
         ),
         "addGlassByNumber" => (
             message =
-            "Select the glass analyses as a comma-separated list of numbers "*
+            "Select the analyses as a comma-separated list of numbers "*
             "(? for help, x to exit):",
             help =
             "For example, suppose that the analyses are labelled as "*
             "G001, G002, ..., then it is not possible to identify "*
-            "the glass by prefix, but you can still select it "*
+            "the glasses by prefix, but you can still select them "*
             "by sequence number (e.g., 1,2,8,9,15,16,...).",
             action = TUIaddGlassByNumber!
+        ),
+        "removeGlass" => (
+            message =
+            "a: Remove all glass measurements\n"*
+            "s: Remove selected analyses\n"*
+            "x: Exit\n"*
+            "?: Help",
+            help =
+            "Unlabel the analyses that are marked as reference glass.",
+            action = Dict(
+                "a" => TUIremoveAllGlass!,
+                "s" => "removeGlassByNumber"
+            )
         ),
         "removeGlassByNumber" => (
             message =
             "Select the glass analyses as a comma-separated list of numbers "*
             "(? for help, x to exit):",
             help =
-            "'bad' glass analyses can be removed one-by-one, by specifying "*
-            "their number. Enter 'x' to go up one level and tabulate "*
-            "the sample if you forgot the exact prefix of your glass.",
-            action = TUIremoveRefmatsByNumber!
-        ),
-        "showGlass" => (
-            message = TUIshowGlass,
-            help =
-            "Even though you may have specified the prefix of your "*
-            "glasses, Plasmatrace still does not know "*
-            "which material this refers to. That information can be "*
-            "specified here. If you do not find your reference glass "*
-            "in this list, then you can either specify your own "*
-            "glass under 'options' in the top menu, or "*
-            "you can email us to add the material to the software.",
-            action = TUIsetGlassGroup!
+            "Select the samples that are to be removed as reference "*
+            "glass by providing a list of comma separated numbers "*
+            "(e.g., 1,2,8,9,15,16,...).",
+            action = TUIremoveGlassByNumber!
         ),
         "view" => (
             message = 
@@ -494,7 +549,7 @@ function tree(ctrl::AbstractDict)
                 "d" => "setNdrift",
                 "h" => "setNdown",
                 "p" => "PA",
-                "l" => TUIRefMatTab,
+                "l" => TUIrefmatTab,
                 "r" => "addRefMat",
                 "n" => "head2name"
             )
@@ -668,544 +723,4 @@ function tree(ctrl::AbstractDict)
             action = TUIexportLog
         )
     )    
-end
-
-function welcome()
-    version = string(pkgversion(@__MODULE__))
-    title = " Plasmatrace "*version*" \n"
-    width = Base.length(title)-1
-    println('-'^width*"\n"*title*'-'^width)
-end
-
-function check(ctrl::AbstractDict,action::AbstractString)
-    return ctrl["priority"][action] ? "[*]" : ""
-end
-
-function TUIinstrument!(ctrl::AbstractDict,
-                        response::AbstractString)
-    if response=="1"
-        ctrl["instrument"] = "Agilent"
-    elseif response=="2"
-        ctrl["instrument"] = "ThermoFisher"
-    else
-        return "x"
-    end
-    return "load"
-end
-
-function TUIload!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["run"] = load(response;
-                       instrument=ctrl["instrument"],
-                       head2name=ctrl["head2name"])
-    ctrl["priority"]["load"] = false
-    ctrl["dname"] = response
-    return "xx"
-end
-
-function TUImethod!(ctrl::AbstractDict,response::AbstractString)
-    methods = _PT["methods"].method
-    i = parse(Int,response)
-    if i > length(methods)
-        return "x"
-    else
-        ctrl["method"] = methods[i]
-    end
-    return "columns"
-end
-
-function TUIcolumnMessage(ctrl::AbstractDict)
-    msg = "Choose from the following list of channels:\n"
-    labels = names(getDat(ctrl["run"][1]))
-    for i in eachindex(labels)
-        msg *= string(i)*". "*labels[i]*"\n"
-    end
-    msg *= "and select the channels corresponding to "*
-    "the following isotopes or their proxies:\n"
-    P, D, d = getPDd(ctrl["method"])
-    msg *= P *", "* D *", "* d *"\n"
-    msg *= "Specify your selection as a "*
-    "comma-separated list of numbers:"
-    return msg
-end
-
-function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
-    labels = names(getDat(ctrl["run"][1]))
-    selected = parse.(Int,split(response,","))
-    PDd = labels[selected]
-    ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
-    ctrl["priority"]["method"] = false
-    return "xx"
-end
-
-function TUItabulate(ctrl::AbstractDict)
-    summarise(ctrl["run"])
-end
-
-function TUIaddStandardsByPrefix!(ctrl::AbstractDict,
-                                  response::AbstractString)
-    snames = getSnames(ctrl["run"])
-    ctrl["selection"] = findall(contains(response),snames)
-    if response in ctrl["refresher"]["prefixes"] # overwrite
-        ctrl["refresher"]["prefixes"] = [response]
-        ctrl["refresher"]["standards"] = AbstractString[]
-    else # append
-        push!(ctrl["refresher"]["prefixes"],response)
-    end
-    return "showRefmats"
-end
-
-function TUIaddGlassByPrefix!(ctrl::AbstractDict,
-                                  response::AbstractString)
-    snames = getSnames(ctrl["run"])
-    ctrl["selection"] = findall(contains(response),snames)
-    if response in ctrl["refresher"]["prefixes"] # overwrite
-        ctrl["refresher"]["prefixes"] = [response]
-        ctrl["refresher"]["glass"] = AbstractString[]
-    else # append
-        push!(ctrl["refresher"]["prefixes"],response)
-    end
-    return "showGlass"
-end
-
-function TUIaddStandardsByNumber!(ctrl::AbstractDict,
-                                  response::AbstractString)
-    ctrl["selection"] = parse.(Int,split(response,","))
-    return "showRefmats"
-end
-
-function TUIaddGlassByNumber!(ctrl::AbstractDict,
-                              response::AbstractString)
-    ctrl["selection"] = parse.(Int,split(response,","))
-    return "showGlass"
-end
-
-function TUIremoveRefmatsByNumber!(ctrl::AbstractDict,
-                                   response::AbstractString)
-    selection = parse.(Int,split(response,","))
-    resetGroup!(ctrl["run"],selection)
-    return "x"
-end
-
-function TUIresetGroup!(ctrl::AbstractDict)
-    setGroup!(ctrl["run"],"sample")
-    ctrl["refresher"]["prefixes"] = AbstractString[]
-    ctrl["refresher"]["refmats"] = AbstractString[]
-    return "x"
-end
-
-function TUIshowMethods(ctrl::AbstractDict)
-    methods = _PT["methods"].method
-    msg = ""
-    for i in eachindex(methods)
-        msg *= string(i)*": "*methods[i]*"\n"
-    end
-    msg *= "x: Exit\n"*"?: Help"
-    return msg
-end
-
-function TUIshowRefmats(ctrl::AbstractDict)
-    msg = "Which of the following standards did you select?\n"
-    standards = collect(keys(_PT["refmat"][ctrl["method"]]))
-    for i in eachindex(standards)
-        msg *= string(i)*": "*standards[i]*"\n"
-    end
-    msg *= "x: Exit\n"*"?: Help"
-    return msg
-end
-
-function TUIshowGlass(ctrl::AbstractDict)
-    msg = "Which of the following standards did you select?\n"
-    standards = collect(keys(_PT["glass"][ctrl["method"]]))
-    for i in eachindex(standards)
-        msg *= string(i)*": "*standards[i]*"\n"
-    end
-    msg *= "x: Exit\n"*"?: Help"
-    return msg
-end
-
-function TUIsetStandardGroup!(ctrl::AbstractDict,response::AbstractString)
-    standards = collect(keys(_PT["refmat"][ctrl["method"]]))
-    i = parse(Int,response)
-    setGroup!(ctrl["run"],ctrl["selection"],standards[i])
-    ctrl["priority"]["standards"] = false
-    nr = length(ctrl["refresher"]["standards"])
-    np = length(ctrl["refresher"]["prefixes"])
-    if nr < np
-        push!(ctrl["refresher"]["refmats"],standards[i])
-    end
-    return "xxx"
-end
-
-function TUIsetGlassGroup!(ctrl::AbstractDict,response::AbstractString)
-    standards = collect(keys(_PT["glass"][ctrl["method"]]))
-    i = parse(Int,response)
-    setGroup!(ctrl["run"],ctrl["selection"],standards[i])
-    ctrl["priority"]["glass"] = false
-    nr = length(ctrl["refresher"]["glass"])
-    np = length(ctrl["refresher"]["prefixes"])
-    if nr < np
-        push!(ctrl["refresher"]["glass"],standards[i])
-    end
-    return "xxx"
-end
-
-function TUIviewer!(ctrl::AbstractDict)
-    TUIplotter(ctrl)
-    push!(ctrl["chain"],"view")
-end
-
-function TUIprocess!(ctrl::AbstractDict)
-    groups = unique(getGroups(ctrl["run"]))
-    stds = groups[groups.!="sample"]
-    ctrl["anchors"] = getAnchor(ctrl["method"],stds)
-    println("Fitting blanks...")
-    ctrl["blank"] = fitBlanks(ctrl["run"],nblank=ctrl["options"]["blank"])
-    println("Fractionation correction...")
-    ctrl["par"] = fractionation(ctrl["run"],
-                                ctrl["method"],
-                                ctrl["blank"],
-                                ctrl["channels"],
-                                ctrl["standards"],
-                                ctrl["glass"];
-                                ndrift=ctrl["options"]["drift"],
-                                ndown=ctrl["options"]["down"],
-                                PAcutoff=ctrl["PAcutoff"])
-    ctrl["priority"]["process"] = false
-    println("Done")
-end
-
-function TUInext!(ctrl::AbstractDict)
-    ctrl["i"] += 1
-    if ctrl["i"]>length(ctrl["run"]) ctrl["i"] = 1 end
-    TUIplotter(ctrl)
-end
-
-function TUIprevious!(ctrl::AbstractDict)
-    ctrl["i"] -= 1
-    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
-    TUIplotter(ctrl)
-end
-
-function TUIgoto!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["i"] = parse(Int,response)
-    if ctrl["i"]>length(ctrl["run"]) ctrl["i"] = 1 end
-    if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
-    TUIplotter(ctrl)
-    return "x"
-end
-
-function TUIplotter(ctrl::AbstractDict)
-    samp = ctrl["run"][ctrl["i"]]
-    if haskey(ctrl,"channels")
-        channels = ctrl["channels"]
-    else
-        channels = names(samp.dat)[3:end]
-    end
-    if isnothing(ctrl["blank"]) | isnothing(ctrl["anchors"]) | (samp.group=="sample")
-        p = plot(samp,ctrl["method"],channels,ctrl["par"],ctrl["standards"],ctrl["glass"],
-                 den=ctrl["den"],transformation=ctrl["transformation"])
-    else
-        if isnothing(ctrl["PAcutoff"])
-            par = ctrl["par"]
-        else
-            analog = isAnalog(samp,ctrl["channels"];cutoff=ctrl["PAcutoff"])
-            j = analog ? 1 : 2
-            par = ctrl["par"][j]
-        end
-        p = plot(samp,channels,ctrl["blank"],par,ctrl["anchors"],
-                 den=ctrl["den"],transformation=ctrl["transformation"])
-    end
-    if !isnothing(ctrl["PAcutoff"])
-        addPAline!(p,ctrl["PAcutoff"])
-    end
-    display(p)
-end
-
-function addPAline!(p,cutoff::AbstractFloat)
-    ylim = Plots.ylims(p)
-    if  sqrt(cutoff) < 1.1*ylim[2]
-        Plots.plot!(p,collect(Plots.xlims(p)),
-                    fill(sqrt(cutoff),2),
-                    seriestype=:line,label="",
-                    linewidth=2,linestyle=:dash)
-    end
-end
-
-function TUIratioMessage(ctrl::AbstractDict)
-    if haskey(ctrl,"channels")
-        channels = collect(values(ctrl["channels"]))
-    else
-        channels = names(ctrl["run"][1].dat)[3:end]
-    end
-    msg = "Choose one of the following denominators:\n"
-    for i in 1:length(channels)
-        msg *= string(i)*": "*channels[i]*"\n"
-    end
-    msg *= "or\n"
-    msg *= "n: No denominator. Plot the raw signals\n"
-    msg *= "?: Help"
-end
-
-function TUIratios!(ctrl::AbstractDict,response::AbstractString)
-    if response=="n"
-        ctrl["den"] = nothing
-    elseif response=="x"
-        return "xx"
-    else
-        i = parse(Int,response)
-        if haskey(ctrl,"channels")
-            channels = collect(values(ctrl["channels"]))
-        else
-            channels = names(ctrl["run"][1].dat)[3:end]
-        end
-        ctrl["den"] = channels[i]
-    end
-    TUIplotter(ctrl)
-    return "x"
-end
-
-function TUIoneAutoBlankWindow!(ctrl::AbstractDict)
-    setBwin!(ctrl["run"][ctrl["i"]])
-    TUIplotter(ctrl)
-end
-
-function TUIoneSingleBlankWindow!(ctrl::AbstractDict,
-                                  response::AbstractString)
-    samp = ctrl["run"][ctrl["i"]]
-    bwin = string2windows(samp,response,true)
-    setBwin!(samp,bwin)
-    TUIplotter(ctrl)
-    return "xx"
-end
-
-function TUIoneMultiBlankWindow!(ctrl::AbstractDict,
-                                 response::AbstractString)
-    samp = ctrl["run"][ctrl["i"]]
-    bwin = string2windows(samp,response,false)
-    setBwin!(samp,bwin)
-    TUIplotter(ctrl)
-    return "xx"
-end
-
-function TUIallAutoBlankWindow!(ctrl::AbstractDict)
-    setBwin!(ctrl["run"])
-    TUIplotter(ctrl)
-end
-
-function TUIallSingleBlankWindow!(ctrl::AbstractDict,
-                                  response::AbstractString)
-    for i in eachindex(ctrl["run"])
-        samp = ctrl["run"][i]
-        bwin = string2windows(samp,text=response,single=true)
-        setBwin!(samp,bwin)
-    end
-    TUIplotter(ctrl)
-    return "xx"
-end
-
-function TUIallMultiBlankWindow!(ctrl::AbstractDict,
-                                 response::AbstractString)
-    for i in eachindex(ctrl["run"])
-        samp = ctrl["run"][i]
-        bwin = string2windows(samp,response,false)
-        setBwin!(samp,bwin)
-    end
-    TUIplotter(ctrl)
-    return "xx"
-end
-
-function TUIoneAutoSignalWindow!(ctrl::AbstractDict)
-    setSwin!(ctrl["run"][ctrl["i"]])
-    TUIplotter(ctrl)
-end
-
-function TUIoneSingleSignalWindow!(ctrl::AbstractDict,
-                                   response::AbstractString)
-    samp = ctrl["run"][ctrl["i"]]
-    swin = string2windows(samp,response,true)
-    setSwin!(samp,swin)
-    TUIplotter(ctrl)
-    return "xx"
-end
-
-function TUIoneMultiSignalWindow!(ctrl::AbstractDict,
-                                  response::AbstractString)
-    samp = ctrl["run"][ctrl["i"]]
-    swin = string2windows(samp,response,false)
-    setSwin!(samp,swin)
-    TUIplotter(ctrl)
-    return "xx"
-end
-
-function TUIallAutoSignalWindow!(ctrl::AbstractDict)
-    setSwin!(ctrl["run"])
-    TUIplotter(ctrl)
-end
-
-function TUIallSingleSignalWindow!(ctrl::AbstractDict,
-                                   response::AbstractString)
-    for i in eachindex(ctrl["run"])
-        samp = ctrl["run"][i]
-        swin = string2windows(samp,response,true)
-        setSwin!(samp,swin)
-    end
-    TUIplotter(ctrl)
-    return "xx"
-end
-
-function TUIallMultiSignalWindow!(ctrl::AbstractDict,
-                                  response::AbstractString)
-    for i in eachindex(ctrl["run"])
-        samp = ctrl["run"][i]
-        swin = string2windows(samp,response,false)
-        setSwin!(samp,swin)
-    end
-    TUIplotter(ctrl)
-    return "xx"
-end
-
-function TUItransformation!(ctrl::AbstractDict,
-                            response::AbstractString)
-    if response=="L"
-        ctrl["transformation"] = "log"
-    elseif response=="s"
-        ctrl["transformation"] = "sqrt"
-    else
-        ctrl["transformation"] = ""
-    end
-    TUIplotter(ctrl)
-    return "x"
-end
-
-function TUIsetNblank!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["options"]["blank"] = parse(Int,response)
-    return "x"
-end
-
-function TUIsetNdrift!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["options"]["drift"] = parse(Int,response)
-    return "x"    
-end
-
-function TUIsetNdown!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["options"]["down"] = parse(Int,response)
-    return "x"    
-end
-
-function TUIRefMatTab(ctrl::AbstractDict)
-    for (key, value) in _PT["refmat"][ctrl["method"]]
-        print(key)
-        print(": ")
-        if !ismissing(value.t[1])
-            print("t=")
-            print(value.t[1])
-            print("Ma, ")
-        end
-        print("y0=")
-        print(value.y0[1])
-        print("\n")
-    end
-    return "x"
-end
-
-# TODO
-function TUIGlassTab(ctrl::AbstractDict)
-    return "x"
-end
-
-function TUIPAlist(ctrl::AbstractDict)
-    snames = getSnames(ctrl["run"])
-    for i in eachindex(snames)
-        dat = getDat(ctrl["run"][i],ctrl["channels"])
-        maxval = maximum(Matrix(dat))
-        formatted = @sprintf("%.*e", 3, maxval)
-        println(formatted*" ("*snames[i]*")")
-    end
-    return "x"
-end
-
-function TUIsetPAcutoff!(ctrl::AbstractDict,response::AbstractString)
-    cutoff = tryparse(Float64,response)
-    ctrl["PAcutoff"] = cutoff
-    return "xx"
-end
-
-function TUIclearPAcutoff!(ctrl::AbstractDict)
-    ctrl["PAcutoff"] = nothing
-    return "xx"
-end
-
-function TUIaddRefMat!(ctrl::AbstractDict,response::AbstractString)
-    setReferenceMaterials!(response)
-    return "x"
-end
-
-function TUIhead2name!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["head2name"] = response=="h"
-    return "x"
-end
-
-function TUIimportLog!(ctrl::AbstractDict,response::AbstractString)
-    history = CSV.read(response,DataFrame)
-    ctrl["history"] = DataFrame(task=String[],action=String[])
-    for row in eachrow(history)
-        try
-            dispatch!(ctrl,key=row[1],response=row[2])
-        catch e
-            println(e)
-        end
-    end
-    ctrl["chain"] = ["top"]
-    return "xx"
-end
-
-function TUIexportLog(ctrl::AbstractDict,response::AbstractString)
-    pop!(ctrl["history"])
-    pop!(ctrl["history"])
-    CSV.write(response,ctrl["history"])
-    return "xx"
-end
-
-function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
-    if response=="a"
-        ctrl["selection"] = 1:length(ctrl["run"])
-    elseif response=="s"
-        ctrl["selection"] = findall(contains("sample"),getGroups(ctrl["run"]))
-    elseif response=="x"
-        return "x"
-    else
-        ctrl["selection"] = findall(contains(response),getSnames(ctrl["run"]))
-    end
-    return "format"
-end
-
-function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"],channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"],
-                    PAcutoff=ctrl["PAcutoff"])
-    fname = splitext(response)[1]*".csv"
-    CSV.write(fname,ratios[ctrl["selection"],:])
-    return "xxx"
-end
-
-function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"],channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"],
-                    PAcutoff=ctrl["PAcutoff"])
-    fname = splitext(response)[1]*".json"
-    export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
-    return "xxx"
-end
-
-function TUIrefresh!(ctrl::AbstractDict)
-    TUIload!(ctrl,ctrl["dname"])
-    snames = getSnames(ctrl["run"])
-    for (refmat,prefix) in ctrl["standards"]
-        setGroup!(ctrl["run"],prefix,refmat)
-    end
-    for (refmat,prefix) in ctrl["glasss"]
-        setGroup!(ctrl["run"],prefix,refmat)
-    end
-    TUIprocess!(ctrl)
-    return nothing
 end

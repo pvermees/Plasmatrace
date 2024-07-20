@@ -5,3 +5,15 @@ load,data/Lu-Hf
 top,m
 method,1
 columns,"15,17,18"
+top,s
+standards,a
+chooseStandard,1
+addStandardGroup,p
+addStandardsByPrefix,hogsbo
+standards,x
+top,g
+glass,a
+chooseGlass,2
+addGlassGroup,p
+addGlassByPrefix,NIST612
+glass,x

@@ -36,8 +36,8 @@ function fractionation(run::Vector{Sample},
                        method::AbstractString,
                        blank::AbstractDataFrame,
                        channels::AbstractDict,
-                       standards::AbstractDict,
-                       glass::AbstractDict;
+                       standards::AbstractVector,
+                       glass::AbstractVector;
                        ndrift::Integer=1,
                        ndown::Integer=0,
                        PAcutoff=nothing,
@@ -51,12 +51,28 @@ function fractionation(run::Vector{Sample},
     end
     return out
 end
-# one-step isotope fractionation using mineral standards
 function fractionation(run::Vector{Sample},
                        method::AbstractString,
                        blank::AbstractDataFrame,
                        channels::AbstractDict,
                        standards::AbstractDict,
+                       glass::AbstractDict;
+                       ndrift::Integer=1,
+                       ndown::Integer=0,
+                       PAcutoff=nothing,
+                       verbose::Bool=false)
+    return fractionation(run,method,blank,channels,
+                         collect(keys(standards)),
+                         collect(keys(glass));
+                         ndrift=ndrift,ndown=ndown,
+                         PAcutoff=PAcutoff,verbose=verbose)
+end
+# one-step isotope fractionation using mineral standards
+function fractionation(run::Vector{Sample},
+                       method::AbstractString,
+                       blank::AbstractDataFrame,
+                       channels::AbstractDict,
+                       standards::AbstractVector,
                        mf=nothing;
                        ndrift::Integer=1,
                        ndown::Integer=0,
@@ -128,12 +144,27 @@ function fractionation(run::Vector{Sample},
     end
     return out
 end
+function fractionation(run::Vector{Sample},
+                       method::AbstractString,
+                       blank::AbstractDataFrame,
+                       channels::AbstractDict,
+                       standards::AbstractDict,
+                       mf=nothing;
+                       ndrift::Integer=1,
+                       ndown::Integer=0,
+                       PAcutoff=nothing,
+                       verbose::Bool=false)
+    return fractionation(run,method,blank,channels,
+                         collect(keys(standards)),mf;
+                         ndrift=ndrift,ndown=ndown,
+                         PAcutoff=PAcutoff,verbose=verbose)
+end
 # isotopic mass fractionation using glass
 function fractionation(run::Vector{Sample},
                        method::AbstractString,
                        blank::AbstractDataFrame,
                        channels::AbstractDict,
-                       glass::AbstractDict;
+                       glass::AbstractVector;
                        verbose::Bool=false)
     
     anchors = getAnchors(method,glass,true)
@@ -168,6 +199,16 @@ function fractionation(run::Vector{Sample},
     mfrac = Optim.minimizer(fit)[1]
     
     return exp(mfrac)
+end
+function fractionation(run::Vector{Sample},
+                       method::AbstractString,
+                       blank::AbstractDataFrame,
+                       channels::AbstractDict,
+                       glass::AbstractDict;
+                       verbose::Bool=false)
+    return fractionation(run,method,blank,channels,
+                         collect(keys(glass));
+                         verbose=verbose)
 end
 export fractionation
 
