@@ -41,12 +41,12 @@ end
 
 # isotopic ratios
 function predict(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
-    ft = polyFac(p=drift,t=t)
-    FT = polyFac(p=down,t=T)
+    ft = polyFac(drift,t)
+    FT = polyFac(down,T)
     mf = exp(mfrac)
-    bPt = polyVal(p=bP,t=t)
-    bDt = polyVal(p=bD,t=t)
-    bdt = polyVal(p=bd,t=t)
+    bPt = polyVal(bP,t)
+    bDt = polyVal(bD,t)
+    bdt = polyVal(bd,t)
     D = getD(Pm,Dm,dm,x0,y0,y1,ft,FT,mf,bPt,bDt,bdt)
     p = getp(Pm,Dm,dm,x0,y0,y1,ft,FT,mf,bPt,bDt,bdt)
     Pf = @. D*x0*(1-p)*ft*FT + bPt
@@ -57,8 +57,8 @@ end
 # isotopic ratios for glass
 function predict(t,Dm,dm,y0,mfrac,bD,bd)
     mf = exp(mfrac)
-    bDt = polyVal(p=bD,t=t)
-    bdt = polyVal(p=bd,t=t)
+    bDt = polyVal(bD,t)
+    bdt = polyVal(bd,t)
     D = getD(Dm,dm,y0,mf,bDt,bdt)
     Df = @. D + bDt
     df = @. D*y0*mf + bdt
@@ -66,10 +66,10 @@ function predict(t,Dm,dm,y0,mfrac,bD,bd)
 end
 # concentrations
 function predict(t,T,Xm,Sm,R,drift,down,bX,bS)
-    ft = polyFac(p=drift,t=t)
-    FT = polyFac(p=down,t=T)
-    bXt = polyVal(p=bX,t=t)
-    bSt = polyVal(p=bS,t=t)
+    ft = polyFac(drift,t)
+    FT = polyFac(down,T)
+    bXt = polyVal(bX,t)
+    bSt = polyVal(bS,t)
     S = getS(Xm,Sm,R,ft,FT,bXt,bSt)
     Xf = @. S*R*ft*FT + bXt
     Sf = @. S + bSt
@@ -93,7 +93,7 @@ function predict(samp::Sample,
     if samp.group == "sample"
         PTerror("notStandard")
     else
-        dat = windowData(samp,signal=true)
+        dat = windowData(samp;signal=true)
         anchor = anchors[samp.group]
         return predict(dat,pars,blank,channels,anchor)
     end

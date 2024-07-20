@@ -2,13 +2,13 @@ function formRatios(df::AbstractDataFrame,
                     num::AbstractString,
                     den::Union{Nothing,AbstractVector};
                     brackets=false)
-    formRatios(df,[num],den,brackets=brackets)
+    formRatios(df,[num],den;brackets=brackets)
 end
 function formRatios(df::AbstractDataFrame,
                     num::Union{Nothing,AbstractVector},
                     den::AbstractString;
                     brackets=false)
-    formRatios(df,num,[den],brackets=brackets)
+    formRatios(df,num,[den];brackets=brackets)
 end
 function formRatios(df::AbstractDataFrame,
                     num::Union{Nothing,AbstractVector},
@@ -43,10 +43,10 @@ function formRatios(df::AbstractDataFrame,
 end
 
 # polynomial fit with logarithmic coefficients
-function polyFit(;t,y,n=1)
+function polyFit(t::AbstractVector,y::AbstractVector,n::Integer)
     
     function misfit(par)
-        pred = polyVal(p=par,t=t)
+        pred = polyVal(par,t)
         sum((y.-pred).^2)
     end
 
@@ -57,9 +57,9 @@ function polyFit(;t,y,n=1)
 
 end
 
-function polyVal(;p,t)
-    np = size(p,1)
-    nt = size(t,1)
+function polyVal(p::AbstractVector,t::AbstractVector)
+    np = length(p)
+    nt = length(t)
     out = fill(0.0,nt)
     if np>0
         for i in 1:np
@@ -70,9 +70,9 @@ function polyVal(;p,t)
 end
 export polyVal
 
-function polyFac(;p,t)
-    np = size(p,1)
-    nt = size(t,1)
+function polyFac(p::AbstractVector,t::AbstractVector)
+    np = length(p)
+    nt = length(t)
     out = fill(1.0,nt)
     if np>0
         out = fill(0.0,nt)
@@ -84,7 +84,8 @@ function polyFac(;p,t)
 end
 export polyFac
 
-function summarise(run::Vector{Sample},verbose=true,n=length(run))
+function summarise(run::Vector{Sample};
+                   verbose=true,n=length(run))
     ns = length(run)
     snames = getSnames(run)
     groups = fill("sample",ns)
@@ -97,12 +98,14 @@ function summarise(run::Vector{Sample},verbose=true,n=length(run))
     if verbose println(first(out,n)) end
     return out
 end
-function summarize(run::Vector{Sample},verbose=true,n=length(run))
-    summarise(run,verbose,n)
+function summarize(run::Vector{Sample};
+                   verbose=true,n=length(run))
+    summarise(run;verbose,n)
 end
 export summarise, summarize
 
-function autoWindow(samp::Sample;blank=false)
+function autoWindow(samp::Sample;
+                    blank=false)
     i0 = samp.i0
     nr = size(samp.dat,1)
     if blank
@@ -155,7 +158,7 @@ function windows2selection(windows)
     return selection
 end
 
-function string2windows(samp::Sample;text::AbstractString,single=false)
+function string2windows(samp::Sample,text::AbstractString,single::Bool)
     if single
         parts = split(text,',')
         stime = [parse(Float64,parts[1])]
@@ -200,7 +203,7 @@ function subset(ratios::AbstractDataFrame,
 end
 export subset
 
-function isAnalog(samp::Sample;channels::AbstractDict,cutoff=nothing)
+function isAnalog(samp::Sample,channels::AbstractDict;cutoff=nothing)
     out = true
     if !isnothing(cutoff)
         dat = getDat(samp,channels)
@@ -208,11 +211,11 @@ function isAnalog(samp::Sample;channels::AbstractDict,cutoff=nothing)
     end
     return out
 end
-function isAnalog(run::Vector{Sample};channels::AbstractDict,cutoff=nothing)
+function isAnalog(run::Vector{Sample},channels::AbstractDict;cutoff=nothing)
     ns = length(run)
     A = fill(true,ns)
     for i in eachindex(A)
-        A[i] = isAnalog(run[i],channels=channels,cutoff=cutoff)
+        A[i] = isAnalog(run[i],channels;cutoff=cutoff)
     end
     return A
 end
@@ -271,19 +274,24 @@ function rle(v::AbstractVector{T}) where T
     return (vals, lens)
 end
 
-function getOffset(df::AbstractDataFrame;transformation::AbstractString)
-    nc = size(df,2)
-    out = Dict{String,Float64}()
-    for col in names(df)
-        m = minimum(df[:,col])
-        offset = m<0 ? abs(m) : 0.0
-        if transformation=="log"
-            M = maximum(df[:,col])
-            padding = m<0 ? (M-m)/100 : 0.0
-        else
-            padding = 0.0
+function getOffset(df::AbstractDataFrame,transformation=nothing)
+    colnames = names(df)
+    nc = length(colnames)
+    if isnothing(transformation)
+        out = Dict(zip(colnames,fill(0.0,nc)))
+    else
+        out = Dict{String,Float64}()
+        for col in colnames
+            m = minimum(df[:,col])
+            offset = m<0 ? abs(m) : 0.0
+            if transformation=="log"
+                M = maximum(df[:,col])
+                padding = m<0 ? (M-m)/100 : 0.0
+            else
+                padding = 0.0
+            end
+            out[col] = offset + padding
         end
-        out[col] = offset + padding
     end
     return out
 end
@@ -291,19 +299,19 @@ function getOffset(samp::Sample,
                    channels::AbstractDict,
                    blank::AbstractDataFrame,
                    pars::Pars,
-                   anchors::AbstractDict;
-                   num=nothing,den=nothing,
-                   transformation::AbstractString)
+                   anchors::AbstractDict,
+                   transformation=nothing;
+                   num=nothing,den=nothing)
     ions = collect(values(channels))
-    obs = windowData(samp,signal=true)[:,ions]
+    obs = windowData(samp;signal=true)[:,ions]
     yobs = formRatios(obs,num,den)
-    offset_obs = getOffset(yobs,transformation=transformation)
+    offset_obs = getOffset(yobs,transformation)
     
     pred = predict(samp,pars,blank,channels,anchors)
     prednames = [channels[i] for i in names(pred)]
     rename!(pred,prednames)
     ypred = formRatios(pred,num,den)
-    offset_pred = getOffset(ypred,transformation=transformation)
+    offset_pred = getOffset(ypred,transformation)
     
     out = offset_obs
     for key in keys(out)
@@ -316,8 +324,8 @@ function getOffset(samp::Sample,
     return out
 end
     
-function transformeer(df::AbstractDataFrame;transformation="",offset::AbstractDict)
-    if transformation==""
+function transformeer(df::AbstractDataFrame;transformation=nothing,offset::AbstractDict)
+    if isnothing(transformation)
         out = df
     else
         out = copy(df)

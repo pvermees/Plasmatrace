@@ -9,7 +9,7 @@ function load(dname::AbstractString;
         if occursin(ext,fname)
             try
                 pname = joinpath(dname,fname)
-                samp = readFile(pname,
+                samp = readFile(pname;
                                 instrument=instrument,
                                 head2name=head2name)
                 push!(samples,samp)
@@ -107,9 +107,9 @@ function export2IsoplotR(run::Vector{Sample},
                          prefix=nothing,fname::AbstractString="PT.json")
     ratios = averat(run,channels,pars,blank)
     if isnothing(prefix)
-        export2IsoplotR(ratios,method,fname=fname)
+        export2IsoplotR(ratios,method;fname=fname)
     else
-        export2IsoplotR(subset(ratios,prefix),method,fname=fname)
+        export2IsoplotR(subset(ratios,prefix),method;fname=fname)
     end
 end
 function export2IsoplotR(ratios::AbstractDataFrame,

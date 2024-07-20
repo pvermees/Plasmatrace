@@ -9,10 +9,10 @@ function process!(run::Vector{Sample},
                   glass::AbstractDict;
                   nblank::Integer=2,ndrift::Integer=1,ndown::Integer=1,
                   PAcutoff=nothing,verbose::Bool=false)
-    blank = fitBlanks(run,nblank=nblank)
+    blank = fitBlanks(run;nblank=nblank)
     setGroup!(run,standards)
     setGroup!(run,glass)
-    fit = fractionation(run,method,blank,channels,standards,glass,
+    fit = fractionation(run,method,blank,channels,standards,glass;
                         ndrift=ndrift,ndown=ndown,
                         PAcutoff=PAcutoff,verbose=verbose)
     return blank, fit
@@ -20,12 +20,12 @@ end
 export process!
 
 function fitBlanks(run::Vector{Sample};nblank=2)
-    blk = pool(run,blank=true)
+    blk = pool(run;blank=true)
     channels = getChannels(run)
     nc = length(channels)
     bpar = DataFrame(zeros(nblank,nc),channels)
     for channel in channels
-        bpar[:,channel] = polyFit(t=blk.t,y=blk[:,channel],n=nblank)
+        bpar[:,channel] = polyFit(blk.t,blk[:,channel],nblank)
     end
     return bpar
 end
@@ -46,7 +46,7 @@ function fractionation(run::Vector{Sample},
         # TODO
     else
         mf = fractionation(run,method,blank,channels,glass,verbose=verbose)
-        out = fractionation(run,method,blank,channels,standards,mf,
+        out = fractionation(run,method,blank,channels,standards,mf;
                             ndrift=ndrift,ndown=ndown,PAcutoff=PAcutoff,verbose=verbose)
     end
     return out
@@ -71,7 +71,7 @@ function fractionation(run::Vector{Sample},
 
         dats = Dict()
         for (refmat,anchor) in anchors
-            dats[refmat] = pool(run,signal=true,group=refmat)
+            dats[refmat] = pool(run;signal=true,group=refmat)
         end
 
         bD = blank[:,channels["D"]]
@@ -120,10 +120,10 @@ function fractionation(run::Vector{Sample},
 
         out = Pars(drift,down,mfrac)
     else
-        analog = isAnalog(run,channels=channels,cutoff=PAcutoff)
-        out = (analog = fractionation(run[analog],method,blank,channels,standards,mf,
+        analog = isAnalog(run,channels,PAcutoff)
+        out = (analog = fractionation(run[analog],method,blank,channels,standards,mf;
                                       ndrift=ndrift,ndown=ndown,verbose=verbose),
-               pulse = fractionation(run[.!analog],method,blank,channels,standards,mf,
+               pulse = fractionation(run[.!analog],method,blank,channels,standards,mf;
                                      ndrift=ndrift,ndown=ndown,verbose=verbose))
     end
     return out
@@ -140,7 +140,7 @@ function fractionation(run::Vector{Sample},
 
     dats = Dict()
     for (refmat,anchor) in anchors
-        dats[refmat] = pool(run,signal=true,group=refmat)
+        dats[refmat] = pool(run;signal=true,group=refmat)
     end
 
     bD = blank[:,channels["D"]]
@@ -171,20 +171,22 @@ function fractionation(run::Vector{Sample},
 end
 export fractionation
 
-function atomic(samp::Sample;
-                channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+function atomic(samp::Sample,
+                channels::AbstractDict,
+                pars::Pars,
+                blank::AbstractDataFrame)
     dat = windowData(samp,signal=true)
     t = dat.t
     T = dat.T
     Pm = dat[:,channels["P"]]
     Dm = dat[:,channels["D"]]
     dm = dat[:,channels["d"]]
-    ft = polyFac(p=pars.drift,t=t)
-    FT = polyFac(p=pars.down,t=T)
+    ft = polyFac(pars.drift,t)
+    FT = polyFac(pars.down,T)
     mf = exp(pars.mfrac)
-    bPt = polyVal(p=blank[:,channels["P"]],t=t)
-    bDt = polyVal(p=blank[:,channels["D"]],t=t)
-    bdt = polyVal(p=blank[:,channels["d"]],t=t)
+    bPt = polyVal(blank[:,channels["P"]],t)
+    bDt = polyVal(blank[:,channels["D"]],t)
+    bdt = polyVal(blank[:,channels["d"]],t)
     D = @. (Dm-bDt)
     P = @. (Pm-bPt)/(ft*FT)
     d = @. (dm-bdt)/mf
@@ -196,7 +198,7 @@ function averat(samp::Sample,
                 channels::AbstractDict,
                 pars::Pars,
                 blank::AbstractDataFrame)
-    t, T, P, D, d = atomic(samp,channels=channels,pars=pars,blank=blank)
+    t, T, P, D, d = atomic(samp,channels,pars,blank)
     nr = length(t)
     muP = Statistics.mean(P)
     muD = Statistics.mean(D)
@@ -226,7 +228,7 @@ function averat(run::Vector{Sample},
     ns = length(run)
     nul = fill(0.0,ns)
     out = DataFrame(name=fill("",ns),x=nul,sx=nul,y=nul,sy=nul,rxy=nul)
-    analog = isAnalog(run,channels=channels,cutoff=PAcutoff)
+    analog = isAnalog(run,channels;cutoff=PAcutoff)
     for i in 1:ns
         samp = run[i]
         out[i,1] = samp.sname

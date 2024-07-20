@@ -2,27 +2,25 @@ function PT(logbook="")
     welcome()
     ctrl = Dict(
         "priority" => Dict("load" => true, "method" => true,
-                           "standards" => true, "process" => true),
+                           "standards" => true, "glass" => true,
+                           "process" => true),
         "history" => DataFrame(task=String[],action=String[]),
         "chain" => ["top"],
         "i" => 1,
         "den" => nothing,
-        "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
         "head2name" => true,
-        "PAcutoff" => nothing,
-        "par" => Pars[],
-        "anchors" => nothing,
-        "blank" => nothing,
         "instrument" => "",
+        "dname" => "",
         "method" => "",
         "channels" => Dict(),
+        "standards" => Dict(),
+        "glass" => Dict(),
+        "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
+        "PAcutoff" => nothing,
+        "blank" => nothing,
+        "par" => nothing,
         "selection" => Int[],
-        "transformation" => "sqrt",
-        "refresher" => Dict(
-            "dname" => "",
-            "prefixes" => AbstractString[],
-            "refmats" => AbstractString[]
-        )
+        "transformation" => "sqrt"
     )
     if logbook != ""
         TUIimportLog!(ctrl,logbook)
@@ -92,7 +90,8 @@ function tree(ctrl::AbstractDict)
             "r: Read data files"*check(ctrl,"load")*"\n"*
             "m: Specify the method"*check(ctrl,"method")*"\n"*
             "t: Tabulate the samples\n"*
-            "s: Mark standards"*check(ctrl,"standards")*"\n"*
+            "s: Mark mineral standards"*check(ctrl,"standards")*"\n"*
+            "g: Mark reference glasses"*check(ctrl,"glass")*"\n"*
             "v: View and adjust each sample\n"*
             "p: Process the data"*check(ctrl,"process")*"\n"*
             "e: Export the results\n"*
@@ -109,6 +108,7 @@ function tree(ctrl::AbstractDict)
                 "m" => "method",
                 "t" => TUItabulate,
                 "s" => "standards",
+                "g" => "glass",
                 "v" => TUIviewer!,
                 "p" => TUIprocess!,
                 "e" => "export",
@@ -147,11 +147,11 @@ function tree(ctrl::AbstractDict)
         ),
         "standards" => (
             message =
-            "p: Add a standard by prefix\n"*
-            "n: Add a standard by number\n"*
-            "N: Remove a standard by number\n"*
-            "r: Remove all standards\n"*
-            "l: List the available reference materials\n"*
+            "p: Add a mineral standard by prefix\n"*
+            "n: Add a mineral standard by number\n"*
+            "N: Remove a mineral standard by number\n"*
+            "r: Remove all reference materials\n"*
+            "l: List the available mineral standards\n"*
             "t: Tabulate all the samples\n"*
             "x: Exit\n"*
             "?: Help",
@@ -162,28 +162,44 @@ function tree(ctrl::AbstractDict)
             action = Dict(
                 "p" => "addStandardsByPrefix",
                 "n" => "addStandardsByNumber",
-                "N" => "removeStandardsByNumber",
+                "N" => "removeRefmatsByNumber",
                 "r" => TUIresetGroup!,
                 "l" => TUIRefMatTab,
                 "t" => TUItabulate
             )
         ),
+        "glass" => (
+            message =
+            "p: Add a reference glass by prefix\n"*
+            "n: Add a reference glass by number\n"*
+            "N: Remove a reference glass by number\n"*
+            "r: Remove all reference materials\n"*
+            "l: List the available reference glasses\n"*
+            "t: Tabulate all the samples\n"*
+            "x: Exit\n"*
+            "?: Help",
+            help =
+            "Choose one or more reference glasses. These will be used "*
+            "to estimate the mass dependent isotope fractionation.",
+            action = Dict(
+                "p" => "addGlassByPrefix",
+                "n" => "addGlassByNumber",
+                "N" => "removeRefmatsByNumber",
+                "r" => TUIresetGroup!,
+                "l" => TUIGlassTab,
+                "t" => TUItabulate
+            )
+        ),
         "addStandardsByPrefix" => (
             message =
-            "Specify the prefix of an age standard or NIST glass "*
+            "Specify the prefix of an age standard "*
             "(? for help, x to exit):",
             help =
             "For example, suppose that Plesovice zircon reference "*
             "materials are named STDCZ01, STDCZ02, ..., then you can "*
             "select all the standards by entering STDCZ here. "*
             "Enter 'x' to go up one level and tabulate the "*
-            "sample if you forgot the exact prefix of your standards."*
-            "Note that NIST glass is only used to determine chemical "*
-            "concentrations and mass fractionation factors, but is "*
-            "NOT used as an isotopic ratio standard. Conversely, "*
-            "minerals are only used as isotopic ratio standards "*
-            "but not as concentration standards. Use both to get the "*
-            "best results.",
+            "sample if you forgot the exact prefix of your standards.",
             action = TUIaddStandardsByPrefix!
         ),
         "addStandardsByNumber" => (
@@ -205,19 +221,64 @@ function tree(ctrl::AbstractDict)
             "'bad' standards can be removed one-by-one, by specifying "*
             "their number. Enter 'x' to go up one level and tabulate "*
             "the sample if you forgot the exact prefix of your standards.",
-            action = TUIremoveStandardsByNumber!
+            action = TUIremoveRefmatsByNumber!
         ),
-        "refmat" => (
+        "showRefmats" => (
             message = TUIshowRefmats,
             help =
             "Even though you may have specified the prefix of your "*
             "reference materials, Plasmatrace still does not know "*
             "which standard this refers to. That information can be "*
-            "specified here. If you do not find your reference material "*
+            "specified here. If you do not find your mineral standard "*
             "in this list, then you can either specify your own 
             reference material under 'options' in the top menu, or "*
             "you can email us to add the material to the software.",
-            action = TUIsetGroup!
+            action = TUIsetStandardGroup!
+        ),
+        "addGlassByPrefix" => (
+            message =
+            "Specify the prefix of a NIST glass "*
+            "(? for help, x to exit):",
+            help =
+            "For example, suppose that NIST612 glass analyses "*
+            "are named GLASS01, GLASS02, ..., then you can "*
+            "select all the standards by entering GLASS here. "*
+            "Enter 'x' to go up one level and tabulate the "*
+            "sample if you forgot the exact prefix of your glasses.",
+            action = TUIaddGlassByPrefix!
+        ),
+        "addGlassByNumber" => (
+            message =
+            "Select the glass analyses as a comma-separated list of numbers "*
+            "(? for help, x to exit):",
+            help =
+            "For example, suppose that the analyses are labelled as "*
+            "G001, G002, ..., then it is not possible to identify "*
+            "the glass by prefix, but you can still select it "*
+            "by sequence number (e.g., 1,2,8,9,15,16,...).",
+            action = TUIaddGlassByNumber!
+        ),
+        "removeGlassByNumber" => (
+            message =
+            "Select the glass analyses as a comma-separated list of numbers "*
+            "(? for help, x to exit):",
+            help =
+            "'bad' glass analyses can be removed one-by-one, by specifying "*
+            "their number. Enter 'x' to go up one level and tabulate "*
+            "the sample if you forgot the exact prefix of your glass.",
+            action = TUIremoveRefmatsByNumber!
+        ),
+        "showGlass" => (
+            message = TUIshowGlass,
+            help =
+            "Even though you may have specified the prefix of your "*
+            "glasses, Plasmatrace still does not know "*
+            "which material this refers to. That information can be "*
+            "specified here. If you do not find your reference glass "*
+            "in this list, then you can either specify your own "*
+            "glass under 'options' in the top menu, or "*
+            "you can email us to add the material to the software.",
+            action = TUIsetGlassGroup!
         ),
         "view" => (
             message = 
@@ -633,11 +694,11 @@ function TUIinstrument!(ctrl::AbstractDict,
 end
 
 function TUIload!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["run"] = load(response,
+    ctrl["run"] = load(response;
                        instrument=ctrl["instrument"],
                        head2name=ctrl["head2name"])
     ctrl["priority"]["load"] = false
-    ctrl["refresher"]["dname"] = response
+    ctrl["dname"] = response
     return "xx"
 end
 
@@ -677,8 +738,7 @@ function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUItabulate(ctrl::AbstractDict)
-    summary_table = summarise(ctrl["run"])
-    println(summary_table)
+    summarise(ctrl["run"])
 end
 
 function TUIaddStandardsByPrefix!(ctrl::AbstractDict,
@@ -687,21 +747,40 @@ function TUIaddStandardsByPrefix!(ctrl::AbstractDict,
     ctrl["selection"] = findall(contains(response),snames)
     if response in ctrl["refresher"]["prefixes"] # overwrite
         ctrl["refresher"]["prefixes"] = [response]
-        ctrl["refresher"]["refmats"] = AbstractString[]
+        ctrl["refresher"]["standards"] = AbstractString[]
     else # append
         push!(ctrl["refresher"]["prefixes"],response)
     end
-    return "refmat"
+    return "showRefmats"
+end
+
+function TUIaddGlassByPrefix!(ctrl::AbstractDict,
+                                  response::AbstractString)
+    snames = getSnames(ctrl["run"])
+    ctrl["selection"] = findall(contains(response),snames)
+    if response in ctrl["refresher"]["prefixes"] # overwrite
+        ctrl["refresher"]["prefixes"] = [response]
+        ctrl["refresher"]["glass"] = AbstractString[]
+    else # append
+        push!(ctrl["refresher"]["prefixes"],response)
+    end
+    return "showGlass"
 end
 
 function TUIaddStandardsByNumber!(ctrl::AbstractDict,
                                   response::AbstractString)
     ctrl["selection"] = parse.(Int,split(response,","))
-    return "refmat"    
+    return "showRefmats"
 end
 
-function TUIremoveStandardsByNumber!(ctrl::AbstractDict,
-                                     response::AbstractString)
+function TUIaddGlassByNumber!(ctrl::AbstractDict,
+                              response::AbstractString)
+    ctrl["selection"] = parse.(Int,split(response,","))
+    return "showGlass"
+end
+
+function TUIremoveRefmatsByNumber!(ctrl::AbstractDict,
+                                   response::AbstractString)
     selection = parse.(Int,split(response,","))
     resetGroup!(ctrl["run"],selection)
     return "x"
@@ -734,15 +813,38 @@ function TUIshowRefmats(ctrl::AbstractDict)
     return msg
 end
 
-function TUIsetGroup!(ctrl::AbstractDict,response::AbstractString)
+function TUIshowGlass(ctrl::AbstractDict)
+    msg = "Which of the following standards did you select?\n"
+    standards = collect(keys(_PT["glass"][ctrl["method"]]))
+    for i in eachindex(standards)
+        msg *= string(i)*": "*standards[i]*"\n"
+    end
+    msg *= "x: Exit\n"*"?: Help"
+    return msg
+end
+
+function TUIsetStandardGroup!(ctrl::AbstractDict,response::AbstractString)
     standards = collect(keys(_PT["refmat"][ctrl["method"]]))
     i = parse(Int,response)
     setGroup!(ctrl["run"],ctrl["selection"],standards[i])
     ctrl["priority"]["standards"] = false
-    nr = length(ctrl["refresher"]["refmats"])
+    nr = length(ctrl["refresher"]["standards"])
     np = length(ctrl["refresher"]["prefixes"])
     if nr < np
         push!(ctrl["refresher"]["refmats"],standards[i])
+    end
+    return "xxx"
+end
+
+function TUIsetGlassGroup!(ctrl::AbstractDict,response::AbstractString)
+    standards = collect(keys(_PT["glass"][ctrl["method"]]))
+    i = parse(Int,response)
+    setGroup!(ctrl["run"],ctrl["selection"],standards[i])
+    ctrl["priority"]["glass"] = false
+    nr = length(ctrl["refresher"]["glass"])
+    np = length(ctrl["refresher"]["prefixes"])
+    if nr < np
+        push!(ctrl["refresher"]["glass"],standards[i])
     end
     return "xxx"
 end
@@ -760,9 +862,11 @@ function TUIprocess!(ctrl::AbstractDict)
     ctrl["blank"] = fitBlanks(ctrl["run"],nblank=ctrl["options"]["blank"])
     println("Fractionation correction...")
     ctrl["par"] = fractionation(ctrl["run"],
-                                blank=ctrl["blank"],
-                                channels=ctrl["channels"],
-                                anchors=ctrl["anchors"],
+                                ctrl["method"],
+                                ctrl["blank"],
+                                ctrl["channels"],
+                                ctrl["standards"],
+                                ctrl["glass"];
                                 ndrift=ctrl["options"]["drift"],
                                 ndown=ctrl["options"]["down"],
                                 PAcutoff=ctrl["PAcutoff"])
@@ -798,13 +902,13 @@ function TUIplotter(ctrl::AbstractDict)
         channels = names(samp.dat)[3:end]
     end
     if isnothing(ctrl["blank"]) | isnothing(ctrl["anchors"]) | (samp.group=="sample")
-        p = plot(samp,channels,den=ctrl["den"],transformation=ctrl["transformation"])
+        p = plot(samp,ctrl["method"],channels,ctrl["par"],ctrl["standards"],ctrl["glass"],
+                 den=ctrl["den"],transformation=ctrl["transformation"])
     else
         if isnothing(ctrl["PAcutoff"])
             par = ctrl["par"]
         else
-            analog = isAnalog(samp,channels=ctrl["channels"],
-                              cutoff=ctrl["PAcutoff"])
+            analog = isAnalog(samp,ctrl["channels"];cutoff=ctrl["PAcutoff"])
             j = analog ? 1 : 2
             par = ctrl["par"][j]
         end
@@ -868,7 +972,7 @@ end
 function TUIoneSingleBlankWindow!(ctrl::AbstractDict,
                                   response::AbstractString)
     samp = ctrl["run"][ctrl["i"]]
-    bwin = string2windows(samp,text=response,single=true)
+    bwin = string2windows(samp,response,true)
     setBwin!(samp,bwin)
     TUIplotter(ctrl)
     return "xx"
@@ -877,7 +981,7 @@ end
 function TUIoneMultiBlankWindow!(ctrl::AbstractDict,
                                  response::AbstractString)
     samp = ctrl["run"][ctrl["i"]]
-    bwin = string2windows(samp,text=response,single=false)
+    bwin = string2windows(samp,response,false)
     setBwin!(samp,bwin)
     TUIplotter(ctrl)
     return "xx"
@@ -903,7 +1007,7 @@ function TUIallMultiBlankWindow!(ctrl::AbstractDict,
                                  response::AbstractString)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
-        bwin = string2windows(samp,text=response,single=false)
+        bwin = string2windows(samp,response,false)
         setBwin!(samp,bwin)
     end
     TUIplotter(ctrl)
@@ -918,7 +1022,7 @@ end
 function TUIoneSingleSignalWindow!(ctrl::AbstractDict,
                                    response::AbstractString)
     samp = ctrl["run"][ctrl["i"]]
-    swin = string2windows(samp,text=response,single=true)
+    swin = string2windows(samp,response,true)
     setSwin!(samp,swin)
     TUIplotter(ctrl)
     return "xx"
@@ -927,7 +1031,7 @@ end
 function TUIoneMultiSignalWindow!(ctrl::AbstractDict,
                                   response::AbstractString)
     samp = ctrl["run"][ctrl["i"]]
-    swin = string2windows(samp,text=response,single=false)
+    swin = string2windows(samp,response,false)
     setSwin!(samp,swin)
     TUIplotter(ctrl)
     return "xx"
@@ -942,7 +1046,7 @@ function TUIallSingleSignalWindow!(ctrl::AbstractDict,
                                    response::AbstractString)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
-        swin = string2windows(samp,text=response,single=true)
+        swin = string2windows(samp,response,true)
         setSwin!(samp,swin)
     end
     TUIplotter(ctrl)
@@ -953,7 +1057,7 @@ function TUIallMultiSignalWindow!(ctrl::AbstractDict,
                                   response::AbstractString)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
-        swin = string2windows(samp,text=response,single=false)
+        swin = string2windows(samp,response,false)
         setSwin!(samp,swin)
     end
     TUIplotter(ctrl)
@@ -1004,6 +1108,11 @@ function TUIRefMatTab(ctrl::AbstractDict)
     return "x"
 end
 
+# TODO
+function TUIGlassTab(ctrl::AbstractDict)
+    return "x"
+end
+
 function TUIPAlist(ctrl::AbstractDict)
     snames = getSnames(ctrl["run"])
     for i in eachindex(snames)
@@ -1046,7 +1155,8 @@ function TUIimportLog!(ctrl::AbstractDict,response::AbstractString)
             println(e)
         end
     end
-    return nothing
+    ctrl["chain"] = ["top"]
+    return "xx"
 end
 
 function TUIexportLog(ctrl::AbstractDict,response::AbstractString)
@@ -1088,12 +1198,13 @@ function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
 end
 
 function TUIrefresh!(ctrl::AbstractDict)
-    R = ctrl["refresher"]
-    TUIload!(ctrl,R["dname"])
+    TUIload!(ctrl,ctrl["dname"])
     snames = getSnames(ctrl["run"])
-    for i in eachindex(R["prefixes"])
-        ctrl["selection"] = findall(contains(R["prefixes"][i]),snames)
-        setGroup!(ctrl["run"],ctrl["selection"],R["refmats"][i])
+    for (refmat,prefix) in ctrl["standards"]
+        setGroup!(ctrl["run"],prefix,refmat)
+    end
+    for (refmat,prefix) in ctrl["glasss"]
+        setGroup!(ctrl["run"],prefix,refmat)
     end
     TUIprocess!(ctrl)
     return nothing

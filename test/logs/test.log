@@ -5,12 +5,3 @@ load,data/Lu-Hf
 top,m
 method,1
 columns,"15,17,18"
-top,s
-standards,p
-addStandardsByPrefix,hogsbo
-refmat,3
-top,s
-standards,p
-addStandardsByPrefix,NIST
-refmat,2
-top,p

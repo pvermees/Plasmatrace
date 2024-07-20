@@ -54,25 +54,41 @@ function setGroup!(run::Vector{Sample},refmat::AbstractString)
 end
 export setGroup!
 
-function setBwin!(samp::Sample,bwin=nothing)
-    if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
-    samp.bwin = bwin
-end
-function setBwin!(run::Vector{Sample},bwin=nothing)
+function setBwin!(run::Vector{Sample},bwin::AbstractVector)
     for i in eachindex(run)
         setBwin!(run[i],bwin)
     end
 end
+function setBwin!(samp::Sample,bwin::AbstractVector)
+    samp.bwin = bwin
+end
+function setBwin!(run::Vector{Sample})
+    for i in eachindex(run)
+        setBwin!(run[i])
+    end
+end
+function setBwin!(samp::Sample)
+    bwin = autoWindow(samp,blank=true)
+    setBwin!(samp::Sample,bwin)
+end
 export setBwin!
 
-function setSwin!(samp::Sample,swin=nothing)
-    if isnothing(swin) swin=autoWindow(samp,blank=false) end
-    samp.swin = swin
-end
-function setSwin!(run::Vector{Sample},swin=nothing)
+function setSwin!(run::Vector{Sample},swin::AbstractVector)
     for i in eachindex(run)
         setSwin!(run[i],swin)
     end
+end
+function setSwin!(samp::Sample,swin::AbstractVector)
+    samp.swin = swin
+end
+function setSwin!(run::Vector{Sample})
+    for i in eachindex(run)
+        setSwin!(run[i])
+    end
+end
+function setSwin!(samp::Sample)
+    swin = autoWindow(samp,blank=false)
+    setSwin!(samp::Sample,swin)
 end
 export setSwin!
 
@@ -150,7 +166,7 @@ function getDat(samp::Sample,channels::AbstractDict)
 end
 export getDat
 
-function getPDd(method)
+function getPDd(method::AbstractString)
     i = findfirst(==(method),_PT["methods"][:,"method"])
     PDd = _PT["methods"][i,2:end]
     return PDd.P, PDd.D, PDd.d

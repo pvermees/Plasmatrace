@@ -4,8 +4,7 @@ function PTerror(key)
         "notStandard" => "The sample has not been marked as a standard",
         "unknownRefMat" => "Unknown reference material.",
         "unknownMethod" => "Unknown method.",
-        "unknownInstrument" => "Unsupported instrument.",
-        "missingNumDen" => "You must provide either a numerator or denominator, or both."
+        "unknownInstrument" => "Unsupported instrument."
     )
     throw(error(errormessages[key]))
 end

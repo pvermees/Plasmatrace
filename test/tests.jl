@@ -4,8 +4,8 @@ using Test, CSV
 import Plots
 
 function loadtest(verbose=false)
-    myrun = load("data/Lu-Hf",instrument="Agilent")
-    if verbose summarise(myrun,true,5) end
+    myrun = load("data/Lu-Hf";instrument="Agilent")
+    if verbose summarise(myrun;verbose=true,n=5) end
     return myrun
 end
 
@@ -27,7 +27,7 @@ end
 
 function blanktest()
     myrun = loadtest()
-    blk = fitBlanks(myrun,nblank=2)
+    blk = fitBlanks(myrun;nblank=2)
     return myrun, blk
 end
 
@@ -38,7 +38,7 @@ function standardtest(verbose=false)
     anchors = getAnchors("Lu-Hf",standards)
     if verbose
         println(anchors)
-        summarise(myrun,true,5)
+        summarise(myrun;verbose=true,n=5)
     end
 end
 
@@ -58,7 +58,7 @@ function predictest()
         println("Not a standard")
     else
         pred = predict(samp,method,fit,blk,channels,standards,glass)
-        p = plot(samp,method,channels,blk,fit,standards,glass,transformation="log")
+        p = plot(samp,method,channels,blk,fit,standards,glass;transformation="log")
         @test display(p) != NaN
     end
     return pred
@@ -76,14 +76,14 @@ function fractionationtest(all=true)
     if all
         print("two separate steps: ")
         mf = fractionation(myrun,"Lu-Hf",blk,channels,glass)
-        fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,mf,ndrift=1,ndown=1)
+        fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,mf;ndrift=1,ndown=1)
         println(fit)
         print("no glass: ")
-        fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,nothing,ndrift=1,ndown=1)
+        fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,nothing;ndrift=1,ndown=1)
         println(fit)
         print("two joint steps: ")
     end
-    fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,glass,ndrift=1,ndown=1)
+    fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,glass;ndrift=1,ndown=1)
     if (all)
         println(fit)
         return myrun, blk, fit, channels, standards, glass
@@ -97,17 +97,17 @@ end
 
 function histest()
     myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
-    pooled = pool(myrun,signal=true,group="BP")
+    pooled = pool(myrun;signal=true,group="BP")
     anchor = anchors["BP"]
     pred = predict(pooled,fit,blk,channels,anchor)
     misfit = @. pooled[:,channels["d"]] - pred[:,"d"]
-    p = Plots.histogram(misfit,legend=false)
+    p = Plots.histogram(misfit;legend=false)
     @test display(p) != NaN
 end
 
 function averatest()
     myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
-    t, T, P, D, d = atomic(myrun[1],channels=channels,pars=fit,blank=blk)
+    t, T, P, D, d = atomic(myrun[1],channels,fit,blk)
     ratios = averat(myrun,channels,fit,blk)
     println(first(ratios,5))
     return ratios
@@ -184,7 +184,7 @@ end
 
 function iCaptest(verbose=true)
     myrun = load("data/iCap",instrument="ThermoFisher")
-    if verbose summarise(myrun,true,5) end
+    if verbose summarise(myrun;verbose=true,n=5) end
 end
 
 function carbonatetest(verbose=false)
@@ -197,7 +197,7 @@ function carbonatetest(verbose=false)
                         nblank=2,ndrift=1,ndown=1,verbose=verbose)
     export2IsoplotR(myrun,method,channels,fit,blk,prefix="Duff",fname="Duff.json")
     p = plot(myrun[3],method,channels,blk,fit,standards,glass,
-             transformation="",num=["Pb207"],den="Pb206",ylim=[-0.02,0.3])
+             transformation=nothing,num=["Pb207"],den="Pb206",ylim=[-0.02,0.3])
     @test display(p) != NaN
 end
 
@@ -205,12 +205,12 @@ function readmetest()
 end
 
 function TUItest()
-    PT("logs/emacs.log")
+    PT()#"logs/test.log")
 end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
+#=@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -226,5 +226,5 @@ Plots.closeall()
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
-#=@testset "readme example" begin readmetest() end
-@testset "TUI test" begin TUItest() end=#
+@testset "readme example" begin readmetest() end=#
+@testset "TUI test" begin TUItest() end

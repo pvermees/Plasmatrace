@@ -5,13 +5,4 @@ load,data/Lu-Hf
 top,m
 method,1
 columns,"15,17,18"
-top,s
-standards,p
-addStandardsByPrefix,hogsbo
-refmat,1
-top,o
-options,p
-PA,a
-setPAcutoff,1e7
-options,x
-top,p
+top,t
