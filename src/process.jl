@@ -5,43 +5,89 @@ returns blk, anchors, fit
 function process!(run::Vector{Sample},
                   method::AbstractString,
                   channels::AbstractDict,
-                  standards::AbstractDict;
-                  nb::Integer=2,nf::Integer=1,nF::Integer=1,
-                  mf=nothing,PAcutoff=nothing,
-                  verbose::Bool=false)
-    blk = fitBlanks(run,nb=nb)
-    setStandards!(run,standards)
-    anchors = getAnchor(method,standards)
-    fit = fractionation(run,blank=blk,channels=channels,
-                        anchors=anchors,nf=nf,nF=nF,mf=mf,
+                  standards::AbstractDict,
+                  glass::AbstractDict;
+                  nblank::Integer=2,ndrift::Integer=1,ndown::Integer=1,
+                  PAcutoff=nothing,verbose::Bool=false)
+    blank = fitBlanks(run;nblank=nblank)
+    setGroup!(run,standards)
+    setGroup!(run,glass)
+    fit = fractionation(run,method,blank,channels,standards,glass;
+                        ndrift=ndrift,ndown=ndown,
                         PAcutoff=PAcutoff,verbose=verbose)
-    return blk, anchors, fit
+    return blank, fit
 end
 export process!
 
-function fitBlanks(run::Vector{Sample};nb=2)
-    blk = pool(run,blank=true)
+function fitBlanks(run::Vector{Sample};nblank=2)
+    blk = pool(run;blank=true)
     channels = getChannels(run)
     nc = length(channels)
-    bpar = DataFrame(zeros(nb,nc),channels)
+    bpar = DataFrame(zeros(nblank,nc),channels)
     for channel in channels
-        bpar[:,channel] = polyFit(t=blk.t,y=blk[:,channel],n=nb)
+        bpar[:,channel] = polyFit(blk.t,blk[:,channel],nblank)
     end
     return bpar
 end
 export fitBlanks
 
-function fractionation(run::Vector{Sample};
-                       blank::AbstractDataFrame,channels::AbstractDict,
-                       anchors::AbstractDict,nf::Integer=1,nF::Integer=0,
-                       mf=nothing,PAcutoff=nothing,verbose::Bool=false)
+# two-step isotope fractionation
+function fractionation(run::Vector{Sample},
+                       method::AbstractString,
+                       blank::AbstractDataFrame,
+                       channels::AbstractDict,
+                       standards::AbstractVector,
+                       glass::AbstractVector;
+                       ndrift::Integer=1,
+                       ndown::Integer=0,
+                       PAcutoff=nothing,
+                       verbose::Bool=false)
+    if method in ["concentrations","concentration","conc"]
+        # TODO
+    else
+        mf = fractionation(run,method,blank,channels,glass;verbose=verbose)
+        out = fractionation(run,method,blank,channels,standards,mf;
+                            ndrift=ndrift,ndown=ndown,PAcutoff=PAcutoff,verbose=verbose)
+    end
+    return out
+end
+function fractionation(run::Vector{Sample},
+                       method::AbstractString,
+                       blank::AbstractDataFrame,
+                       channels::AbstractDict,
+                       standards::AbstractDict,
+                       glass::AbstractDict;
+                       ndrift::Integer=1,
+                       ndown::Integer=0,
+                       PAcutoff=nothing,
+                       verbose::Bool=false)
+    return fractionation(run,method,blank,channels,
+                         collect(keys(standards)),
+                         collect(keys(glass));
+                         ndrift=ndrift,ndown=ndown,
+                         PAcutoff=PAcutoff,verbose=verbose)
+end
+# one-step isotope fractionation using mineral standards
+function fractionation(run::Vector{Sample},
+                       method::AbstractString,
+                       blank::AbstractDataFrame,
+                       channels::AbstractDict,
+                       standards::AbstractVector,
+                       mf::Union{AbstractFloat,Nothing};
+                       ndrift::Integer=1,
+                       ndown::Integer=0,
+                       PAcutoff=nothing,
+                       verbose::Bool=false)
+    
+    anchors = getAnchors(method,standards,false)
 
     if isnothing(PAcutoff)
-        if nf<1 PTerror("nfzero") end
+        
+        if ndrift<1 PTerror("ndriftzero") end
 
         dats = Dict()
         for (refmat,anchor) in anchors
-            dats[refmat] = pool(run,signal=true,group=refmat)
+            dats[refmat] = pool(run;signal=true,group=refmat)
         end
 
         bD = blank[:,channels["D"]]
@@ -49,8 +95,8 @@ function fractionation(run::Vector{Sample};
         bP = blank[:,channels["P"]]
 
         function misfit(par)
-            drift = par[1:nf]
-            down = vcat(0.0,par[nf+1:nf+nF])
+            drift = par[1:ndrift]
+            down = vcat(0.0,par[ndrift+1:ndrift+ndown])
             mfrac = isnothing(mf) ? par[end] : log(mf)
             out = 0.0
             for (refmat,dat) in dats
@@ -60,63 +106,129 @@ function fractionation(run::Vector{Sample};
                 Dm = dat[:,channels["D"]]
                 dm = dat[:,channels["d"]]
                 (x0,y0,y1) = anchors[refmat]
-                if ismissing(x0)
-                    out += SS(t,Dm,dm,y0,mfrac,bD,bd)
-                else
-                    out += SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
-                end
+                out += SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
             end
             return out
         end
 
-        init = fill(0.0,nf)
-        if (nF>0) init = vcat(init,fill(0.0,nF)) end
+        init = fill(0.0,ndrift)
+        if (ndown>0) init = vcat(init,fill(0.0,ndown)) end
         if isnothing(mf) init = vcat(init,0.0) end
-
         if length(init)>0
             fit = Optim.optimize(misfit,init)
-            if verbose println(fit) end
+            if verbose
+                println("Drift and downhole fractionation correction:\n")
+                println(fit)
+            else
+                if fit.iteration_converged
+                    @warn "Reached the maximum number of iterations before reaching " *
+                        "convergence. Reduce the order of the polynomials or fix the " *
+                        "mass fractionation and try again."
+                end
+            end
             pars = Optim.minimizer(fit)
         else
             pars = 0.0
         end
-        drift = pars[1:nf]
-        down = vcat(0.0,pars[nf+1:nf+nF])
+        drift = pars[1:ndrift]
+        down = vcat(0.0,pars[ndrift+1:ndrift+ndown])
 
         mfrac = isnothing(mf) ? pars[end] : log(mf)
 
         out = Pars(drift,down,mfrac)
     else
-        out = Array{Pars}(undef,2)
-        analog = isAnalog(run,channels=channels,cutoff=PAcutoff)
-        out[1] = fractionation(run[analog],
-                               blank=blank,channels=channels,
-                               anchors=anchors,nf=nf,nF=nF,mf=mf,
-                               verbose=verbose)
-        
-        out[2] = fractionation(run[.!analog],
-                               blank=blank,channels=channels,
-                               anchors=anchors,nf=nf,nF=nF,mf=mf,
-                               verbose=verbose)
+        analog = isAnalog(run,channels,PAcutoff)
+        out = (analog = fractionation(run[analog],method,blank,channels,standards,mf;
+                                      ndrift=ndrift,ndown=ndown,verbose=verbose),
+               pulse = fractionation(run[.!analog],method,blank,channels,standards,mf;
+                                     ndrift=ndrift,ndown=ndown,verbose=verbose))
     end
     return out
 end
+function fractionation(run::Vector{Sample},
+                       method::AbstractString,
+                       blank::AbstractDataFrame,
+                       channels::AbstractDict,
+                       standards::AbstractDict,
+                       mf::Union{AbstractFloat,Nothing};
+                       ndrift::Integer=1,
+                       ndown::Integer=0,
+                       PAcutoff=nothing,
+                       verbose::Bool=false)
+    return fractionation(run,method,blank,channels,
+                         collect(keys(standards)),mf;
+                         ndrift=ndrift,ndown=ndown,
+                         PAcutoff=PAcutoff,verbose=verbose)
+end
+# isotopic mass fractionation using glass
+function fractionation(run::Vector{Sample},
+                       method::AbstractString,
+                       blank::AbstractDataFrame,
+                       channels::AbstractDict,
+                       glass::AbstractVector;
+                       verbose::Bool=false)
+    
+    anchors = getAnchors(method,glass,true)
+
+    dats = Dict()
+    for (refmat,anchor) in anchors
+        dats[refmat] = pool(run;signal=true,group=refmat)
+    end
+
+    bD = blank[:,channels["D"]]
+    bd = blank[:,channels["d"]]
+
+    function misfit(par)
+        mfrac = par[1]
+        out = 0.0
+        for (refmat,dat) in dats
+            t = dat.t
+            Dm = dat[:,channels["D"]]
+            dm = dat[:,channels["d"]]
+            y0 = anchors[refmat]
+            out += SS(t,Dm,dm,y0,mfrac,bD,bd)
+        end
+        return out
+    end
+
+    fit = Optim.optimize(misfit,[0.0])
+    if verbose
+        println("Mass fractionation correction:\n")
+        println(fit)
+    end
+
+    mfrac = Optim.minimizer(fit)[1]
+    
+    return exp(mfrac)
+end
+function fractionation(run::Vector{Sample},
+                       method::AbstractString,
+                       blank::AbstractDataFrame,
+                       channels::AbstractDict,
+                       glass::AbstractDict;
+                       verbose::Bool=false)
+    return fractionation(run,method,blank,channels,
+                         collect(keys(glass));
+                         verbose=verbose)
+end
 export fractionation
 
-function atomic(samp::Sample;
-                channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
+function atomic(samp::Sample,
+                channels::AbstractDict,
+                pars::Pars,
+                blank::AbstractDataFrame)
     dat = windowData(samp,signal=true)
     t = dat.t
     T = dat.T
     Pm = dat[:,channels["P"]]
     Dm = dat[:,channels["D"]]
     dm = dat[:,channels["d"]]
-    ft = polyFac(p=pars.drift,t=t)
-    FT = polyFac(p=pars.down,t=T)
+    ft = polyFac(pars.drift,t)
+    FT = polyFac(pars.down,T)
     mf = exp(pars.mfrac)
-    bPt = polyVal(p=blank[:,channels["P"]],t=t)
-    bDt = polyVal(p=blank[:,channels["D"]],t=t)
-    bdt = polyVal(p=blank[:,channels["d"]],t=t)
+    bPt = polyVal(blank[:,channels["P"]],t)
+    bDt = polyVal(blank[:,channels["D"]],t)
+    bdt = polyVal(blank[:,channels["d"]],t)
     D = @. (Dm-bDt)
     P = @. (Pm-bPt)/(ft*FT)
     d = @. (dm-bdt)/mf
@@ -124,9 +236,11 @@ function atomic(samp::Sample;
 end
 export atomic
 
-function averat(samp::Sample;
-                channels::AbstractDict,pars::Pars,blank::AbstractDataFrame)
-    t, T, P, D, d = atomic(samp,channels=channels,pars=pars,blank=blank)
+function averat(samp::Sample,
+                channels::AbstractDict,
+                pars::Pars,
+                blank::AbstractDataFrame)
+    t, T, P, D, d = atomic(samp,channels,pars,blank)
     nr = length(t)
     muP = Statistics.mean(P)
     muD = Statistics.mean(D)
@@ -148,65 +262,27 @@ function averat(samp::Sample;
     rxy = covmat[1,2]/(sx*sy)
     return [x sx y sy rxy]
 end
-function averat(run::Vector{Sample};
+function averat(run::Vector{Sample},
                 channels::AbstractDict,
-                pars::Union{Pars,AbstractVector},
-                blank::AbstractDataFrame,
+                pars::Union{Pars,NamedTuple},
+                blank::AbstractDataFrame;
                 PAcutoff=nothing)
     ns = length(run)
-    out = DataFrame(name=fill("",ns),x=fill(0.0,ns),sx=fill(0.0,ns),
-                    y=fill(0.0,ns),sy=fill(0.0,ns),rxy=fill(0.0,ns))
-    analog = isAnalog(run,channels=channels,cutoff=PAcutoff)
+    nul = fill(0.0,ns)
+    out = DataFrame(name=fill("",ns),x=nul,sx=nul,y=nul,sy=nul,rxy=nul)
+    analog = isAnalog(run,channels,PAcutoff)
     for i in 1:ns
-        out[i,1] = run[i].sname
+        samp = run[i]
+        out[i,1] = samp.sname
         if isa(pars,Pars)
-            out[i,2:end] = averat(run[i],channels=channels,
-                                  pars=pars,blank=blank)
+            samp_pars = pars
+        elseif analog[i]
+            samp_pars = pars.analog
         else
-            j = analog ? 1 : 2
-            out[i,2:end] = averat(run[i],channels=channels,
-                                  pars=pars[j],blank=blank)
+            samp_pars = pars.pulse
         end
+        out[i,2:end] = averat(samp,channels,samp_pars,blank)
     end
     return out
 end
 export averat
-
-function export2IsoplotR(fname::AbstractString,
-                         ratios::AbstractDataFrame,
-                         method::AbstractString)
-    json = jsonTemplate()
-
-    P, D, d = getPDd(method)
-
-    datastring = "\"ierr\":1,\"data\":{"*
-    "\""* P *"/"* D *"\":["*     join(ratios[:,2],",")*"],"*
-    "\"err["* P *"/"* D *"]\":["*join(ratios[:,3],",")*"],"*
-    "\""* d *"/"* D *"\":["*     join(ratios[:,4],",")*"],"*
-    "\"err["* d *"/"* D *"]\":["*join(ratios[:,5],",")*"],"*
-    "\"(rho)\":["*join(ratios[:,6],",")*"],"*
-    "\"(C)\":[],\"(omit)\":[],"*
-    "\"(comment)\":[\""*join(ratios[:,1],"\",\"")*"\"]"
-
-    json = replace(json,"\""*method*"\":{}" =>
-                   "\""*method*"\":{"*datastring*"}}")
-
-    
-    if method in ["Lu-Hf","Rb-Sr"]
-                        
-        old = "\"geochronometer\":\"U-Pb\",\"plotdevice\":\"concordia\""
-        new = "\"geochronometer\":\""*method*"\",\"plotdevice\":\"isochron\""
-        json = replace(json, old => new)
-        
-        old = "\""*method*"\":{\"format\":1,\"i2i\":true,\"projerr\":false,\"inverse\":false}"
-        new = "\""*method*"\":{\"format\":2,\"i2i\":true,\"projerr\":false,\"inverse\":true}"
-        json = replace(json, old => new)
-        
-    end
-    
-    file = open(fname,"w")
-    write(file,json)
-    close(file)
-    
-end
-export export2IsoplotR

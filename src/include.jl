@@ -11,5 +11,7 @@ include("plots.jl")
 include("process.jl")
 include("crunch.jl")
 include("TUI.jl")
+include("TUIactions.jl")
+include("TUImessages.jl")
 
 init_PT!()

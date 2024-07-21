@@ -32,47 +32,63 @@ function getAttr(run::Vector{Sample},attr::Symbol)
     return out
 end
 
-function setStandards!(run::Vector{Sample},selection::Vector{Int},refmat::AbstractString)
+function setGroup!(run::Vector{Sample},selection::Vector{Int},refmat::AbstractString)
     for i in selection
         run[i].group = refmat
     end
 end
-function setStandards!(run::Vector{Sample},prefix::AbstractString,refmat::AbstractString)
+function setGroup!(run::Vector{Sample},prefix::AbstractString,refmat::AbstractString)
     snames = getSnames(run)
     selection = findall(contains(prefix),snames)
-    setStandards!(run::Vector{Sample},selection,refmat)
+    setGroup!(run::Vector{Sample},selection,refmat)
 end
-function setStandards!(run::Vector{Sample},standards::AbstractDict)
+function setGroup!(run::Vector{Sample},standards::AbstractDict)
     for (refmat,prefix) in standards
-        setStandards!(run,prefix,refmat)
+        setGroup!(run,prefix,refmat)
     end
 end
-function setStandards!(run::Vector{Sample},refmat::AbstractString)
+function setGroup!(run::Vector{Sample},refmat::AbstractString)
     for sample in run
         sample.group = refmat
     end
 end
-export setStandards!
+export setGroup!
 
-function setBwin!(samp::Sample,bwin=nothing)
-    if isnothing(bwin) bwin=autoWindow(samp,blank=true) end
-    samp.bwin = bwin
-end
-function setBwin!(run::Vector{Sample},bwin=nothing)
+function setBwin!(run::Vector{Sample},bwin::AbstractVector)
     for i in eachindex(run)
         setBwin!(run[i],bwin)
     end
 end
+function setBwin!(samp::Sample,bwin::AbstractVector)
+    samp.bwin = bwin
+end
+function setBwin!(run::Vector{Sample})
+    for i in eachindex(run)
+        setBwin!(run[i])
+    end
+end
+function setBwin!(samp::Sample)
+    bwin = autoWindow(samp,blank=true)
+    setBwin!(samp::Sample,bwin)
+end
 export setBwin!
 
-function setSwin!(samp::Sample,swin=nothing)
-    if isnothing(swin) swin=autoWindow(samp,blank=false) end
-    samp.swin = swin
-end
-function setSwin!(run::Vector{Sample},swin=nothing)
+function setSwin!(run::Vector{Sample},swin::AbstractVector)
     for i in eachindex(run)
         setSwin!(run[i],swin)
     end
+end
+function setSwin!(samp::Sample,swin::AbstractVector)
+    samp.swin = swin
+end
+function setSwin!(run::Vector{Sample})
+    for i in eachindex(run)
+        setSwin!(run[i])
+    end
+end
+function setSwin!(samp::Sample)
+    swin = autoWindow(samp,blank=false)
+    setSwin!(samp::Sample,swin)
 end
 export setSwin!
 
@@ -93,12 +109,11 @@ function sett0!(samp::Sample)
 end
 export sett0!
 
+# mineral
 function getx0y0y1(method::AbstractString,
                    refmat::AbstractString)
     t = _PT["refmat"][method][refmat].t[1]
-    if ismissing(t)
-        x0 = y1 = missing
-    elseif method=="U-Pb"
+    if method=="U-Pb"
         L8 = _PT["lambda"]["U238-Pb206"][1]
         L5 = _PT["lambda"]["U235-Pb207"][1]
         U58 = _PT["iratio"]["U-Pb"].U235/_PT["iratio"]["U-Pb"].U238
@@ -112,33 +127,34 @@ function getx0y0y1(method::AbstractString,
     y0 = _PT["refmat"][method][refmat].y0[1]
     return (x0=x0,y0=y0,y1=y1)
 end
-
-function getAnchor(method::AbstractString,refmat::AbstractString)
-    return getx0y0y1(method,refmat)
+# glass
+function gety0(method::AbstractString,
+               refmat::AbstractString)
+    x0 = y1 = missing
+    i = findfirst(==(method),_PT["methods"][:,"method"])
+    ratio = _PT["methods"][i,"d"] * _PT["methods"][i,"D"]
+    return _PT["glass"][refmat][ratio]
 end
-function getAnchor(method::AbstractString,standards::Vector{String})
-    nr = length(standards)
-    out = Dict{String, NamedTuple}()
-    for standard in standards
-        out[standard] = getAnchor(method,standard)
+
+function getAnchors(method::AbstractString,standards::AbstractVector,glass::AbstractVector)
+    Sanchors = getAnchors(method,standards,false)
+    Ganchors = getAnchors(method,glass,true)
+    return merge(Sanchors,Ganchors)
+end
+function getAnchors(method::AbstractString,standards::AbstractDict,glass::AbstractDict)
+    return getAnchors(method,collect(keys(standards)),collect(keys(glass)))
+end
+function getAnchors(method::AbstractString,refmats::AbstractVector,glass::Bool=false)
+    out = Dict()
+    for refmat in refmats
+        out[refmat] = glass ? gety0(method,refmat) : getx0y0y1(method,refmat)
     end
     return out
 end
-function getAnchor(method::AbstractString,standards::AbstractDict)
-    return getAnchor(method,collect(keys(standards)))
+function getAnchors(method::AbstractString,refmats::AbstractDict,glass::Bool=false)
+    return getAnchors(method,collect(keys(refmats)),glass)
 end
-export getAnchor
-
-function setAnchor!(method::AbstractString,standards::AbstractDict)
-    setMethod!(method)
-    setStandards!(standards)
-    setAnchor!()
-end
-function setAnchor!(method::AbstractString)
-    setMethod!(method)
-    setAnchor!()
-end
-export setAnchor!
+export getAnchors
 
 function getDat(samp::Sample)
     return samp.dat[:,2:end-1]
@@ -148,7 +164,7 @@ function getDat(samp::Sample,channels::AbstractDict)
 end
 export getDat
 
-function getPDd(method)
+function getPDd(method::AbstractString)
     i = findfirst(==(method),_PT["methods"][:,"method"])
     PDd = _PT["methods"][i,2:end]
     return PDd.P, PDd.D, PDd.d
@@ -192,6 +208,9 @@ function getGlass(csv::AbstractString=joinpath(@__DIR__,"../settings/glass.csv")
     return out
 end
 export getGlass
+function setGlass!(csv::AbstractString=joinpath(@__DIR__,"../settings/glass.csv"))
+    _PT["glass"] = getGlass(csv)
+end
 function getReferenceMaterials(csv::AbstractString=joinpath(@__DIR__,"../settings/standards.csv"))
     tab = CSV.read(csv, DataFrame)
     out = Dict()

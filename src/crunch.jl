@@ -33,20 +33,20 @@ function SS(t,Dm,dm,y0,mfrac,bD,bd)
     return sum(S)
 end
 # concentrations
-function SS(t,T,Xm,Sm,a,drift,down,bX,bS)
-    pred = predict(t,T,Xm,Sm,a,drift,down,bX,bS)
+function SS(t,T,Xm,Sm,R,drift,down,bX,bS)
+    pred = predict(t,T,Xm,Sm,R,drift,down,bX,bS)
     S = @. (pred[:,"X"]-Xm)^2 + (pred[:,"S"]-Sm)^2
     return sum(S)
 end
 
 # isotopic ratios
 function predict(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
-    ft = polyFac(p=drift,t=t)
-    FT = polyFac(p=down,t=T)
+    ft = polyFac(drift,t)
+    FT = polyFac(down,T)
     mf = exp(mfrac)
-    bPt = polyVal(p=bP,t=t)
-    bDt = polyVal(p=bD,t=t)
-    bdt = polyVal(p=bd,t=t)
+    bPt = polyVal(bP,t)
+    bDt = polyVal(bD,t)
+    bdt = polyVal(bd,t)
     D = getD(Pm,Dm,dm,x0,y0,y1,ft,FT,mf,bPt,bDt,bdt)
     p = getp(Pm,Dm,dm,x0,y0,y1,ft,FT,mf,bPt,bDt,bdt)
     Pf = @. D*x0*(1-p)*ft*FT + bPt
@@ -57,23 +57,33 @@ end
 # isotopic ratios for glass
 function predict(t,Dm,dm,y0,mfrac,bD,bd)
     mf = exp(mfrac)
-    bDt = polyVal(p=bD,t=t)
-    bdt = polyVal(p=bd,t=t)
+    bDt = polyVal(bD,t)
+    bdt = polyVal(bd,t)
     D = getD(Dm,dm,y0,mf,bDt,bdt)
     Df = @. D + bDt
     df = @. D*y0*mf + bdt
     return DataFrame(D=Df,d=df)
 end
 # concentrations
-function predict(t,T,Xm,Sm,a,drift,down,bX,bS)
-    ft = polyFac(p=drift,t=t)
-    FT = polyFac(p=down,t=T)
-    bXt = polyVal(p=bX,t=t)
-    bSt = polyVal(p=bS,t=t)
-    S = getS(Xm,Sm,a,ft,FT,bXt,bSt)
-    Xf = @. S*a*ft*FT + bXt
+function predict(t,T,Xm,Sm,R,drift,down,bX,bS)
+    ft = polyFac(drift,t)
+    FT = polyFac(down,T)
+    bXt = polyVal(bX,t)
+    bSt = polyVal(bS,t)
+    S = getS(Xm,Sm,R,ft,FT,bXt,bSt)
+    Xf = @. S*R*ft*FT + bXt
     Sf = @. S + bSt
     return DataFrame(X=Xf,S=Sf)
+end
+function predict(samp::Sample,
+                 method::AbstractString,
+                 pars::Pars,
+                 blank::AbstractDataFrame,
+                 channels::AbstractDict,
+                 standards::AbstractDict,
+                 glass::AbstractDict)
+    anchors = getAnchors(method,standards,glass)
+    return predict(samp,pars,blank,channels,anchors)
 end
 function predict(samp::Sample,
                  pars::Pars,
@@ -83,18 +93,17 @@ function predict(samp::Sample,
     if samp.group == "sample"
         PTerror("notStandard")
     else
-        dat = windowData(samp,signal=true)
-        (x0,y0,y1) = anchors[samp.group]
-        return predict(dat,pars,blank,channels,x0,y0,y1)
+        dat = windowData(samp;signal=true)
+        anchor = anchors[samp.group]
+        return predict(dat,pars,blank,channels,anchor)
     end
 end
+# minerals
 function predict(dat::AbstractDataFrame,
                  pars::Pars,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
-                 x0::AbstractFloat,
-                 y0::AbstractFloat,
-                 y1::AbstractFloat)
+                 anchor::NamedTuple)
     t = dat.t
     T = dat.T
     Pm = dat[:,channels["P"]]
@@ -103,8 +112,22 @@ function predict(dat::AbstractDataFrame,
     bP = blank[:,channels["P"]]
     bD = blank[:,channels["D"]]
     bd = blank[:,channels["d"]]
-    return predict(t,T,Pm,Dm,dm,x0,y0,y1,
+    return predict(t,T,Pm,Dm,dm,
+                   anchor.x0,anchor.y0,anchor.y1,
                    pars.drift,pars.down,pars.mfrac,
-                   bP,bD,bd)
+                   bP,bD,bd)    
+end
+# glass
+function predict(dat::AbstractDataFrame,
+                 pars::Pars,
+                 blank::AbstractDataFrame,
+                 channels::AbstractDict,
+                 y0::AbstractFloat)
+    t = dat.t
+    Dm = dat[:,channels["D"]]
+    dm = dat[:,channels["d"]]
+    bD = blank[:,channels["D"]]
+    bd = blank[:,channels["d"]]
+    return predict(t,Dm,dm,y0,pars.mfrac,bD,bd)
 end
 export predict
