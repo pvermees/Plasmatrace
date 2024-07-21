@@ -9,6 +9,14 @@ function TUIcheck(ctrl::AbstractDict,action::AbstractString)
     return ctrl["priority"][action] ? "[*]" : ""
 end
 
+function TUIread(ctrl::AbstractDict)
+    if ctrl["template"]
+        push!(ctrl["chain"],"load")
+    else
+        push!(ctrl["chain"],"instrument")
+    end
+end
+
 function TUIinstrument!(ctrl::AbstractDict,
                         response::AbstractString)
     if response=="1"
@@ -27,7 +35,11 @@ function TUIload!(ctrl::AbstractDict,response::AbstractString)
                        head2name=ctrl["head2name"])
     ctrl["priority"]["load"] = false
     ctrl["dname"] = response
-    return "xx"
+    if ctrl["template"]
+        return "x"
+    else
+        return "xx"
+    end
 end
 
 function TUImethod!(ctrl::AbstractDict,response::AbstractString)
@@ -490,20 +502,20 @@ function TUIopenMethod!(ctrl::AbstractDict,response::AbstractString)
     ctrl["PAcutoff"] = PAcutoff
     ctrl["transformation"] = transformation
     ctrl["priority"]["method"] = false
+    ctrl["template"] = true
     return "xx"
 end
 
 function TUIsaveMethod(ctrl::AbstractDict,response::AbstractString)
     PAcutoff = isnothing(ctrl["PAcutoff"]) ? "nothing" : string(ctrl["PAcutoff"])
-    L1 = "instrument = \"" * ctrl["instrument"] * "\"\n"
-    L2 = "head2name = " * string(ctrl["head2name"]) * "\n"
-    L3 = "channels = " * dict2string(ctrl["channels"]) * "\n"
-    L4 = "options = " * dict2string(ctrl["options"]) * "\n"
-    L5 = "PAcutoff = " * PAcutoff * "\n"
-    L6 = "transformation = \"" * ctrl["transformation"] * "\""
-    tmp = "$L1 $L2 $L3 $L4 $L5 $L6"
     open(response, "w") do file
-        write(file, tmp)
+        write(file,"instrument = \"" * ctrl["instrument"] * "\"\n")
+        write(file,"head2name = " * string(ctrl["head2name"]) * "\n")
+        write(file,"channels = " * dict2string(ctrl["channels"]) * "\n")
+        write(file,"options = " * dict2string(ctrl["options"]) * "\n")
+        write(file,"PAcutoff = " * PAcutoff * "\n")
+        write(file,"transformation = \"" * ctrl["transformation"] * "\"\n")
+        write(file,"template = true")
     end
     return "xx"
 end

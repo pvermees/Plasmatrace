@@ -20,7 +20,8 @@ function PT(logbook="")
         "blank" => nothing,
         "par" => nothing,
         "cache" => nothing,
-        "transformation" => "sqrt"
+        "transformation" => "sqrt",
+        "template" => false
     )
     if logbook != ""
         TUIimportLog!(ctrl,logbook)
@@ -104,7 +105,7 @@ function tree(ctrl::AbstractDict)
             "mark compulsory steps. Refresh reloads the data directory "*
             "and only works if the asterisks are gone.",
             action = Dict(
-                "r" => "instrument",
+                "r" => TUIread,
                 "m" => "method",
                 "t" => TUItabulate,
                 "s" => "standards",
