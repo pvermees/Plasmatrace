@@ -104,8 +104,9 @@ function export2IsoplotR(run::Vector{Sample},
                          channels::AbstractDict,
                          pars::Union{Pars,NamedTuple},
                          blank::AbstractDataFrame;
-                         prefix=nothing,fname::AbstractString="PT.json")
-    ratios = averat(run,channels,pars,blank)
+                         PAcutoff=nothing,prefix=nothing,
+                         fname::AbstractString="PT.json")
+    ratios = averat(run,channels,pars,blank;PAcutoff=PAcutoff)
     if isnothing(prefix)
         export2IsoplotR(ratios,method;fname=fname)
     else

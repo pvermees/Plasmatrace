@@ -205,9 +205,6 @@ function carbonatetest(verbose=false)
     @test display(p) != NaN
 end
 
-function readmetest()
-end
-
 function TUItest()
     PT("logs/test.log")
 end
@@ -230,5 +227,4 @@ Plots.closeall()
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
-@testset "readme example" begin readmetest() end
 @testset "TUI test" begin TUItest() end

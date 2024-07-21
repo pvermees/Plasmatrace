@@ -389,32 +389,30 @@ end
 
 function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
     if response=="a"
-        ctrl["selection"] = 1:length(ctrl["run"])
+        ctrl["cache"] = 1:length(ctrl["run"])
     elseif response=="s"
-        ctrl["selection"] = findall(contains("sample"),getGroups(ctrl["run"]))
+        ctrl["cache"] = findall(contains("sample"),getGroups(ctrl["run"]))
     elseif response=="x"
         return "x"
     else
-        ctrl["selection"] = findall(contains(response),getSnames(ctrl["run"]))
+        ctrl["cache"] = findall(contains(response),getSnames(ctrl["run"]))
     end
     return "format"
 end
 
 function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"],channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"],
+    ratios = averat(ctrl["run"],ctrl["channels"],ctrl["par"],ctrl["blank"];
                     PAcutoff=ctrl["PAcutoff"])
     fname = splitext(response)[1]*".csv"
-    CSV.write(fname,ratios[ctrl["selection"],:])
+    CSV.write(fname,ratios[ctrl["cache"],:])
     return "xxx"
 end
 
 function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"],channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"],
+    ratios = averat(ctrl["run"],ctrl["channels"],ctrl["par"],ctrl["blank"];
                     PAcutoff=ctrl["PAcutoff"])
     fname = splitext(response)[1]*".json"
-    export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
+    export2IsoplotR(ratios[ctrl["cache"],:],ctrl["method"];fname=fname)
     return "xxx"
 end
 

@@ -21,17 +21,18 @@ Here is an example of a menu-driven Plasmatrace session:
 julia> using Plasmatrace
 julia> PT()
 -------------------
- Plasmatrace 0.4.0 
+ Plasmatrace 0.5.2
 -------------------
 
 r: Read data files[*]
 m: Specify the method[*]
 t: Tabulate the samples
-s: Mark standards[*]
+s: Mark mineral standards[*]
+g: Mark reference glasses[*]
 v: View and adjust each sample
 p: Process the data[*]
-e: Export the isotope ratios
-l: Import/export a session log
+e: Export the results
+l: Logs and templates
 o: Options
 R: Refresh
 x: Exit
@@ -50,11 +51,12 @@ data/Lu-Hf
 r: Read data files
 m: Specify the method[*]
 t: Tabulate the samples
-s: Mark standards[*]
+s: Mark mineral standards[*]
+g: Mark reference glasses[*]
 v: View and adjust each sample
 p: Process the data[*]
-e: Export the isotope ratios
-l: Import/export a session log
+e: Export the results
+l: Logs and templates
 o: Options
 R: Refresh
 x: Exit
@@ -92,57 +94,112 @@ Lu176, Hf176, Hf177
 Specify your selection as a comma-separated list of numbers:
 15,17,18
 
-Which isotope is measured as "Hf178 -> 260"?
-1: Hf174
-2: Hf177
-3: Hf178
-4: Hf179
-5: Hf180
-x: Exit
-?: Help
-3
-
 r: Read data files
 m: Specify the method
 t: Tabulate the samples
-s: Mark standards[*]
+s: Mark mineral standards[*]
+g: Mark reference glasses[*]
 v: View and adjust each sample
 p: Process the data[*]
-e: Export the isotope ratios
-l: Import/export a session log
+e: Export the results
+l: Logs and templates
 o: Options
 R: Refresh
 x: Exit
 ?: Help
 s
 
+a: Add a mineral standard
+r: Remove mineral standards
+l: List the available mineral standards
 t: Tabulate all the samples
-p: Add a standard by prefix
-n: Add a standard by number
-N: Remove a standard by number
-r: Remove all standards
+x: Exit
+?: Help
+a
+
+Choose one of the following standards:
+1: Hogsbo
+2: BP
+3: ME-1
+x: Exit
+?: Help
+1
+
+p: Select samples by prefix
+n: Select samples by number
+t: Tabulate all the samples
 x: Exit
 ?: Help
 p
 
-Specify the prefix of the standard (? for help, x to exit):
-BP
+Specify the prefix of the Hogsbo measurements (? for help, x to exit):
+hogsbo
 
-Which of the following standards did you select?
-1: Hogsbo
-2: BP
+a: Add a mineral standard
+r: Remove mineral standards
+l: List the available mineral standards
+t: Tabulate all the samples
 x: Exit
 ?: Help
-2
+x
 
 r: Read data files
 m: Specify the method
 t: Tabulate the samples
-s: Mark standards
+s: Mark mineral standards
+g: Mark reference glasses[*]
 v: View and adjust each sample
 p: Process the data[*]
-e: Export the isotope ratios
-l: Import/export a session log
+e: Export the results
+l: Logs and templates
+o: Options
+R: Refresh
+x: Exit
+?: Help
+g
+
+a: Add a reference glass
+r: Remove reference glasses
+l: List the available reference glasses
+t: Tabulate all the samples
+x: Exit
+?: Help
+a
+
+Choose one of the following reference glasses:
+1: NIST610
+2: NIST612
+x: Exit
+?: Help
+2
+
+p: Select analyses by prefix
+n: Select analyses by number
+t: Tabulate all the analyses
+x: Exit
+?: Help
+p
+
+Specify the prefix of the NIST612 measurements (? for help, x to exit):
+NIST612
+
+a: Add a reference glass
+r: Remove reference glasses
+l: List the available reference glasses
+t: Tabulate all the samples
+x: Exit
+?: Help
+x
+
+r: Read data files
+m: Specify the method
+t: Tabulate the samples
+s: Mark mineral standards
+g: Mark reference glasses
+v: View and adjust each sample
+p: Process the data[*]
+e: Export the results
+l: Logs and templates
 o: Options
 R: Refresh
 x: Exit
@@ -155,11 +212,12 @@ Done
 r: Read data files
 m: Specify the method
 t: Tabulate the samples
-s: Mark standards
+s: Mark mineral standards
+g: Mark reference glasses
 v: View and adjust each sample
 p: Process the data
-e: Export the isotope ratios
-l: Import/export a session log
+e: Export the results
+l: Logs and templates
 o: Options
 R: Refresh
 x: Exit
@@ -180,16 +238,17 @@ x: Exit
 j
 
 Enter the path and name of the .json file (? for help, x to exit):
-output/test.json
+BP.json
 
 r: Read data files
 m: Specify the method
 t: Tabulate the samples
-s: Mark standards
+s: Mark mineral standards
+g: Mark reference glasses
 v: View and adjust each sample
 p: Process the data
-e: Export the isotope ratios
-l: Import/export a session log
+e: Export the results
+l: Logs and templates
 o: Options
 R: Refresh
 x: Exit
@@ -201,18 +260,18 @@ julia>
 
 ## 2. Command-line API
 
-Here is an example of a Lu-Hf calibration using two mineral standards.
-The blanks are fitted using a second order polynomial, whereas the
-signal drift is modelled using a linear function:
+Here is an example of a carbonate U-Pb data reduction using WC-1 for
+time-dependent elemental fractionation correction between U and Pb and
+NIST-612 for mass-dependent fractionation correction of the
+Pb-isotopes. The script exports all the aliquots of the "Duff" sample
+to a JSON file that can be opened in IsoplotR:
 
 ```
-julia> run = load("/home/mydata",instrument="Agilent")
-julia> blk = fitBlanks(run,n=2)
-julia> standards = Dict("BP" => "BP", "Hogsbo" => "hogsbo_ana")
-julia> setStandards!(run,standards)
-julia> anchors = getAnchor("Lu-Hf",standards)
-julia> channels = Dict("d"=>"Hf178 -> 260","D"=>"Hf176 -> 258","P"=>"Lu175 -> 175")
-julia> fit = fractionation(run,blank=blk,channels=channels,anchors=anchors,mf=1.4671)
-julia> ratios = averat(run,channels=channels,pars=fit,blank=blk)
-julia> CSV.write("out.csv", ratios)
+julia> method = "U-Pb"
+julia> run = load("data/carbonate",instrument="Agilent")
+julia> standards = Dict("WC1"=>"WC1")
+julia> glass = Dict("NIST612"=>"NIST612")
+julia> channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
+julia> blk, fit = process!(run,method,channels,standards,glass)
+julia> export2IsoplotR(run,method,channels,fit,blk,prefix="Duff",fname="Duff.json")
 ```
