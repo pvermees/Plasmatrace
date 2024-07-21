@@ -131,13 +131,8 @@ end
 function gety0(method::AbstractString,
                refmat::AbstractString)
     x0 = y1 = missing
-    if method=="U-Pb"
-        ratio = "Pb207Pb206"
-    elseif method=="Lu-Hf"
-        ratio = "Hf177Hf176"
-    elseif method=="Rb-Sr"
-        ratio = "Sr87Sr86"
-    end
+    i = findfirst(==(method),_PT["methods"][:,"method"])
+    ratio = _PT["methods"][i,"d"] * _PT["methods"][i,"D"]
     return _PT["glass"][refmat][ratio]
 end
 
@@ -213,6 +208,9 @@ function getGlass(csv::AbstractString=joinpath(@__DIR__,"../settings/glass.csv")
     return out
 end
 export getGlass
+function setGlass!(csv::AbstractString=joinpath(@__DIR__,"../settings/glass.csv"))
+    _PT["glass"] = getGlass(csv)
+end
 function getReferenceMaterials(csv::AbstractString=joinpath(@__DIR__,"../settings/standards.csv"))
     tab = CSV.read(csv, DataFrame)
     out = Dict()

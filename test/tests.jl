@@ -140,8 +140,8 @@ function PAtest(verbose=false)
     standards = Dict("Hogsbo" => "hogsbo")
     glass = Dict("NIST612" => "NIST612p")
     cutoff = 1e7
-    blk, fit = process!(myrun,method,channels,standards,glass,
-                        PAcutoff=cutoff,nblank=2,ndrift=2,ndown=2)
+    blk, fit = process!(myrun,method,channels,standards,glass;
+                        PAcutoff=cutoff,nblank=2,ndrift=1,ndown=1)
     ratios = averat(myrun,channels,fit,blk)
     if verbose println(first(ratios,5)) end
     return ratios
@@ -163,7 +163,8 @@ function RbSrtest()
     standards = Dict("MDC" => "MDC -")
     setGroup!(myrun,standards)
     blank = fitBlanks(myrun,nblank=2)
-    fit = fractionation(myrun,method,blank,channels,standards,1.0;ndrift=1)
+    fit = fractionation(myrun,method,blank,channels,standards,1.0;
+                        ndrift=1,verbose=false)
     anchors = getAnchors(method,standards)
     p = plot(myrun[2],channels,blank,fit,anchors,transformation="log",den="Sr86 -> 102")
     export2IsoplotR(myrun,method,channels,fit,blank,prefix="Entire",fname="Entire.json")
@@ -179,7 +180,7 @@ function UPbtest()
                  "NIST612" => "612")
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
     blank, pars = process!(myrun,"U-Pb",channels,standards,glass,
-                           nblank=2,ndrift=1,ndown=2)
+                           nblank=2,ndrift=1,ndown=1)
     export2IsoplotR(myrun,method,channels,pars,blank,fname="UPb.json")
     p = plot(myrun[1],method,channels,blank,pars,standards,glass,transformation="log")
     @test display(p) != NaN

@@ -45,7 +45,7 @@ function fractionation(run::Vector{Sample},
     if method in ["concentrations","concentration","conc"]
         # TODO
     else
-        mf = fractionation(run,method,blank,channels,glass,verbose=verbose)
+        mf = fractionation(run,method,blank,channels,glass;verbose=verbose)
         out = fractionation(run,method,blank,channels,standards,mf;
                             ndrift=ndrift,ndown=ndown,PAcutoff=PAcutoff,verbose=verbose)
     end

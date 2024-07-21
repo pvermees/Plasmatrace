@@ -356,28 +356,18 @@ function TUIallMultiSignalWindow!(ctrl::AbstractDict,
     return "xx"
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+function TUItransformation!(ctrl::AbstractDict,
+                            response::AbstractString)
+    if response=="L"
+        ctrl["transformation"] = "log"
+    elseif response=="s"
+        ctrl["transformation"] = "sqrt"
+    else
+        ctrl["transformation"] = ""
+    end
+    TUIplotter(ctrl)
+    return "x"
+end
 
 function TUIprocess!(ctrl::AbstractDict)
     ctrl["anchors"] = getAnchors(ctrl["method"],ctrl["standards"],ctrl["glass"])
@@ -397,69 +387,35 @@ function TUIprocess!(ctrl::AbstractDict)
     println("Done")
 end
 
-function TUItransformation!(ctrl::AbstractDict,
-                            response::AbstractString)
-    if response=="L"
-        ctrl["transformation"] = "log"
+function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
+    if response=="a"
+        ctrl["selection"] = 1:length(ctrl["run"])
     elseif response=="s"
-        ctrl["transformation"] = "sqrt"
+        ctrl["selection"] = findall(contains("sample"),getGroups(ctrl["run"]))
+    elseif response=="x"
+        return "x"
     else
-        ctrl["transformation"] = ""
+        ctrl["selection"] = findall(contains(response),getSnames(ctrl["run"]))
     end
-    TUIplotter(ctrl)
-    return "x"
+    return "format"
 end
 
-function TUIsetNblank!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["options"]["blank"] = parse(Int,response)
-    return "x"
+function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
+    ratios = averat(ctrl["run"],channels=ctrl["channels"],
+                    pars=ctrl["par"],blank=ctrl["blank"],
+                    PAcutoff=ctrl["PAcutoff"])
+    fname = splitext(response)[1]*".csv"
+    CSV.write(fname,ratios[ctrl["selection"],:])
+    return "xxx"
 end
 
-function TUIsetNdrift!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["options"]["drift"] = parse(Int,response)
-    return "x"    
-end
-
-function TUIsetNdown!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["options"]["down"] = parse(Int,response)
-    return "x"    
-end
-
-# TODO
-function TUIGlassTab(ctrl::AbstractDict)
-    return "x"
-end
-
-function TUIPAlist(ctrl::AbstractDict)
-    snames = getSnames(ctrl["run"])
-    for i in eachindex(snames)
-        dat = getDat(ctrl["run"][i],ctrl["channels"])
-        maxval = maximum(Matrix(dat))
-        formatted = @sprintf("%.*e", 3, maxval)
-        println(formatted*" ("*snames[i]*")")
-    end
-    return "x"
-end
-
-function TUIsetPAcutoff!(ctrl::AbstractDict,response::AbstractString)
-    cutoff = tryparse(Float64,response)
-    ctrl["PAcutoff"] = cutoff
-    return "xx"
-end
-
-function TUIclearPAcutoff!(ctrl::AbstractDict)
-    ctrl["PAcutoff"] = nothing
-    return "xx"
-end
-
-function TUIaddRefMat!(ctrl::AbstractDict,response::AbstractString)
-    setReferenceMaterials!(response)
-    return "x"
-end
-
-function TUIhead2name!(ctrl::AbstractDict,response::AbstractString)
-    ctrl["head2name"] = response=="h"
-    return "x"
+function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
+    ratios = averat(ctrl["run"],channels=ctrl["channels"],
+                    pars=ctrl["par"],blank=ctrl["blank"],
+                    PAcutoff=ctrl["PAcutoff"])
+    fname = splitext(response)[1]*".json"
+    export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
+    return "xxx"
 end
 
 function TUIimportLog!(ctrl::AbstractDict,response::AbstractString)
@@ -508,35 +464,56 @@ function TUIsaveMethod(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
-    if response=="a"
-        ctrl["selection"] = 1:length(ctrl["run"])
-    elseif response=="s"
-        ctrl["selection"] = findall(contains("sample"),getGroups(ctrl["run"]))
-    elseif response=="x"
-        return "x"
-    else
-        ctrl["selection"] = findall(contains(response),getSnames(ctrl["run"]))
+function TUIsetNblank!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["options"]["blank"] = parse(Int,response)
+    return "x"
+end
+
+function TUIsetNdrift!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["options"]["drift"] = parse(Int,response)
+    return "x"    
+end
+
+function TUIsetNdown!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["options"]["down"] = parse(Int,response)
+    return "x"    
+end
+
+function TUIPAlist(ctrl::AbstractDict)
+    snames = getSnames(ctrl["run"])
+    for i in eachindex(snames)
+        dat = getDat(ctrl["run"][i],ctrl["channels"])
+        maxval = maximum(Matrix(dat))
+        formatted = @sprintf("%.*e", 3, maxval)
+        println(formatted*" ("*snames[i]*")")
     end
-    return "format"
+    return "x"
 end
 
-function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"],channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"],
-                    PAcutoff=ctrl["PAcutoff"])
-    fname = splitext(response)[1]*".csv"
-    CSV.write(fname,ratios[ctrl["selection"],:])
-    return "xxx"
+function TUIsetPAcutoff!(ctrl::AbstractDict,response::AbstractString)
+    cutoff = tryparse(Float64,response)
+    ctrl["PAcutoff"] = cutoff
+    return "xx"
 end
 
-function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
-    ratios = averat(ctrl["run"],channels=ctrl["channels"],
-                    pars=ctrl["par"],blank=ctrl["blank"],
-                    PAcutoff=ctrl["PAcutoff"])
-    fname = splitext(response)[1]*".json"
-    export2IsoplotR(fname,ratios[ctrl["selection"],:],ctrl["method"])
-    return "xxx"
+function TUIclearPAcutoff!(ctrl::AbstractDict)
+    ctrl["PAcutoff"] = nothing
+    return "xx"
+end
+
+function TUIaddStandard!(ctrl::AbstractDict,response::AbstractString)
+    setReferenceMaterials!(response)
+    return "x"
+end
+
+function TUIaddGlass!(ctrl::AbstractDict,response::AbstractString)
+    setGlass!(response)
+    return "x"
+end
+
+function TUIhead2name!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["head2name"] = response=="h"
+    return "x"
 end
 
 function TUIrefresh!(ctrl::AbstractDict)

@@ -394,46 +394,6 @@ function tree(ctrl::AbstractDict)
                 "M" => "allMultiBlankWindow"
             )
         ),
-        "Swin" => (
-            message =
-            "Choose an option to set the signal window(s):\n"*
-            "a: Automatic (current sample)\n"*
-            "s: Manually set a one-part window (current sample)\n"*
-            "m: Manually set a multi-part window (current sample)\n"*
-            "A: Automatic (all samples)\n"*
-            "S: Manually set a one-part window (all samples)\n"*
-            "M: Manually set a multi-part window (all samples)\n"*
-            "x: Exit\n"*
-            "?: Help",
-            help = 
-            "Specify the signal as pairs of time stamps (in seconds) "*
-            "or trust Plasmatrace to choose the signal windows "*
-            "automatically. The signals of the reference materials "*
-            "are used to define the drift and fractionation "*
-            "corrections, which are then applied to the samples.",
-            action = Dict(
-                "a" => TUIoneAutoSignalWindow!,
-                "s" => "oneSingleSignalWindow",
-                "m" => "oneMultiSignalWindow",
-                "A" => TUIallAutoSignalWindow!,
-                "S" => "allSingleSignalWindow",
-                "M" => "allMultiSignalWindow"
-            )
-        ),
-        "transformation" => (
-            message =
-            "Choose a data transformation for the y-axis:\n"*
-            "l: Linear\n"*
-            "L: Logarithmic\n"*
-            "s: Square root\n"*
-            "x: Exit\n"*
-            "?: Help",
-            help =
-            "Using a square root or log-transform makes it easier to compare "*
-            "signal strengths or signal ratios that vary over several "*
-            "orders of magnitude.",
-            action = TUItransformation!
-        ),
         "oneSingleBlankWindow" => (
             message =
             "Enter the start and end point of the selection window "*
@@ -477,6 +437,32 @@ function tree(ctrl::AbstractDict)
             " of numbers. For example: (0,20),(25,30) marks a two-part "*
             "selection window from 0 to 20s, and from 25 to 30s.",
             action = TUIallMultiBlankWindow!
+        ),
+        "Swin" => (
+            message =
+            "Choose an option to set the signal window(s):\n"*
+            "a: Automatic (current sample)\n"*
+            "s: Manually set a one-part window (current sample)\n"*
+            "m: Manually set a multi-part window (current sample)\n"*
+            "A: Automatic (all samples)\n"*
+            "S: Manually set a one-part window (all samples)\n"*
+            "M: Manually set a multi-part window (all samples)\n"*
+            "x: Exit\n"*
+            "?: Help",
+            help = 
+            "Specify the signal as pairs of time stamps (in seconds) "*
+            "or trust Plasmatrace to choose the signal windows "*
+            "automatically. The signals of the reference materials "*
+            "are used to define the drift and fractionation "*
+            "corrections, which are then applied to the samples.",
+            action = Dict(
+                "a" => TUIoneAutoSignalWindow!,
+                "s" => "oneSingleSignalWindow",
+                "m" => "oneMultiSignalWindow",
+                "A" => TUIallAutoSignalWindow!,
+                "S" => "allSingleSignalWindow",
+                "M" => "allMultiSignalWindow"
+            )
         ),
         "oneSingleSignalWindow" => (
             message =
@@ -522,122 +508,19 @@ function tree(ctrl::AbstractDict)
             "signal window from 40 to 45s, and from 50 to 60s.",
             action = TUIallMultiSignalWindow!
         ),
-        "options" => (
+        "transformation" => (
             message =
-            "b: Set the polynomial order of the blank correction\n"*
-            "d: Set the polynomial order of the drift correction\n"*
-            "h: Set the polynomial order of the down hole fractionation correction\n"*
-            "p: Subset the data by P/A cutoff\n"*
-            "l: List the available reference materials\n"*
-            "r: Define new reference materials\n"*
-            "n: Configure the file name reader\n"*
+            "Choose a data transformation for the y-axis:\n"*
+            "l: Linear\n"*
+            "L: Logarithmic\n"*
+            "s: Square root\n"*
             "x: Exit\n"*
             "?: Help",
             help =
-            "Advanced settings to override the default behaviour "*
-            "of Plasmatrace. See the individual options for "*
-            "further information.",
-            action = Dict(
-                "b" => "setNblank",
-                "d" => "setNdrift",
-                "h" => "setNdown",
-                "p" => "PA",
-                "l" => TUIrefmatTab,
-                "r" => "addRefMat",
-                "n" => "head2name"
-            )
-        ),
-        "setNblank" => (
-            message =
-            "Enter a non-negative integer (current value = "*
-            string(ctrl["options"]["blank"])*", ? for help, x to exit):",
-            help =
-            "The blank is fitted by the following equation: "*
-            "b = exp(a[1]) + exp(a[2])*t[1] + ... + exp(a[n])*t^(n-1). "*
-            "Here you can specify the value of n.",
-            action = TUIsetNblank!
-        ),
-        "setNdrift" => (
-            message =
-            "Enter a non-negative integer (current value = "*
-            string(ctrl["options"]["drift"])*", ? for help, x to exit)",
-            help =
-            "The session drift is fitted by the following equation: "*
-            "d = exp( a[1] + a[2]*t + ... + a[n]*t^(n-1) ). "*
-            "Here you can specify the value of n.",
-            action = TUIsetNdrift!
-        ),
-        "setNdown" => (
-            message =
-            "Enter a non-negative integer (current value = "*
-            string(ctrl["options"]["down"])*", ? for help, x to exit)",
-            help =
-            "The down-hole drift is fitted by the following equation: "*
-            "d = exp( a[1]*t + a[2]*t^2 + ... + a[n]*t^n ). "*
-            "Here you can specify the value of n.",
-            action = TUIsetNdown!
-        ),
-        "PA" => (
-            message =
-            "l: List the maximum signal strength for each file\n"*
-            "a: Add a pulse/analog cutoff\n"*
-            "r: Remove the pulse/analog cutoff\n"*
-            "x: Exit\n"*
-            "?: Help",
-            help =
-            "On single collector ICP-MS instruments, low intensity "*
-            "ion beams are measured in 'pulse' (P) mode and high "*
-            "intensity ion beams are measured in 'analog' (A) mode. "*
-            "The intercalibration of these two modes is not always "*
-            "perfect. Here you can set or remove the cutoff value "*
-            "between P and A mode, so that you can group samples "*
-            "and standards according to them.",
-            action = Dict(
-                "l" => TUIPAlist,
-                "a" => "setPAcutoff",
-                "r" => TUIclearPAcutoff!
-            )
-        ),
-        "setPAcutoff" => (
-            message =
-            "Enter the cutoff between pulse and analog mode in cps "*
-            "(? for help, x to exit):",
-            help =
-            "After entering this value, samples and standards will be "*
-            "split into two groups, corresponding to pulse mode (maximum "*
-            "signal below the cutoff) and analog mode (maximum signal "*
-            "above the cutoff).",
-            action = TUIsetPAcutoff!
-        ),
-        "addRefMat" => (
-            message =
-            "Enter the path to the standards file (? for help, x to exit)",
-            help =
-            "Add new isotopic reference materials to Plasmatrace "*
-            "by specifying the path to a .csv file that is "*
-            "formatted as follows:\n\n"*
-            "method,name,t,st,y0,sy0\n"*
-            "Lu-Hf,Hogsbo,1029,1.7,3.55,0.05\n"*
-            "Lu-Hf,BP,1745,5.0,3.55,0.05\n\n"*
-            "where 't' is the age of the sample, 'y0' is the "*
-            "y-intercept of the inverse isochron, and 'st' and 'sy0' "*
-            "are their standard errors, which are not used for the "*
-            "calculations in this version of the sofware.",
-            action = TUIaddRefMat!
-        ),
-        "head2name" => (
-            message =
-            "h: Extract the sample names from the file headers\n"*
-            "f: Extract the sample names from the file names\n"*
-            "x: Exit\n"*
-            "?: Help",
-            help =
-            "In most cases, the name of each ablation spot is "*
-            "registered in the headers of the input files. However, "*
-            "occasionally, the headers contain generic names (e.g., "*
-            "spot01, spot02, ...) and the spot name must be inferred "*
-            "from the file name (e.g. /path/to/data/Plesovice-01.csv)",
-            action = TUIhead2name!
+            "Using a square root or log-transform makes it easier to compare "*
+            "signal strengths or signal ratios that vary over several "*
+            "orders of magnitude.",
+            action = TUItransformation!
         ),
         "export" => (
             message =
@@ -732,6 +615,139 @@ function tree(ctrl::AbstractDict)
             help = "Save the current Plasmatrace method for use "*
             "in a future session.",
             action = TUIsaveMethod
+        ),
+        "options" => (
+            message =
+            "b: Set the polynomial order of the blank correction\n"*
+            "d: Set the polynomial order of the drift correction\n"*
+            "h: Set the polynomial order of the down hole fractionation correction\n"*
+            "p: Subset the data by P/A cutoff\n"*
+            "l: List the available age standardss\n"*
+            "a: Define new age standards\n"*
+            "r: List the available reference glasses\n"*
+            "g: Define new reference glasses\n"*
+            "n: Configure the file name reader\n"*
+            "x: Exit\n"*
+            "?: Help",
+            help =
+            "Advanced settings to override the default behaviour "*
+            "of Plasmatrace. See the individual options for "*
+            "further information.",
+            action = Dict(
+                "b" => "setNblank",
+                "d" => "setNdrift",
+                "h" => "setNdown",
+                "p" => "PA",
+                "l" => TUIrefmatTab,
+                "a" => "addStandard",
+                "r" => TUIglassTab,
+                "g" => "addGlass",
+                "n" => "head2name"
+            )
+        ),
+        "setNblank" => (
+            message =
+            "Enter a non-negative integer (current value = "*
+            string(ctrl["options"]["blank"])*", ? for help, x to exit):",
+            help =
+            "The blank is fitted by the following equation: "*
+            "b = exp(a[1]) + exp(a[2])*t[1] + ... + exp(a[n])*t^(n-1). "*
+            "Here you can specify the value of n.",
+            action = TUIsetNblank!
+        ),
+        "setNdrift" => (
+            message =
+            "Enter a non-negative integer (current value = "*
+            string(ctrl["options"]["drift"])*", ? for help, x to exit)",
+            help =
+            "The session drift is fitted by the following equation: "*
+            "d = exp( a[1] + a[2]*t + ... + a[n]*t^(n-1) ). "*
+            "Here you can specify the value of n.",
+            action = TUIsetNdrift!
+        ),
+        "setNdown" => (
+            message =
+            "Enter a non-negative integer (current value = "*
+            string(ctrl["options"]["down"])*", ? for help, x to exit)",
+            help =
+            "The down-hole drift is fitted by the following equation: "*
+            "d = exp( a[1]*t + a[2]*t^2 + ... + a[n]*t^n ). "*
+            "Here you can specify the value of n.",
+            action = TUIsetNdown!
+        ),
+        "PA" => (
+            message =
+            "l: List the maximum signal strength for each file\n"*
+            "a: Add a pulse/analog cutoff\n"*
+            "r: Remove the pulse/analog cutoff\n"*
+            "x: Exit\n"*
+            "?: Help",
+            help =
+            "On single collector ICP-MS instruments, low intensity "*
+            "ion beams are measured in 'pulse' (P) mode and high "*
+            "intensity ion beams are measured in 'analog' (A) mode. "*
+            "The intercalibration of these two modes is not always "*
+            "perfect. Here you can set or remove the cutoff value "*
+            "between P and A mode, so that you can group samples "*
+            "and standards according to them.",
+            action = Dict(
+                "l" => TUIPAlist,
+                "a" => "setPAcutoff",
+                "r" => TUIclearPAcutoff!
+            )
+        ),
+        "setPAcutoff" => (
+            message =
+            "Enter the cutoff between pulse and analog mode in cps "*
+            "(? for help, x to exit):",
+            help =
+            "After entering this value, samples and standards will be "*
+            "split into two groups, corresponding to pulse mode (maximum "*
+            "signal below the cutoff) and analog mode (maximum signal "*
+            "above the cutoff).",
+            action = TUIsetPAcutoff!
+        ),
+        "addStandard" => (
+            message =
+            "Enter the path to the standards file (? for help, x to exit)",
+            help =
+            "Add new isotopic reference materials to Plasmatrace "*
+            "by specifying the path to a .csv file that is "*
+            "formatted as follows:\n\n"*
+            "method,name,t,st,y0,sy0\n"*
+            "Lu-Hf,Hogsbo,1029,1.7,3.55,0.05\n"*
+            "Lu-Hf,BP,1745,5.0,3.55,0.05\n\n"*
+            "where 't' is the age of the sample, 'y0' is the "*
+            "y-intercept of the inverse isochron, and 'st' and 'sy0' "*
+            "are their standard errors, which are not used for the "*
+            "calculations in this version of the sofware.",
+            action = TUIaddStandard!
+        ),
+        "addGlass" => (
+            message =
+            "Enter the path to the glass file (? for help, x to exit)",
+            help =
+            "Add new concentration standards to Plasmatrace "*
+            "by specifying the path to a .csv file that is "*
+            "formatted as follows:\n\n"*
+            "SRM,Be,B,F,Mg,...,Bi,Th,U,Hf177Hf176,Rb87Rb86,Pb207Pb206\n"*
+            "NIST612,476,350,304,432,...,384,457.2,461.5,3.544566,1.410312,0.9097\n"*
+            "NIST610,37.5,34.3,80,68,...,30.2,37.79,37.38,3.544842,1.409344,0.9074",
+            action = TUIaddGlass!
+        ),
+        "head2name" => (
+            message =
+            "h: Extract the sample names from the file headers\n"*
+            "f: Extract the sample names from the file names\n"*
+            "x: Exit\n"*
+            "?: Help",
+            help =
+            "In most cases, the name of each ablation spot is "*
+            "registered in the headers of the input files. However, "*
+            "occasionally, the headers contain generic names (e.g., "*
+            "spot01, spot02, ...) and the spot name must be inferred "*
+            "from the file name (e.g. /path/to/data/Plesovice-01.csv)",
+            action = TUIhead2name!
         )
     )    
 end
