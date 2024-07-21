@@ -73,7 +73,7 @@ function fractionation(run::Vector{Sample},
                        blank::AbstractDataFrame,
                        channels::AbstractDict,
                        standards::AbstractVector,
-                       mf=nothing;
+                       mf::Union{AbstractFloat,Nothing};
                        ndrift::Integer=1,
                        ndown::Integer=0,
                        PAcutoff=nothing,
@@ -121,8 +121,9 @@ function fractionation(run::Vector{Sample},
                 println(fit)
             else
                 if fit.iteration_converged
-                    @warn "Reached the maximum number of iterations before reaching convergence. "*
-                    "Reduce the order of the polynomials or fix the mass fractionation and try again."
+                    @warn "Reached the maximum number of iterations before reaching " *
+                        "convergence. Reduce the order of the polynomials or fix the " *
+                        "mass fractionation and try again."
                 end
             end
             pars = Optim.minimizer(fit)
@@ -149,7 +150,7 @@ function fractionation(run::Vector{Sample},
                        blank::AbstractDataFrame,
                        channels::AbstractDict,
                        standards::AbstractDict,
-                       mf=nothing;
+                       mf::Union{AbstractFloat,Nothing};
                        ndrift::Integer=1,
                        ndown::Integer=0,
                        PAcutoff=nothing,
@@ -269,7 +270,7 @@ function averat(run::Vector{Sample},
     ns = length(run)
     nul = fill(0.0,ns)
     out = DataFrame(name=fill("",ns),x=nul,sx=nul,y=nul,sy=nul,rxy=nul)
-    analog = isAnalog(run,channels;cutoff=PAcutoff)
+    analog = isAnalog(run,channels,PAcutoff)
     for i in 1:ns
         samp = run[i]
         out[i,1] = samp.sname

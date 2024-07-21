@@ -337,7 +337,7 @@ function tree(ctrl::AbstractDict)
             "r: Plot signals or ratios?\n"*
             "b: Select blank window(s)\n"*
             "s: Select signal window(s)\n"*
-            "T: Choose a data transformation\n"*
+            "d: Choose a data transformation\n"*
             "x: Exit\n"*
             "?: Help",
             help =
@@ -352,7 +352,7 @@ function tree(ctrl::AbstractDict)
                 "r" => "setDen",
                 "b" => "Bwin",
                 "s" => "Swin",
-                "T" => "transformation"
+                "d" => "transformation"
             )
         ),
         "goto" => (

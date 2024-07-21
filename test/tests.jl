@@ -66,6 +66,7 @@ end
 
 function fractionationtest(all=true)
     myrun, blk = blanktest()
+    method = "Lu-Hf"
     channels = Dict("d" => "Hf178 -> 260",
                     "D" => "Hf176 -> 258",
                     "P" => "Lu175 -> 175")
@@ -75,11 +76,13 @@ function fractionationtest(all=true)
     setGroup!(myrun,standards)
     if all
         print("two separate steps: ")
-        mf = fractionation(myrun,"Lu-Hf",blk,channels,glass)
-        fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,mf;ndrift=1,ndown=1)
+        mf = fractionation(myrun,method,blk,channels,glass)
+        fit = fractionation(myrun,method,blk,channels,standards,mf;
+                            ndrift=1,ndown=1)
         println(fit)
         print("no glass: ")
-        fit = fractionation(myrun,"Lu-Hf",blk,channels,standards,nothing;ndrift=1,ndown=1)
+        fit = fractionation(myrun,method,blk,channels,standards,nothing;
+                            ndrift=1,ndown=1)
         println(fit)
         print("two joint steps: ")
     end
@@ -88,8 +91,8 @@ function fractionationtest(all=true)
         println(fit)
         return myrun, blk, fit, channels, standards, glass
     else
-        Sanchors = getAnchors("Lu-Hf",standards,false)
-        Ganchors = getAnchors("Lu-Hf",glass,true)
+        Ganchors = getAnchors(method,glass,true)
+        Sanchors = getAnchors(method,standards,false)
         anchors = merge(Sanchors,Ganchors)
         return myrun, blk, fit, channels, standards, glass, anchors
     end
@@ -205,12 +208,12 @@ function readmetest()
 end
 
 function TUItest()
-    PT()#"logs/test.log")
+    PT("logs/test.log")
 end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -226,5 +229,5 @@ Plots.closeall()
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
-@testset "readme example" begin readmetest() end=#
+@testset "readme example" begin readmetest() end
 @testset "TUI test" begin TUItest() end

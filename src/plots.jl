@@ -18,8 +18,8 @@ function plot(samp::Sample,
               channels::AbstractDict,
               blank::AbstractDataFrame,
               pars::Pars,
-              standards::AbstractDict,
-              glass::AbstractDict;
+              standards::AbstractVector,
+              glass::AbstractVector;
               num=nothing,den=nothing,
               transformation=nothing,
               seriestype=:scatter,titlefontsize=10,
@@ -32,6 +32,25 @@ function plot(samp::Sample,
                 num=num,den=den,transformation=transformation,
                 seriestype=seriestype,titlefontsize=titlefontsize,
                 ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+end
+function plot(samp::Sample,
+              method::AbstractString,
+              channels::AbstractDict,
+              blank::AbstractDataFrame,
+              pars::Pars,
+              standards::AbstractDict,
+              glass::AbstractDict;
+              num=nothing,den=nothing,
+              transformation=nothing,
+              seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+              linecol="black",linestyle=:solid)
+    return plot(samp,method,channels,blank,pars,
+                collect(keys(standards)),collect(keys(glass));
+                num=num,den=den,transformation=transformation,
+                seriestype=seriestype,titlefontsize=titlefontsize,
+                ms=ms,ma=ma,xlim=xlim,ylim=ylim,
+                linecol=linecol,linestyle=linestyle)
 end
 """
 Plot selected channels for a sample or a standard

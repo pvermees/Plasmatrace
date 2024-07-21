@@ -55,3 +55,18 @@ function TUIaddByNumberMessage(ctrl::AbstractDict)
         "(? for help, x to exit):"
     return msg
 end
+
+function TUIratioMessage(ctrl::AbstractDict)
+    if haskey(ctrl,"channels")
+        channels = collect(values(ctrl["channels"]))
+    else
+        channels = names(ctrl["run"][1].dat)[3:end]
+    end
+    msg = "Choose one of the following denominators:\n"
+    for i in 1:length(channels)
+        msg *= string(i)*": "*channels[i]*"\n"
+    end
+    msg *= "or\n"
+    msg *= "n: No denominator. Plot the raw signals\n"
+    msg *= "?: Help"
+end

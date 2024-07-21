@@ -182,40 +182,41 @@ function TUIviewer!(ctrl::AbstractDict)
     push!(ctrl["chain"],"view")
 end
 
-function TUIprocess!(ctrl::AbstractDict)
-    ctrl["anchors"] = getAnchors(ctrl["method"],ctrl["standards"],ctrl["glass"])
-    println("Fitting blanks...")
-    ctrl["blank"] = fitBlanks(ctrl["run"],nblank=ctrl["options"]["blank"])
-    println("Fractionation correction...")
-    ctrl["par"] = fractionation(ctrl["run"],
-                                ctrl["method"],
-                                ctrl["blank"],
-                                ctrl["channels"],
-                                ctrl["standards"],
-                                ctrl["glass"];
-                                ndrift=ctrl["options"]["drift"],
-                                ndown=ctrl["options"]["down"],
-                                PAcutoff=ctrl["PAcutoff"])
-    ctrl["priority"]["process"] = false
-    println("Done")
+function TUIplotter(ctrl::AbstractDict)
+    samp = ctrl["run"][ctrl["i"]]
+    if haskey(ctrl,"channels")
+        channels = ctrl["channels"]
+    else
+        channels = names(samp.dat)[3:end]
+    end
+    if isnothing(ctrl["blank"]) | (samp.group=="sample")
+        p = plot(samp,channels,den=ctrl["den"],transformation=ctrl["transformation"])
+    else
+        if isnothing(ctrl["PAcutoff"])
+            par = ctrl["par"]
+        else
+            analog = isAnalog(samp,ctrl["channels"],ctrl["PAcutoff"])
+            par = analog ? ctrl["par"].analog : ctrl["par"].pulse
+        end
+        anchors = getAnchors(ctrl["run"],ctrl["standards"],ctrl["glass"])
+        p = plot(samp,channels,ctrl["blank"],par,ctrl["standards"],ctrl["glass"],
+                 den=ctrl["den"],transformation=ctrl["transformation"])
+    end
+    if !isnothing(ctrl["PAcutoff"])
+        TUIaddPAline!(p,ctrl["PAcutoff"])
+    end
+    display(p)
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+function TUIaddPAline!(p,cutoff::AbstractFloat)
+    ylim = Plots.ylims(p)
+    if  sqrt(cutoff) < 1.1*ylim[2]
+        Plots.plot!(p,collect(Plots.xlims(p)),
+                    fill(sqrt(cutoff),2),
+                    seriestype=:line,label="",
+                    linewidth=2,linestyle=:dash)
+    end
+end
 
 function TUInext!(ctrl::AbstractDict)
     ctrl["i"] += 1
@@ -235,58 +236,6 @@ function TUIgoto!(ctrl::AbstractDict,response::AbstractString)
     if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
     TUIplotter(ctrl)
     return "x"
-end
-
-function TUIplotter(ctrl::AbstractDict)
-    samp = ctrl["run"][ctrl["i"]]
-    if haskey(ctrl,"channels")
-        channels = ctrl["channels"]
-    else
-        channels = names(samp.dat)[3:end]
-    end
-    if isnothing(ctrl["blank"]) | isnothing(ctrl["anchors"]) | (samp.group=="sample")
-        p = plot(samp,ctrl["method"],channels,ctrl["par"],ctrl["standards"],ctrl["glass"],
-                 den=ctrl["den"],transformation=ctrl["transformation"])
-    else
-        if isnothing(ctrl["PAcutoff"])
-            par = ctrl["par"]
-        else
-            analog = isAnalog(samp,ctrl["channels"];cutoff=ctrl["PAcutoff"])
-            j = analog ? 1 : 2
-            par = ctrl["par"][j]
-        end
-        p = plot(samp,channels,ctrl["blank"],par,ctrl["anchors"],
-                 den=ctrl["den"],transformation=ctrl["transformation"])
-    end
-    if !isnothing(ctrl["PAcutoff"])
-        TUIaddPAline!(p,ctrl["PAcutoff"])
-    end
-    display(p)
-end
-
-function TUIaddPAline!(p,cutoff::AbstractFloat)
-    ylim = Plots.ylims(p)
-    if  sqrt(cutoff) < 1.1*ylim[2]
-        Plots.plot!(p,collect(Plots.xlims(p)),
-                    fill(sqrt(cutoff),2),
-                    seriestype=:line,label="",
-                    linewidth=2,linestyle=:dash)
-    end
-end
-
-function TUIratioMessage(ctrl::AbstractDict)
-    if haskey(ctrl,"channels")
-        channels = collect(values(ctrl["channels"]))
-    else
-        channels = names(ctrl["run"][1].dat)[3:end]
-    end
-    msg = "Choose one of the following denominators:\n"
-    for i in 1:length(channels)
-        msg *= string(i)*": "*channels[i]*"\n"
-    end
-    msg *= "or\n"
-    msg *= "n: No denominator. Plot the raw signals\n"
-    msg *= "?: Help"
 end
 
 function TUIratios!(ctrl::AbstractDict,response::AbstractString)
@@ -339,7 +288,7 @@ function TUIallSingleBlankWindow!(ctrl::AbstractDict,
                                   response::AbstractString)
     for i in eachindex(ctrl["run"])
         samp = ctrl["run"][i]
-        bwin = string2windows(samp,text=response,single=true)
+        bwin = string2windows(samp,response,true)
         setBwin!(samp,bwin)
     end
     TUIplotter(ctrl)
@@ -377,7 +326,7 @@ function TUIoneMultiSignalWindow!(ctrl::AbstractDict,
     swin = string2windows(samp,response,false)
     setSwin!(samp,swin)
     TUIplotter(ctrl)
-    return "xx"
+    return "x"
 end
 
 function TUIallAutoSignalWindow!(ctrl::AbstractDict)
@@ -405,6 +354,47 @@ function TUIallMultiSignalWindow!(ctrl::AbstractDict,
     end
     TUIplotter(ctrl)
     return "xx"
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function TUIprocess!(ctrl::AbstractDict)
+    ctrl["anchors"] = getAnchors(ctrl["method"],ctrl["standards"],ctrl["glass"])
+    println("Fitting blanks...")
+    ctrl["blank"] = fitBlanks(ctrl["run"],nblank=ctrl["options"]["blank"])
+    println("Fractionation correction...")
+    ctrl["par"] = fractionation(ctrl["run"],
+                                ctrl["method"],
+                                ctrl["blank"],
+                                ctrl["channels"],
+                                ctrl["standards"],
+                                ctrl["glass"];
+                                ndrift=ctrl["options"]["drift"],
+                                ndown=ctrl["options"]["down"],
+                                PAcutoff=ctrl["PAcutoff"])
+    ctrl["priority"]["process"] = false
+    println("Done")
 end
 
 function TUItransformation!(ctrl::AbstractDict,
@@ -482,7 +472,6 @@ function TUIimportLog!(ctrl::AbstractDict,response::AbstractString)
             println(e)
         end
     end
-    ctrl["chain"] = ["top"]
     return "xx"
 end
 
@@ -515,7 +504,6 @@ function TUIsaveMethod(ctrl::AbstractDict,response::AbstractString)
         write(file,"options = " * dict2string(ctrl["options"]) * "\n")
         write(file,"PAcutoff = " * PAcutoff * "\n")
         write(file,"transformation = \"" * ctrl["transformation"] * "\"\n")
-        write(file,"template = true")
     end
     return "xx"
 end

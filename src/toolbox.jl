@@ -106,14 +106,16 @@ export summarise, summarize
 
 function autoWindow(samp::Sample;
                     blank=false)
-    i0 = samp.i0
-    nr = size(samp.dat,1)
+    t0 = samp.t0
+    t = samp.dat[:,1]
+    nt = length(t)
+    i0 = round(Int,nt*(t0-t[1])/(t[end]-t[1]))
     if blank
         from = 1
         to = ceil(Int,i0*9/10)
     else
-        from = floor(Int,i0+(nr-i0)/10)
-        to = nr
+        from = floor(Int,i0+(nt-i0)/10)
+        to = nt
     end
     return [(from,to)]
 end
@@ -203,7 +205,7 @@ function subset(ratios::AbstractDataFrame,
 end
 export subset
 
-function isAnalog(samp::Sample,channels::AbstractDict;cutoff=nothing)
+function isAnalog(samp::Sample,channels::AbstractDict,cutoff=nothing)
     out = true
     if !isnothing(cutoff)
         dat = getDat(samp,channels)
@@ -211,11 +213,11 @@ function isAnalog(samp::Sample,channels::AbstractDict;cutoff=nothing)
     end
     return out
 end
-function isAnalog(run::Vector{Sample},channels::AbstractDict;cutoff=nothing)
+function isAnalog(run::Vector{Sample},channels::AbstractDict,cutoff=nothing)
     ns = length(run)
     A = fill(true,ns)
     for i in eachindex(A)
-        A[i] = isAnalog(run[i],channels;cutoff=cutoff)
+        A[i] = isAnalog(run[i],channels,cutoff)
     end
     return A
 end
