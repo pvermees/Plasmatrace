@@ -193,9 +193,7 @@ function tree(ctrl::AbstractDict)
             )
         ),
         "addStandardsByPrefix" => (
-            message =
-            "Specify the prefix of an age standard "*
-            "(? for help, x to exit):",
+            message = TUIaddByPrefixMessage,
             help =
             "For example, suppose that Plesovice zircon reference "*
             "materials are named STDCZ01, STDCZ02, ..., then you can "*
@@ -205,9 +203,7 @@ function tree(ctrl::AbstractDict)
             action = TUIaddStandardsByPrefix!
         ),
         "addStandardsByNumber" => (
-            message =
-            "Select the reference materials as a comma-separated list of numbers "*
-            "(? for help, x to exit):",
+            message = TUIaddByNumberMessage,
             help =
             "For example, suppose that the analyses are labelled as "*
             "G001, G002, ..., then it is not possible to identify "*
@@ -284,9 +280,7 @@ function tree(ctrl::AbstractDict)
             )
         ),
         "addGlassByPrefix" => (
-            message =
-            "Specify the prefix of a NIST glass "*
-            "(? for help, x to exit):",
+            message = TUIaddByPrefixMessage,
             help =
             "For example, suppose that NIST-612 reference glasses "*
             "are named GLASS01, GLASS02, ..., then you can "*
@@ -302,9 +296,7 @@ function tree(ctrl::AbstractDict)
             action = TUIaddGlassByPrefix!
         ),
         "addGlassByNumber" => (
-            message =
-            "Select the analyses as a comma-separated list of numbers "*
-            "(? for help, x to exit):",
+            message = TUIaddByPrefixMessage,
             help =
             "For example, suppose that the analyses are labelled as "*
             "G001, G002, ..., then it is not possible to identify "*

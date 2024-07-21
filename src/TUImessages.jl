@@ -42,3 +42,16 @@ function TUIchooseGlassMessage(ctrl::AbstractDict)
     msg *= "x: Exit\n"*"?: Help"
     return msg
 end
+
+function TUIaddByPrefixMessage(ctrl::AbstractDict)
+    msg = "Specify the prefix of the " * ctrl["cache"] *
+        " measurements (? for help, x to exit):"
+    return msg
+end
+
+function TUIaddByNumberMessage(ctrl::AbstractDict)
+    msg = "Select the " * ctrl["cache"] * " measurements " *
+        "with a comma-separated list of numbers " *
+        "(? for help, x to exit):"
+    return msg
+end
