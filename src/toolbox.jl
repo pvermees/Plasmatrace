@@ -335,3 +335,16 @@ function transformeer(df::AbstractDataFrame;transformation=nothing,offset::Abstr
     end
     return out
 end
+
+function dict2string(dict::AbstractDict)
+    k = collect(keys(dict))
+    v = collect(values(dict))
+    q = isa(v[1],AbstractString) ? '"' : ""
+    out = "Dict(" * '"' * k[1] * '"' * " => " * q * string(v[1]) * q
+    for i in 2:length(k)
+        q = isa(v[i],AbstractString) ? '"' : ""
+        out *= "," * '"' * k[i] * '"' * " => " * q * string(v[i]) * q
+    end
+    out *= ")"
+    return out
+end

@@ -95,7 +95,7 @@ function tree(ctrl::AbstractDict)
             "v: View and adjust each sample\n"*
             "p: Process the data"*TUIcheck(ctrl,"process")*"\n"*
             "e: Export the results\n"*
-            "l: Import/export a session log\n"*
+            "l: Logs and templates\n"*
             "o: Options\n"*
             "R: Refresh\n"*
             "x: Exit\n"*
@@ -688,17 +688,21 @@ function tree(ctrl::AbstractDict)
             "Choose an option:\n"*
             "i: Import a session log\n"*
             "e: Export the session log\n"*
+            "o: Open a template\n"*
+            "s: Save a template\n"*
             "x: Exit\n"*
             "?: Help",
             help =
             "Session logs are an easy and useful way to "*
-            "save intermediate results, "*
-            "save default settings, increase throughput, "*
-            "develop FAIR data processing "*
-            "chains, and report bugs.",
+            "save intermediate results, increase throughput, "*
+            "develop FAIR data processing chains, and report bugs.\n"*
+            "Methods are slimmed down session logs, which save "*
+            "default settings whilst omitting sample-specific details.",
             action = Dict(
                 "i" => "importLog",
-                "e" => "exportLog"
+                "e" => "exportLog",
+                "o" => "openMethod",
+                "s" => "saveMethod"
             )
         ),
         "importLog" => (
@@ -710,9 +714,23 @@ function tree(ctrl::AbstractDict)
         "exportLog" => (
             message = "Enter the path and name of the log "*
             "file (? for help, x to exit):",
-            help = "Save the current Plasmatrace so that you "*
+            help = "Save the current Plasmatrace session so that you "*
             "can replicate your results later",
             action = TUIexportLog
+        ),
+        "openMethod" => (
+            message = "Enter the path and name of the template "*
+            "file (? for help, x to exit):",
+            help = "Open default settings in a template file to avoid "*
+            "repetitive entry of the method details.",
+            action = TUIopenMethod!
+        ),
+        "saveMethod" => (
+            message = "Enter the path and name of the template "*
+            "file (? for help, x to exit):",
+            help = "Save the current Plasmatrace method for use "*
+            "in a future session.",
+            action = TUIsaveMethod
         )
     )    
 end

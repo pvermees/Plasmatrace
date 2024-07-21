@@ -9,20 +9,6 @@ function TUIcheck(ctrl::AbstractDict,action::AbstractString)
     return ctrl["priority"][action] ? "[*]" : ""
 end
 
-function TUIimportLog!(ctrl::AbstractDict,response::AbstractString)
-    history = CSV.read(response,DataFrame)
-    ctrl["history"] = DataFrame(task=String[],action=String[])
-    for row in eachrow(history)
-        try
-            dispatch!(ctrl,key=row[1],response=row[2])
-        catch e
-            println(e)
-        end
-    end
-    ctrl["chain"] = ["top"]
-    return "xx"
-end
-
 function TUIinstrument!(ctrl::AbstractDict,
                         response::AbstractString)
     if response=="1"
@@ -474,10 +460,51 @@ function TUIhead2name!(ctrl::AbstractDict,response::AbstractString)
     return "x"
 end
 
+function TUIimportLog!(ctrl::AbstractDict,response::AbstractString)
+    history = CSV.read(response,DataFrame)
+    ctrl["history"] = DataFrame(task=String[],action=String[])
+    for row in eachrow(history)
+        try
+            dispatch!(ctrl,key=row[1],response=row[2])
+        catch e
+            println(e)
+        end
+    end
+    ctrl["chain"] = ["top"]
+    return "xx"
+end
+
 function TUIexportLog(ctrl::AbstractDict,response::AbstractString)
     pop!(ctrl["history"])
     pop!(ctrl["history"])
     CSV.write(response,ctrl["history"])
+    return "xx"
+end
+
+function TUIopenMethod!(ctrl::AbstractDict,response::AbstractString)
+    include(response)
+    ctrl["instrument"] = instrument
+    ctrl["head2name"] = head2name
+    ctrl["channels"] = channels
+    ctrl["options"] = options
+    ctrl["PAcutoff"] = PAcutoff
+    ctrl["transformation"] = transformation
+    ctrl["priority"]["method"] = false
+    return "xx"
+end
+
+function TUIsaveMethod(ctrl::AbstractDict,response::AbstractString)
+    PAcutoff = isnothing(ctrl["PAcutoff"]) ? "nothing" : string(ctrl["PAcutoff"])
+    L1 = "instrument = \"" * ctrl["instrument"] * "\"\n"
+    L2 = "head2name = " * string(ctrl["head2name"]) * "\n"
+    L3 = "channels = " * dict2string(ctrl["channels"]) * "\n"
+    L4 = "options = " * dict2string(ctrl["options"]) * "\n"
+    L5 = "PAcutoff = " * PAcutoff * "\n"
+    L6 = "transformation = \"" * ctrl["transformation"] * "\""
+    tmp = "$L1 $L2 $L3 $L4 $L5 $L6"
+    open(response, "w") do file
+        write(file, tmp)
+    end
     return "xx"
 end
 
