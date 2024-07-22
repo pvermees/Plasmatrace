@@ -31,11 +31,43 @@ function load(dname::AbstractString;
     end
     return sortedsamples
 end
+function load(dfile::AbstractString,
+              tfile::AbstractString;
+              instrument::AbstractString="Agilent")
+    samples = Vector{Sample}(undef,0)
+    datetimes = Vector{DateTime}(undef,0)
+    data = timestamps = DataFrame()
+    try
+        sname, datetime, header, skipto, footerskip, data =
+            readDat(dfile;instrument=instrument)
+    catch e
+        println("Failed to read "*dfile)
+    end
+    try
+        timestamps = CSV.read(tfile, DataFrame)
+    catch e
+        println("Failed to read "*tfile)
+    end
+end
 export load
 
 function readFile(fname::AbstractString;
                   instrument::AbstractString="Agilent",
                   head2name::Bool=true)
+    sname, datetime, header, skipto, footerskip, dat =
+        readDat(fname;instrument=instrument,head2name=head2name)
+    select!(dat, [k for (k,v) in pairs(eachcol(dat)) if !all(ismissing, v)])
+    i0 = geti0(dat[:,2:end])
+    t0 = dat[i0,1]
+    nr = size(dat,1)
+    bwin = [(1,ceil(Int,i0*9/10))]
+    swin = [(floor(Int,i0+(nr-i0)/10),nr)]
+    return Sample(sname,datetime,dat,t0,bwin,swin,"sample")
+end
+
+function readDat(fname::AbstractString;
+                 instrument::AbstractString="Agilent",
+                 head2name::Bool=true)
     if instrument=="Agilent"
         sname, datetime, header, skipto, footerskip =
             readAgilent(fname,head2name)
@@ -54,13 +86,7 @@ function readFile(fname::AbstractString;
         ignoreemptyrows = true,
         delim = ',',
     )
-    select!(dat, [k for (k,v) in pairs(eachcol(dat)) if !all(ismissing, v)])
-    i0 = geti0(dat[:,2:end])
-    t0 = dat[i0,1]
-    nr = size(dat,1)
-    bwin = [(1,ceil(Int,i0*9/10))]
-    swin = [(floor(Int,i0+(nr-i0)/10),nr)]
-    return Sample(sname,datetime,dat,t0,bwin,swin,"sample")
+    return sname, datetime, header, skipto, footerskip, dat
 end
 
 function readAgilent(fname::AbstractString,

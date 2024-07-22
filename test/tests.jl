@@ -205,6 +205,13 @@ function carbonatetest(verbose=false)
     @test display(p) != NaN
 end
 
+function timestamptest(verbose=true)
+    myrun = load("data/timestamp/MSdata.csv","data/timestamp/timestamp.csv";
+                 instrument="Agilent")
+    if verbose summarise(myrun;verbose=true,n=5) end
+    return myrun
+end
+
 function TUItest()
     PT("logs/test.log")
 end
@@ -227,4 +234,5 @@ Plots.closeall()
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
+@testset "timestamp test" begin timestamptest(false) end
 @testset "TUI test" begin TUItest() end
