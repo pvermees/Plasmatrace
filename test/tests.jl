@@ -209,6 +209,8 @@ function timestamptest(verbose=true)
     myrun = load("data/timestamp/MSdata.csv","data/timestamp/timestamp.csv";
                  instrument="Agilent")
     if verbose summarise(myrun;verbose=true,n=5) end
+    p = plot(myrun[1])
+    @test display(p) != NaN
 end
 
 function TUItest()
