@@ -209,7 +209,6 @@ function timestamptest(verbose=true)
     myrun = load("data/timestamp/MSdata.csv","data/timestamp/timestamp.csv";
                  instrument="Agilent")
     if verbose summarise(myrun;verbose=true,n=5) end
-    return myrun
 end
 
 function TUItest()
@@ -218,7 +217,7 @@ end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -233,6 +232,6 @@ Plots.closeall()
 @testset "Rb-Sr" begin RbSrtest() end
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
-@testset "carbonate test" begin carbonatetest() end=#
+@testset "carbonate test" begin carbonatetest() end
 @testset "timestamp test" begin timestamptest() end
-#@testset "TUI test" begin TUItest() end
+@testset "TUI test" begin TUItest() end
