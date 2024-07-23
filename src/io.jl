@@ -1,3 +1,37 @@
+"""
+load
+
+Read mass spectrometer data
+
+# Returns
+
+- a vector of samples
+
+# Methods
+
+- `load(dname::AbstractString;
+        instrument::AbstractString="Agilent",
+        head2name::Bool=true)`
+- `load(dfile::AbstractString,
+        tfile::AbstractString;
+        instrument::AbstractString="Agilent")`
+
+# Arguments
+
+- `dname`: directory containing mass spectrometer data files
+- `instrument`: one of "Agilent" or "ThermoFisher"
+- `head2name`: `true` if sample names should be read from the file headers.
+               `false` if they should be extracted from the file names
+- `dfile`: single data file
+- `tfile`: laser timestamp file
+
+# Examples
+```julia
+myrun = load("data/Lu-Hf";instrument="Agilent")
+p = plot(myrun[1],["Hf176 -> 258","Hf178 -> 260"])
+display(p)
+```
+"""
 function load(dname::AbstractString;
               instrument::AbstractString="Agilent",
               head2name::Bool=true)
