@@ -224,13 +224,15 @@ end
 export isAnalog
 
 function automatic_datetime(datetime_string::AbstractString)
-    if occursin(r"-", datetime_string) == true
+    if occursin(r"-", datetime_string)
         date_delim = '-'
-    elseif occursin(r"/", datetime_string) == true
+    elseif occursin(r"/", datetime_string)
         date_delim = '/'
     end
-    if occursin(r"(?i:AM|PM)", datetime_string) == true
+    if occursin(r"(?i:AM|PM)", datetime_string)
         time_format = "H:M:S p"
+    elseif occursin(r".", datetime_string)
+        time_format = "H:M:S.s"
     else
         time_format = "H:M:S"
     end
@@ -250,7 +252,13 @@ function automatic_datetime(datetime_string::AbstractString)
     return datetime
 end
 
-# lifted from StatsBase.jl
+"""
+rle(v)
+
+Return the run-length encoding of a vector as a tuple.
+
+Function lifted from StatsBase.jl
+"""
 function rle(v::AbstractVector{T}) where T
     n = length(v)
     vals = T[]
