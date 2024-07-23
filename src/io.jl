@@ -72,8 +72,7 @@ function load(dfile::AbstractString,
     datetimes = Vector{DateTime}(undef,0)
     data = timestamps = DataFrame()
     try
-        sname, datetime, header, skipto, footerskip, data =
-            readDat(dfile;instrument=instrument)
+        data = readDat(dfile;instrument=instrument)[1]
     catch e
         println("Failed to read "*dfile)
     end
@@ -82,13 +81,14 @@ function load(dfile::AbstractString,
     catch e
         println("Failed to read "*tfile)
     end
+    return parseData(data,timestamps)
 end
 export load
 
 function readFile(fname::AbstractString;
                   instrument::AbstractString="Agilent",
                   head2name::Bool=true)
-    sname, datetime, header, skipto, footerskip, dat =
+    dat, sname, datetime, header, skipto, footerskip =
         readDat(fname;instrument=instrument,head2name=head2name)
     select!(dat, [k for (k,v) in pairs(eachcol(dat)) if !all(ismissing, v)])
     i0 = geti0(dat[:,2:end])
@@ -120,7 +120,7 @@ function readDat(fname::AbstractString;
         ignoreemptyrows = true,
         delim = ',',
     )
-    return sname, datetime, header, skipto, footerskip, dat
+    return dat, sname, datetime, header, skipto, footerskip
 end
 
 function readAgilent(fname::AbstractString,
@@ -157,6 +157,46 @@ function readThermoFisher(fname::AbstractString,
     
     return sname, datetime, header, skipto, footerskip
     
+end
+
+function parseData(data::AbstractDataFrame,
+                   timestamps::AbstractDataFrame)
+    runtime = data[:,1] # "Time [Sec]"
+    signal = data[:,2:end]
+    total = sum.(eachrow(signal))
+    scaled = total./Statistics.mean(total)
+    cs = cumsum(scaled)
+    ICPduration = runtime[end]
+    start = findfirst("On".==timestamps[:,11]) # "Laser State"
+    stop = findlast("On".==timestamps[:,11])+1
+    from = automatic_datetime(timestamps[1,1]) # "Timestamp"
+    to = automatic_datetime(timestamps[end,1])
+    LAduration = Millisecond(to - from).value/1000
+    lower = 0.0
+    if LAduration>ICPduration
+        @warn The laser session is longer than the ICP-MS session!
+        upper = ICPduration
+    else
+        upper = ICPduration - LAduration
+    end
+    misfit = function(lag)
+        i1 = argmin(abs.(runtime .- lag))
+        i2 = argmin(abs.(runtime .< lag + LAduration))
+        log(cs[end]) - log(cs[i2]-cs[i1])
+    end
+    crude = argmin(misfit.(lower:1.0:upper))
+    fit = Optim.optimize(misfit,runtime[crude-1],runtime[crude+1])
+    lag = Optim.minimizer(fit)
+    if true # change to true to plot the selection window
+        p = Plots.plot(runtime,total;label="") # change total to cs for a cumulative plot
+        dy = Plots.ylims(p)
+        Plots.plot!(p,fill(lag,2),collect(dy[[1,2]]);
+                    linecolor="black",linestyle=:solid,label="")
+        Plots.plot!(p,fill(lag+LAduration,2),collect(dy[[1,2]]);
+                    linecolor="black",linestyle=:solid,label="")
+        display(p)
+    end
+    return lag # TODO
 end
 
 function export2IsoplotR(run::Vector{Sample},
