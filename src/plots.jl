@@ -28,7 +28,12 @@ Plot selected channels for a sample or a vector of samples
         ms=2,ma=0.5,xlim=:auto,ylim=:auto,
         linecol="black",linestyle=:solid)`
 - `plot(samp::Sample,
-        channels::AbstractDict;
+        channels::Union{AbstractVector,AbstractDict};
+        num=nothing,den=nothing,
+        transformation=nothing,offset=nothing,
+        seriestype=:scatter,titlefontsize=10,
+        ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)`
+- `plot(samp::Sample;
         num=nothing,den=nothing,
         transformation=nothing,offset=nothing,
         seriestype=:scatter,titlefontsize=10,
@@ -38,6 +43,7 @@ Plot selected channels for a sample or a vector of samples
 
 - `method`: either "U-Pb", "Lu-Hf" or "Rb-Sr"
 - `channels`: dictionary of the type Dict("P" => "parent", "D" => "daughter", "d" => "sister")
+              or a vector of channel names (e.g., the keys of a channels Dict)
 - `blank`: the output of fitBlanks()
 - `pars`: the output of fractionation() or process!()
 - `standards` = dictionary of the type Dict("prefix" => "mineral standard")
@@ -48,7 +54,6 @@ Plot selected channels for a sample or a vector of samples
 - `seriestype` = :scatter or :path
 - `titlefontsize`, `ms`, `xlim`, `ylim` = see the generic Plot.plot function
 - `anchors`: the output of getAnchors()
-- `channels` = a vector of channel names (e.g., the keys of a channels Dict)
 
 # Examples
 
@@ -139,6 +144,16 @@ function plot(samp::Sample,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
     return plot(samp,collect(values(channels));
+                num=num,den=den,transformation=transformation,
+                offset=offset,seriestype=seriestype,titlefontsize=titlefontsize,
+                ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+end
+function plot(samp::Sample;
+              num=nothing,den=nothing,
+              transformation=nothing,offset=nothing,
+              seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
+    return plot(samp,getChannels(samp);
                 num=num,den=den,transformation=transformation,
                 offset=offset,seriestype=seriestype,titlefontsize=titlefontsize,
                 ms=ms,ma=ma,xlim=xlim,ylim=ylim)
