@@ -72,7 +72,7 @@ function load(dfile::AbstractString,
     datetimes = Vector{DateTime}(undef,0)
     data = timestamps = DataFrame()
     try
-        data = readDat(dfile;instrument=instrument)[1]
+        data = readDat(dfile,instrument,false)[1]
     catch e
         println("Failed to read "*dfile)
     end
@@ -88,18 +88,20 @@ export load
 function readFile(fname::AbstractString;
                   instrument::AbstractString="Agilent",
                   head2name::Bool=true)
-    dat, sname, datetime, header, skipto, footerskip =
-        readDat(fname;instrument=instrument,head2name=head2name)
-    select!(dat, [k for (k,v) in pairs(eachcol(dat)) if !all(ismissing, v)])
-    i0 = geti0(dat[:,2:end])
-    t0 = dat[i0,1]
-    nr = size(dat,1)
-    bwin = [(1,ceil(Int,i0*9/10))]
-    swin = [(floor(Int,i0+(nr-i0)/10),nr)]
-    return Sample(sname,datetime,dat,t0,bwin,swin,"sample")
+    dat, sname, datetime = readDat(fname,instrument,head2name)
+    return df2sample(dat,sname,datetime)
 end
 
-function readDat(fname::AbstractString;
+function df2sample(df::AbstractDataFrame,sname::AbstractString,datetime::DateTime)
+    i0 = geti0(df[:,2:end])
+    t0 = df[i0,1]
+    nr = size(df,1)
+    bwin = [(1,ceil(Int,i0*9/10))]
+    swin = [(floor(Int,i0+(nr-i0)/10),nr)]
+    return Sample(sname,datetime,df,t0,bwin,swin,"sample")
+end
+
+function readDat(fname::AbstractString,
                  instrument::AbstractString="Agilent",
                  head2name::Bool=true)
     if instrument=="Agilent"
@@ -120,7 +122,8 @@ function readDat(fname::AbstractString;
         ignoreemptyrows = true,
         delim = ',',
     )
-    return dat, sname, datetime, header, skipto, footerskip
+    select!(dat, [k for (k,v) in pairs(eachcol(dat)) if !all(ismissing, v)])
+    return dat, sname, datetime
 end
 
 function readAgilent(fname::AbstractString,
@@ -161,17 +164,20 @@ end
 
 function parseData(data::AbstractDataFrame,
                    timestamps::AbstractDataFrame)
+    run = Vector{Sample}(undef,0)
+    # 1. get the cumulative signal
+    nr = size(data,1)
     runtime = data[:,1] # "Time [Sec]"
     signal = data[:,2:end]
     total = sum.(eachrow(signal))
     scaled = total./Statistics.mean(total)
     cs = cumsum(scaled)
+    # 2. find the lag time between the laser and ICP-MS files
     ICPduration = runtime[end]
-    start = findfirst("On".==timestamps[:,11]) # "Laser State"
-    stop = findlast("On".==timestamps[:,11])+1
-    from = automatic_datetime(timestamps[1,1]) # "Timestamp"
-    to = automatic_datetime(timestamps[end,1])
-    LAduration = Millisecond(to - from).value/1000
+    lasertime = automatic_datetime.(timestamps[:,1]) # "Timestamp"
+    start = lasertime[1]
+    stop = lasertime[end]
+    LAduration = Millisecond(stop - start).value/1000
     lower = 0.0
     if LAduration>ICPduration
         @warn The laser session is longer than the ICP-MS session!
@@ -187,16 +193,23 @@ function parseData(data::AbstractDataFrame,
     crude = argmin(misfit.(lower:1.0:upper))
     fit = Optim.optimize(misfit,runtime[crude-1],runtime[crude+1])
     lag = Optim.minimizer(fit)
-    if true # change to true to plot the selection window
-        p = Plots.plot(runtime,total;label="") # change total to cs for a cumulative plot
-        dy = Plots.ylims(p)
-        Plots.plot!(p,fill(lag,2),collect(dy[[1,2]]);
-                    linecolor="black",linestyle=:solid,label="")
-        Plots.plot!(p,fill(lag+LAduration,2),collect(dy[[1,2]]);
-                    linecolor="black",linestyle=:solid,label="")
-        display(p)
+    # 3. parse the signals into samples
+    sequences = findall(!ismissing,timestamps[:,2]) # "Sequence Number"
+    LA_index = [sequences;size(timestamps,1)]
+    i1 = argmin(abs.(runtime .- lag))
+    i2 = argmin(abs.(runtime .< lag + LAduration))
+    for i in eachindex(sequences)
+        datetime = from = lasertime[LA_index[i]]
+        to = lasertime[LA_index[i+1]]
+        t1 =  Millisecond(from-start).value/1000
+        t2 =  Millisecond(to-start).value/1000
+        first = maximum([1,floor(Int,(i2-i1)*t1/LAduration)])
+        last = minimum([ceil(Int,(i2-i1)*t2/LAduration),nr])
+        sname = timestamps[LA_index[i],5] # "Comment"
+        samp = df2sample(data[first:last,:],sname,datetime)
+        push!(run,samp)
     end
-    return lag # TODO
+    return run
 end
 
 function export2IsoplotR(run::Vector{Sample},

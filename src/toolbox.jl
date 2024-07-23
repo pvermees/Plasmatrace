@@ -259,7 +259,7 @@ Return the run-length encoding of a vector as a tuple.
 
 Function lifted from StatsBase.jl
 """
-function rle(v::AbstractVector)
+function rle(v::AbstractVector{T}) where T
     n = length(v)
     vals = T[]
     lens = Int[]
