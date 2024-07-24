@@ -1,10 +1,11 @@
-using Infiltrator
+if !(@isdefined rerun)
+    using Revise, Pkg
+    Pkg.activate("/home/pvermees/git/Plasmatrace")
+    Pkg.instantiate()
+    Pkg.precompile()
+    cd("/home/pvermees/git/Plasmatrace/test")
+end
 
-odir = pwd()
-cd(@__DIR__)
+rerun = true
 
-include("../src/include.jl")
-include("tests.jl")
-#PT()
-
-cd(odir)
+include("runtests.jl")
