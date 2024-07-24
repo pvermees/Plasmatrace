@@ -8,6 +8,7 @@ function PT(logbook="")
         "chain" => ["top"],
         "i" => 1,
         "den" => nothing,
+        "multifile" => true,
         "head2name" => true,
         "instrument" => "",
         "dname" => "",
@@ -626,8 +627,8 @@ function tree(ctrl::AbstractDict)
             action = Dict(
                 "i" => "importLog",
                 "e" => "exportLog",
-                "o" => "openMethod",
-                "s" => "saveMethod"
+                "o" => "openTemplate",
+                "s" => "saveTemplate"
             )
         ),
         "importLog" => (
@@ -643,19 +644,19 @@ function tree(ctrl::AbstractDict)
             "can replicate your results later",
             action = TUIexportLog
         ),
-        "openMethod" => (
+        "openTemplate" => (
             message = "Enter the path and name of the template "*
             "file (? for help, x to exit):",
             help = "Open default settings in a template file to avoid "*
             "repetitive entry of the method details.",
-            action = TUIopenMethod!
+            action = TUIopenTemplate!
         ),
-        "saveMethod" => (
+        "saveTemplate" => (
             message = "Enter the path and name of the template "*
             "file (? for help, x to exit):",
             help = "Save the current Plasmatrace method for use "*
             "in a future session.",
-            action = TUIsaveMethod
+            action = TUIsaveTemplate
         ),
         "options" => (
             message =

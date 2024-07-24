@@ -11,7 +11,11 @@ end
 
 function TUIread(ctrl::AbstractDict)
     if ctrl["template"]
-        push!(ctrl["chain"],"load")
+        if ctrl["multifile"]
+            push!(ctrl["chain"],"loadICPdir")
+        else
+            push!(ctrl["chain"],"loadICPfile")
+        end
     else
         push!(ctrl["chain"],"instrument")
     end
@@ -35,6 +39,7 @@ function TUIloadICPdir!(ctrl::AbstractDict,response::AbstractString)
                        instrument=ctrl["instrument"],
                        head2name=ctrl["head2name"])
     ctrl["priority"]["load"] = false
+    ctrl["multifile"] = true
     ctrl["dname"] = response
     if ctrl["template"]
         return "x"
@@ -52,8 +57,10 @@ function TUIloadLAfile!(ctrl::AbstractDict,response::AbstractString)
     ctrl["run"] = load(ctrl["dname"],response;
                        instrument=ctrl["instrument"])
     ctrl["priority"]["load"] = false
+    ctrl["head2name"] = true
+    ctrl["multifile"] = false
     if ctrl["template"]
-        return "x"
+        return "xx"
     else
         return "xxxx"
     end
@@ -453,10 +460,11 @@ function TUIexportLog(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function TUIopenMethod!(ctrl::AbstractDict,response::AbstractString)
+function TUIopenTemplate!(ctrl::AbstractDict,response::AbstractString)
     include(response)
     ctrl["instrument"] = instrument
     ctrl["head2name"] = head2name
+    ctrl["multifile"] = multifile
     ctrl["channels"] = channels
     ctrl["options"] = options
     ctrl["PAcutoff"] = PAcutoff
@@ -466,10 +474,11 @@ function TUIopenMethod!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function TUIsaveMethod(ctrl::AbstractDict,response::AbstractString)
+function TUIsaveTemplate(ctrl::AbstractDict,response::AbstractString)
     PAcutoff = isnothing(ctrl["PAcutoff"]) ? "nothing" : string(ctrl["PAcutoff"])
     open(response, "w") do file
         write(file,"instrument = \"" * ctrl["instrument"] * "\"\n")
+        write(file,"multifile = " * string(ctrl["multifile"]) * "\n")
         write(file,"head2name = " * string(ctrl["head2name"]) * "\n")
         write(file,"channels = " * dict2string(ctrl["channels"]) * "\n")
         write(file,"options = " * dict2string(ctrl["options"]) * "\n")
