@@ -44,7 +44,7 @@ function TUIloadICPdir!(ctrl::AbstractDict,response::AbstractString)
     if ctrl["template"]
         return "x"
     else
-        return "xx"
+        return "xxx"
     end
 end
 
