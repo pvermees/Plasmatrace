@@ -70,9 +70,10 @@ function load(dfile::AbstractString,
               instrument::AbstractString="Agilent")
     samples = Vector{Sample}(undef,0)
     datetimes = Vector{DateTime}(undef,0)
-    data = timestamps = DataFrame()
+    dat = timestamps = DataFrame()
     try
-        data = readDat(dfile,instrument,false)[1]
+        dat = readDat(dfile,instrument,false)[1]
+        dat.t = dat[:,1] ./ dat[end,1]
     catch e
         println("Failed to read "*dfile)
     end
@@ -81,7 +82,7 @@ function load(dfile::AbstractString,
     catch e
         println("Failed to read "*tfile)
     end
-    return parseData(data,timestamps)
+    return parseData(dat,timestamps)
 end
 export load
 

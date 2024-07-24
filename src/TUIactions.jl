@@ -19,17 +19,18 @@ end
 
 function TUIinstrument!(ctrl::AbstractDict,
                         response::AbstractString)
-    if response=="1"
+    if response=="a"
         ctrl["instrument"] = "Agilent"
-    elseif response=="2"
+    elseif response=="t"
         ctrl["instrument"] = "ThermoFisher"
     else
+        @warn "Unsupported instrument"
         return "x"
     end
-    return "load"
+    return "dir|file"
 end
 
-function TUIload!(ctrl::AbstractDict,response::AbstractString)
+function TUIloadICPdir!(ctrl::AbstractDict,response::AbstractString)
     ctrl["run"] = load(response;
                        instrument=ctrl["instrument"],
                        head2name=ctrl["head2name"])
@@ -39,6 +40,22 @@ function TUIload!(ctrl::AbstractDict,response::AbstractString)
         return "x"
     else
         return "xx"
+    end
+end
+
+function TUIloadICPfile!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["dname"] = response
+    return "loadLAfile"
+end
+
+function TUIloadLAfile!(ctrl::AbstractDict,response::AbstractString)
+    ctrl["run"] = load(ctrl["dname"],response;
+                       instrument=ctrl["instrument"])
+    ctrl["priority"]["load"] = false
+    if ctrl["template"]
+        return "x"
+    else
+        return "xxxx"
     end
 end
 

@@ -53,7 +53,7 @@ function dispatch!(ctrl::AbstractDict;
     if response == "?"
         println(help)
         next = nothing
-    elseif response in ["x","xx","xxx"]
+    elseif response in ["x","xx","xxx","xxxx"]
         next = response
     elseif isa(action,Function)
         next = action(ctrl,response)
@@ -71,6 +71,12 @@ function dispatch!(ctrl::AbstractDict;
         pop!(ctrl["chain"])
     elseif next == "xxx"
         if length(ctrl["chain"])<3 return end
+        pop!(ctrl["chain"])
+        pop!(ctrl["chain"])
+        pop!(ctrl["chain"])
+    elseif next == "xxxx"
+        if length(ctrl["chain"])<4 return end
+        pop!(ctrl["chain"])
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
@@ -120,20 +126,55 @@ function tree(ctrl::AbstractDict)
         ),
         "instrument" => (
             message =
-            "1: Agilent\n"*
-            "2: ThermoFisher\n"*
+            "a: Agilent\n"*
+            "t: ThermoFisher\n"*
             "x: Exit\n"*
             "?: Help",
             help = "Choose a file format. Email us if you don't "*
             "find your instrument in this list.",
             action = TUIinstrument!
         ),
-        "load" => (
-            message = "Enter the full path of the data directory "*
+        "dir|file" => (
+            message =
+            "d: Read a directory of individual data files\n"*
+            "p: Parse the data from a single file using a laser log\n"*
             "(? for help, x to exit):",
-            help = "Plasmatrace will read all the files in this folder. "*
+            help =
+            "There are two ways to store mass spectrometer data. Each analysis "*
+            "(spot or raster) can be saved into its own file, or all analyses can be "*
+            "stored together in a single file. In the latter case, a laser log file is "*
+            "needed to parse the data into individual samples",
+            action = Dict(
+                "d" => "loadICPdir",
+                "p" => "loadICPfile"
+            )
+        ),
+        "loadICPdir" => (
+            message =
+            "Enter the full path of the data directory "*
+            "(? for help, x to exit):",
+            help =
+            "Plasmatrace will read all the files in this folder. "*
             "You don't need to select the files, just the folder.",
-            action = TUIload!,
+            action = TUIloadICPdir!
+        ),
+        "loadICPfile" => (
+            message =
+            "Enter the full path of the ICP-MS data file "*
+            "(? for help, x to exit):",
+            help =
+            "Plasmatrace will read the pooled data in this file and "*
+            "parse it using a laser log file, which is to be provided next.",
+            action = TUIloadICPfile!
+        ),
+        "loadLAfile" => (
+            message =
+            "Enter the full path of the laser log file "*
+            "(? for help, x to exit):",
+            help =
+            "Plasmatrace will parse the ICP-MS data provided in the "*
+            "previous step using this log file.",
+            action = TUIloadLAfile!
         ),
         "method" => (
             message = TUIshowMethods,
