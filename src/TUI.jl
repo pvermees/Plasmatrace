@@ -1,4 +1,4 @@
-function PT(logbook="")
+function PT(logbook="",tree=PTree())
     TUIwelcome()
     ctrl = Dict(
         "priority" => Dict("load" => true, "method" => true,
@@ -25,12 +25,12 @@ function PT(logbook="")
         "template" => false
     )
     if logbook != ""
-        TUIimportLog!(ctrl,logbook)
+        TUIimportLog!(ctrl,tree,logbook)
     end
     while true
         if length(ctrl["chain"])<1 return end
         try
-            dispatch!(ctrl,verbose=false)
+            dispatch!(ctrl,tree,verbose=false)
         catch e
             println(e)
         end
@@ -38,13 +38,14 @@ function PT(logbook="")
 end
 export PT
 
-function dispatch!(ctrl::AbstractDict;
+function dispatch!(ctrl::AbstractDict,
+                   tree::AbstractDict;
                    key=nothing,response=nothing,verbose=false)
     if (verbose)
         println(ctrl["chain"])
     end
     if isnothing(key) key = ctrl["chain"][end] end
-    (message,help,action) = tree(ctrl)[key]
+    (message,help,action) = tree[key]
     if isa(message,Function)
         println("\n"*message(ctrl))
     else
@@ -92,23 +93,10 @@ function dispatch!(ctrl::AbstractDict;
     end
 end
 
-function tree(ctrl::AbstractDict)
+function PTree()
     Dict(
         "top" => (
-            message =
-            "r: Read data files"*TUIcheck(ctrl,"load")*"\n"*
-            "m: Specify the method"*TUIcheck(ctrl,"method")*"\n"*
-            "t: Tabulate the samples\n"*
-            "s: Mark mineral standards"*TUIcheck(ctrl,"standards")*"\n"*
-            "g: Mark reference glasses"*TUIcheck(ctrl,"glass")*"\n"*
-            "v: View and adjust each sample\n"*
-            "p: Process the data"*TUIcheck(ctrl,"process")*"\n"*
-            "e: Export the results\n"*
-            "l: Logs and templates\n"*
-            "o: Options\n"*
-            "R: Refresh\n"*
-            "x: Exit\n"*
-            "?: Help",
+            message = TUIwelcomeMessage,
             help = "This is the top-level menu. Asterisks (*) "*
             "mark compulsory steps. Refresh reloads the data directory "*
             "and only works if the asterisks are gone.",
@@ -689,9 +677,7 @@ function tree(ctrl::AbstractDict)
             )
         ),
         "setNblank" => (
-            message =
-            "Enter a non-negative integer (current value = "*
-            string(ctrl["options"]["blank"])*", ? for help, x to exit):",
+            message = TUIsetNblankMessage,
             help =
             "The blank is fitted by the following equation: "*
             "b = exp(a[1]) + exp(a[2])*t[1] + ... + exp(a[n])*t^(n-1). "*
@@ -699,9 +685,7 @@ function tree(ctrl::AbstractDict)
             action = TUIsetNblank!
         ),
         "setNdrift" => (
-            message =
-            "Enter a non-negative integer (current value = "*
-            string(ctrl["options"]["drift"])*", ? for help, x to exit)",
+            message = TUIsetNdriftMessage,
             help =
             "The session drift is fitted by the following equation: "*
             "d = exp( a[1] + a[2]*t + ... + a[n]*t^(n-1) ). "*
@@ -709,9 +693,7 @@ function tree(ctrl::AbstractDict)
             action = TUIsetNdrift!
         ),
         "setNdown" => (
-            message =
-            "Enter a non-negative integer (current value = "*
-            string(ctrl["options"]["down"])*", ? for help, x to exit)",
+            message = TUIsetNdownMessage,
             help =
             "The down-hole drift is fitted by the following equation: "*
             "d = exp( a[1]*t + a[2]*t^2 + ... + a[n]*t^n ). "*
@@ -792,5 +774,6 @@ function tree(ctrl::AbstractDict)
             "from the file name (e.g. /path/to/data/Plesovice-01.csv)",
             action = TUIhead2name!
         )
-    )    
+    )
 end
+export PTree

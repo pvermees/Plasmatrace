@@ -34,7 +34,8 @@ function TUIinstrument!(ctrl::AbstractDict,
     return "dir|file"
 end
 
-function TUIloadICPdir!(ctrl::AbstractDict,response::AbstractString)
+function TUIloadICPdir!(ctrl::AbstractDict,
+                        response::AbstractString)
     ctrl["run"] = load(response;
                        instrument=ctrl["instrument"],
                        head2name=ctrl["head2name"])
@@ -48,12 +49,14 @@ function TUIloadICPdir!(ctrl::AbstractDict,response::AbstractString)
     end
 end
 
-function TUIloadICPfile!(ctrl::AbstractDict,response::AbstractString)
+function TUIloadICPfile!(ctrl::AbstractDict,
+                         response::AbstractString)
     ctrl["dname"] = response
     return "loadLAfile"
 end
 
-function TUIloadLAfile!(ctrl::AbstractDict,response::AbstractString)
+function TUIloadLAfile!(ctrl::AbstractDict,
+                        response::AbstractString)
     ctrl["run"] = load(ctrl["dname"],response;
                        instrument=ctrl["instrument"])
     ctrl["priority"]["load"] = false
@@ -66,7 +69,8 @@ function TUIloadLAfile!(ctrl::AbstractDict,response::AbstractString)
     end
 end
 
-function TUImethod!(ctrl::AbstractDict,response::AbstractString)
+function TUImethod!(ctrl::AbstractDict,
+                    response::AbstractString)
     methods = _PT["methods"].method
     i = parse(Int,response)
     if i > length(methods)
@@ -81,7 +85,8 @@ function TUItabulate(ctrl::AbstractDict)
     summarise(ctrl["run"])
 end
 
-function TUIcolumns!(ctrl::AbstractDict,response::AbstractString)
+function TUIcolumns!(ctrl::AbstractDict,
+                     response::AbstractString)
     labels = names(getDat(ctrl["run"][1]))
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
@@ -254,7 +259,8 @@ function TUIprevious!(ctrl::AbstractDict)
     TUIplotter(ctrl)
 end
 
-function TUIgoto!(ctrl::AbstractDict,response::AbstractString)
+function TUIgoto!(ctrl::AbstractDict,
+                  response::AbstractString)
     ctrl["i"] = parse(Int,response)
     if ctrl["i"]>length(ctrl["run"]) ctrl["i"] = 1 end
     if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
@@ -262,7 +268,8 @@ function TUIgoto!(ctrl::AbstractDict,response::AbstractString)
     return "x"
 end
 
-function TUIratios!(ctrl::AbstractDict,response::AbstractString)
+function TUIratios!(ctrl::AbstractDict,
+                    response::AbstractString)
     if response=="n"
         ctrl["den"] = nothing
     elseif response=="x"
@@ -411,7 +418,8 @@ function TUIprocess!(ctrl::AbstractDict)
     println("Done")
 end
 
-function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
+function TUIsubset!(ctrl::AbstractDict,
+                    response::AbstractString)
     if response=="a"
         ctrl["cache"] = 1:length(ctrl["run"])
     elseif response=="s"
@@ -424,7 +432,8 @@ function TUIsubset!(ctrl::AbstractDict,response::AbstractString)
     return "format"
 end
 
-function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
+function TUIexport2csv(ctrl::AbstractDict,
+                       response::AbstractString)
     ratios = averat(ctrl["run"],ctrl["channels"],ctrl["par"],ctrl["blank"];
                     PAcutoff=ctrl["PAcutoff"])
     fname = splitext(response)[1]*".csv"
@@ -432,7 +441,8 @@ function TUIexport2csv(ctrl::AbstractDict,response::AbstractString)
     return "xxx"
 end
 
-function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
+function TUIexport2json(ctrl::AbstractDict,
+                        response::AbstractString)
     ratios = averat(ctrl["run"],ctrl["channels"],ctrl["par"],ctrl["blank"];
                     PAcutoff=ctrl["PAcutoff"])
     fname = splitext(response)[1]*".json"
@@ -440,12 +450,14 @@ function TUIexport2json(ctrl::AbstractDict,response::AbstractString)
     return "xxx"
 end
 
-function TUIimportLog!(ctrl::AbstractDict,response::AbstractString)
+function TUIimportLog!(ctrl::AbstractDict,
+                       tree::AbstractDict,
+                       response::AbstractString)
     history = CSV.read(response,DataFrame)
     ctrl["history"] = DataFrame(task=String[],action=String[])
     for row in eachrow(history)
         try
-            dispatch!(ctrl,key=row[1],response=row[2])
+            dispatch!(ctrl,tree;key=row[1],response=row[2])
         catch e
             println(e)
         end
@@ -453,12 +465,14 @@ function TUIimportLog!(ctrl::AbstractDict,response::AbstractString)
     return "xxx"
 end
 
-function TUIexportLog(ctrl::AbstractDict,response::AbstractString)
+function TUIexportLog(ctrl::AbstractDict,
+                      response::AbstractString)
     CSV.write(response,ctrl["history"])
     return "xx"
 end
 
-function TUIopenTemplate!(ctrl::AbstractDict,response::AbstractString)
+function TUIopenTemplate!(ctrl::AbstractDict,
+                          response::AbstractString)
     include(response)
     ctrl["instrument"] = instrument
     ctrl["head2name"] = head2name
@@ -472,7 +486,8 @@ function TUIopenTemplate!(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function TUIsaveTemplate(ctrl::AbstractDict,response::AbstractString)
+function TUIsaveTemplate(ctrl::AbstractDict,
+                         response::AbstractString)
     PAcutoff = isnothing(ctrl["PAcutoff"]) ? "nothing" : string(ctrl["PAcutoff"])
     open(response, "w") do file
         write(file,"instrument = \"" * ctrl["instrument"] * "\"\n")
@@ -486,17 +501,20 @@ function TUIsaveTemplate(ctrl::AbstractDict,response::AbstractString)
     return "xx"
 end
 
-function TUIsetNblank!(ctrl::AbstractDict,response::AbstractString)
+function TUIsetNblank!(ctrl::AbstractDict,
+                       response::AbstractString)
     ctrl["options"]["blank"] = parse(Int,response)
     return "x"
 end
 
-function TUIsetNdrift!(ctrl::AbstractDict,response::AbstractString)
+function TUIsetNdrift!(ctrl::AbstractDict,
+                       response::AbstractString)
     ctrl["options"]["drift"] = parse(Int,response)
     return "x"    
 end
 
-function TUIsetNdown!(ctrl::AbstractDict,response::AbstractString)
+function TUIsetNdown!(ctrl::AbstractDict,
+                      response::AbstractString)
     ctrl["options"]["down"] = parse(Int,response)
     return "x"    
 end
@@ -512,7 +530,8 @@ function TUIPAlist(ctrl::AbstractDict)
     return "x"
 end
 
-function TUIsetPAcutoff!(ctrl::AbstractDict,response::AbstractString)
+function TUIsetPAcutoff!(ctrl::AbstractDict,
+                         response::AbstractString)
     cutoff = tryparse(Float64,response)
     ctrl["PAcutoff"] = cutoff
     return "xx"
@@ -523,17 +542,20 @@ function TUIclearPAcutoff!(ctrl::AbstractDict)
     return "xx"
 end
 
-function TUIaddStandard!(ctrl::AbstractDict,response::AbstractString)
+function TUIaddStandard!(ctrl::AbstractDict,
+                         response::AbstractString)
     setReferenceMaterials!(response)
     return "x"
 end
 
-function TUIaddGlass!(ctrl::AbstractDict,response::AbstractString)
+function TUIaddGlass!(ctrl::AbstractDict,
+                      response::AbstractString)
     setGlass!(response)
     return "x"
 end
 
-function TUIhead2name!(ctrl::AbstractDict,response::AbstractString)
+function TUIhead2name!(ctrl::AbstractDict,
+                       response::AbstractString)
     ctrl["head2name"] = response=="h"
     return "x"
 end
