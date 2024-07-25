@@ -211,7 +211,7 @@ function TUIplotter(ctrl::AbstractDict)
     if haskey(ctrl,"channels")
         channels = ctrl["channels"]
     else
-        channels = names(samp.dat)[3:end]
+        channels = getChannels(samp)
     end
     if isnothing(ctrl["blank"]) | (samp.group=="sample")
         p = plot(samp,channels,den=ctrl["den"],transformation=ctrl["transformation"])
@@ -222,8 +222,8 @@ function TUIplotter(ctrl::AbstractDict)
             analog = isAnalog(samp,ctrl["channels"],ctrl["PAcutoff"])
             par = analog ? ctrl["par"].analog : ctrl["par"].pulse
         end
-        anchors = getAnchors(ctrl["run"],ctrl["standards"],ctrl["glass"])
-        p = plot(samp,channels,ctrl["blank"],par,ctrl["standards"],ctrl["glass"],
+        anchors = getAnchors(ctrl["method"],ctrl["standards"],ctrl["glass"])
+        p = plot(samp,ctrl["method"],channels,ctrl["blank"],par,ctrl["standards"],ctrl["glass"];
                  den=ctrl["den"],transformation=ctrl["transformation"])
     end
     if !isnothing(ctrl["PAcutoff"])
@@ -450,12 +450,10 @@ function TUIimportLog!(ctrl::AbstractDict,response::AbstractString)
             println(e)
         end
     end
-    return "xx"
+    return "xxx"
 end
 
 function TUIexportLog(ctrl::AbstractDict,response::AbstractString)
-    pop!(ctrl["history"])
-    pop!(ctrl["history"])
     CSV.write(response,ctrl["history"])
     return "xx"
 end
