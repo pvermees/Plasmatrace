@@ -1,3 +1,19 @@
+function TUIwelcomeMessage(ctrl::AbstractDict)
+    msg = "r: Read data files"*TUIcheck(ctrl,"load")*"\n"*
+    "m: Specify the method"*TUIcheck(ctrl,"method")*"\n"*
+    "t: Tabulate the samples\n"*
+    "s: Mark mineral standards"*TUIcheck(ctrl,"standards")*"\n"*
+    "g: Mark reference glasses"*TUIcheck(ctrl,"glass")*"\n"*
+    "v: View and adjust each sample\n"*
+    "p: Process the data"*TUIcheck(ctrl,"process")*"\n"*
+    "e: Export the results\n"*
+    "l: Logs and templates\n"*
+    "o: Options\n"*
+    "R: Refresh\n"*
+    "x: Exit\n"*
+    "?: Help"
+    return msg
+end
 function TUIshowMethods(ctrl::AbstractDict)
     methods = _PT["methods"].method
     msg = ""
@@ -69,4 +85,22 @@ function TUIratioMessage(ctrl::AbstractDict)
     msg *= "or\n"
     msg *= "n: No denominator. Plot the raw signals\n"
     msg *= "?: Help"
+end
+
+function TUIsetNblankMessage(ctrl::AbstractDict)
+    msg = "Enter a non-negative integer (current value = "*
+    string(ctrl["options"]["blank"])*", ? for help, x to exit):"
+    return msg
+end
+
+function TUIsetNdriftMessage(ctrl::AbstractDict)
+    msg = "Enter a non-negative integer (current value = "*
+    string(ctrl["options"]["drift"])*", ? for help, x to exit)",
+    return msg
+end
+
+function TUIsetNdownMessage(ctrl::AbstractDict)
+    msg = "Enter a non-negative integer (current value = "*
+    string(ctrl["options"]["down"])*", ? for help, x to exit)",
+    return msg
 end

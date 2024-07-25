@@ -12,9 +12,9 @@ include("io.jl")
 include("plots.jl")
 include("crunch.jl")
 include("process.jl")
-include("TUI.jl")
-include("TUIactions.jl")
 include("TUImessages.jl")
+include("TUIactions.jl")
+include("TUI.jl")
 
 init_PT!()
 
