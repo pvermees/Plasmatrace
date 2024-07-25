@@ -212,12 +212,12 @@ function timestamptest(verbose=true)
 end
 
 function TUItest()
-    PT()#"logs/test.log")
+    PT("logs/test.log")
 end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -233,5 +233,5 @@ Plots.closeall()
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
-@testset "timestamp test" begin timestamptest() end=#
+@testset "timestamp test" begin timestamptest() end
 @testset "TUI test" begin TUItest() end
