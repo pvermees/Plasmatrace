@@ -1,4 +1,7 @@
-function PT!(logbook::AbstractString="")
+function PT!(extensions...;logbook::AbstractString="")
+    for (i, extension) in enumerate(extensions)
+        println("Extension #$i = $extension")
+    end
     TUIwelcome()
     if isnothing(_PT["ctrl"])
         TUIinit!()

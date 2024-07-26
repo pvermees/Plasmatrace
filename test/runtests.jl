@@ -212,7 +212,7 @@ function timestamptest(verbose=true)
 end
 
 function TUItest()
-    PT!("logs/test.log")
+    PT!(logbook="logs/test.log")
 end
 
 Plots.closeall()
