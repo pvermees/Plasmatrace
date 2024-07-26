@@ -27,5 +27,7 @@ function init_PT!()
     _PT["iratio"] = getiratios()
     _PT["refmat"] = getReferenceMaterials()
     _PT["glass"] = getGlass()
+    _PT["ctrl"] = nothing
+    _PT["tree"] = getPTree()
 end
 export init_PT!

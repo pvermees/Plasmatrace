@@ -2,10 +2,13 @@
 
 ## Julia package for LA-ICP-MS data reduction
 
-Plasmatrace is in early development and has not yet been added to
-the [Julia](https://julialang.org/) package repository. However, if
-you want to play around with the current functionality, then you can
-install the package from GitHub. At the Julia REPL:
+Plasmatrace is in early development and has not yet been added to the
+[Julia](https://julialang.org/) package repository. However, if you
+want to play around with the current functionality, then you can
+install the package from GitHub. First, make sure that you have Julia
+installed on your system by downloading it from
+[here](https://julialang.org/downloads/#current_stable_release). Then,
+at the Julia REPL:
 
 ```
 import Pkg; Pkg.add(url="https://github.com/pvermees/Plasmatrace.git")

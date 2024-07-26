@@ -9,7 +9,8 @@ function TUIwelcomeMessage(ctrl::AbstractDict)
     "e: Export the results\n"*
     "l: Logs and templates\n"*
     "o: Options\n"*
-    "R: Refresh\n"*
+    "u: Update\n"*
+    "c: Clear\n"*
     "x: Exit\n"*
     "?: Help"
     return msg
