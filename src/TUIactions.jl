@@ -1,3 +1,8 @@
+function TUI(key::AbstractString)
+    return _PT["ctrl"][key]
+end
+export TUI
+
 function TUIwelcome()
     version = string(pkgversion(@__MODULE__))
     title = " Plasmatrace "*version*" \n"
@@ -41,7 +46,7 @@ function TUIloadICPdir!(ctrl::AbstractDict,
                        head2name=ctrl["head2name"])
     ctrl["priority"]["load"] = false
     ctrl["multifile"] = true
-    ctrl["dname"] = response
+    ctrl["ICPpath"] = response
     if ctrl["template"]
         return "x"
     else
@@ -51,13 +56,14 @@ end
 
 function TUIloadICPfile!(ctrl::AbstractDict,
                          response::AbstractString)
-    ctrl["dname"] = response
+    ctrl["ICPpath"] = response
     return "loadLAfile"
 end
 
 function TUIloadLAfile!(ctrl::AbstractDict,
                         response::AbstractString)
-    ctrl["run"] = load(ctrl["dname"],response;
+    ctrl["LApath"] = response
+    ctrl["run"] = load(ctrl["ICPpath"],ctrl["LApath"];
                        instrument=ctrl["instrument"])
     ctrl["priority"]["load"] = false
     ctrl["head2name"] = true
@@ -451,18 +457,17 @@ function TUIexport2json(ctrl::AbstractDict,
 end
 
 function TUIimportLog!(ctrl::AbstractDict,
-                       tree::AbstractDict,
                        response::AbstractString)
+    TUIclear!(ctrl)
     history = CSV.read(response,DataFrame)
-    ctrl["history"] = DataFrame(task=String[],action=String[])
     for row in eachrow(history)
         try
-            dispatch!(ctrl,tree;key=row[1],response=row[2])
+            dispatch!(ctrl;key=row[1],response=row[2])
         catch e
             println(e)
         end
     end
-    return "xxx"
+    return "x"
 end
 
 function TUIexportLog(ctrl::AbstractDict,
@@ -561,7 +566,12 @@ function TUIhead2name!(ctrl::AbstractDict,
 end
 
 function TUIrefresh!(ctrl::AbstractDict)
-    TUIload!(ctrl,ctrl["dname"])
+    if ctrl["multifile"]
+        TUIloadICPfile!(ctrl,ctrl["ICPpath"])
+        TUIloadLAfile!(ctrl,ctrl["LApath"])
+    else
+        TUIloadICPdir!(ctrl,ctrl["ICPpath"])
+    end
     snames = getSnames(ctrl["run"])
     for (refmat,prefix) in ctrl["standards"]
         setGroup!(ctrl["run"],prefix,refmat)
@@ -572,3 +582,45 @@ function TUIrefresh!(ctrl::AbstractDict)
     TUIprocess!(ctrl)
     return nothing
 end
+
+function TUIclear!(ctrl::AbstractDict)
+    tree = TUIinit()
+    empty!(ctrl)
+    for (k,v) in tree
+        ctrl[k] = v
+    end
+    return nothing
+end
+
+function TUIinit!()
+    _PT["ctrl"] = TUIinit()
+end
+function TUIinit()
+    return Dict(
+        "priority" => Dict("load" => true, "method" => true,
+                           "standards" => true, "glass" => true,
+                           "process" => true),
+        "history" => DataFrame(task=String[],action=String[]),
+        "chain" => ["top"],
+        "run" => nothing,
+        "i" => 1,
+        "den" => nothing,
+        "multifile" => true,
+        "head2name" => true,
+        "method" => "",
+        "instrument" => "",
+        "ICPpath" => "",
+        "LApath" => "",
+        "channels" => Dict(),
+        "standards" => AbstractString[],
+        "glass" => AbstractString[],
+        "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
+        "PAcutoff" => nothing,
+        "blank" => nothing,
+        "par" => nothing,
+        "cache" => nothing,
+        "transformation" => "sqrt",
+        "template" => false
+    )
+end
+

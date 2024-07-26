@@ -1,51 +1,31 @@
-function PT(logbook="",tree=PTree())
+function PT!(logbook::AbstractString="")
     TUIwelcome()
-    ctrl = Dict(
-        "priority" => Dict("load" => true, "method" => true,
-                           "standards" => true, "glass" => true,
-                           "process" => true),
-        "history" => DataFrame(task=String[],action=String[]),
-        "chain" => ["top"],
-        "i" => 1,
-        "den" => nothing,
-        "multifile" => true,
-        "head2name" => true,
-        "instrument" => "",
-        "dname" => "",
-        "method" => "",
-        "channels" => Dict(),
-        "standards" => AbstractString[],
-        "glass" => AbstractString[],
-        "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
-        "PAcutoff" => nothing,
-        "blank" => nothing,
-        "par" => nothing,
-        "cache" => nothing,
-        "transformation" => "sqrt",
-        "template" => false
-    )
+    if isnothing(_PT["ctrl"])
+        TUIinit!()
+    else
+        _PT["ctrl"]["chain"] = ["top"]
+    end
     if logbook != ""
-        TUIimportLog!(ctrl,tree,logbook)
+        TUIimportLog!(_PT["ctrl"],logbook)
     end
     while true
-        if length(ctrl["chain"])<1 return end
+        if length(_PT["ctrl"]["chain"])<1 return end
         try
-            dispatch!(ctrl,tree,verbose=false)
+            dispatch!(_PT["ctrl"],verbose=false)
         catch e
             println(e)
         end
     end
 end
-export PT
+export PT!
 
-function dispatch!(ctrl::AbstractDict,
-                   tree::AbstractDict;
+function dispatch!(ctrl::AbstractDict;
                    key=nothing,response=nothing,verbose=false)
     if (verbose)
         println(ctrl["chain"])
     end
     if isnothing(key) key = ctrl["chain"][end] end
-    (message,help,action) = tree[key]
+    (message,help,action) = _PT["tree"][key]
     if isa(message,Function)
         println("\n"*message(ctrl))
     else
@@ -93,7 +73,16 @@ function dispatch!(ctrl::AbstractDict,
     end
 end
 
+function PTree!(tree::AbstractDict)
+    _PT["tree"] = tree
+end
+export PTree!
 function PTree()
+    return _PT["tree"]
+end
+export PTree
+
+function getPTree()
     Dict(
         "top" => (
             message = TUIwelcomeMessage,
@@ -111,7 +100,8 @@ function PTree()
                 "e" => "export",
                 "l" => "log",
                 "o" => "options",
-                "R" => TUIrefresh!
+                "u" => TUIrefresh!,
+                "c" => TUIclear!
             )
         ),
         "instrument" => (
@@ -776,4 +766,3 @@ function PTree()
         )
     )
 end
-export PTree
