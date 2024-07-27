@@ -211,6 +211,18 @@ function timestamptest(verbose=true)
     @test display(p) != NaN
 end
 
+module test
+function PTree!(tree::AbstractDict)
+    old = tree["top"]
+    tree["top"] = (message = "test", help = "test", action = old.action)
+end
+export PTree!
+end
+using .test
+function extensiontest(verbose=true)
+    PT!(test,logbook="logs/extension.log")
+end
+
 function TUItest()
     PT!(logbook="logs/test.log")
 end
@@ -234,4 +246,5 @@ Plots.closeall()
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
 @testset "timestamp test" begin timestamptest() end
+@testset "extension test" begin extensiontest() end
 @testset "TUI test" begin TUItest() end

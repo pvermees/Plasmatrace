@@ -1,6 +1,6 @@
 function PT!(extensions...;logbook::AbstractString="")
     for (i, extension) in enumerate(extensions)
-        println("Extension #$i = $extension")
+        extension.PTree!(_PT["tree"])
     end
     TUIwelcome()
     if isnothing(_PT["ctrl"])
