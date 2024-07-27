@@ -17,12 +17,12 @@ end
 function TUIread(ctrl::AbstractDict)
     if ctrl["template"]
         if ctrl["multifile"]
-            push!(ctrl["chain"],"loadICPdir")
+            return "loadICPdir"
         else
-            push!(ctrl["chain"],"loadICPfile")
+            return "loadICPfile"
         end
     else
-        push!(ctrl["chain"],"instrument")
+        return "instrument"
     end
 end
 
@@ -89,6 +89,7 @@ end
 
 function TUItabulate(ctrl::AbstractDict)
     summarise(ctrl["run"])
+    return nothing
 end
 
 function TUIcolumns!(ctrl::AbstractDict,
@@ -214,7 +215,7 @@ end
 
 function TUIviewer!(ctrl::AbstractDict)
     TUIplotter(ctrl)
-    push!(ctrl["chain"],"view")
+    return "view"
 end
 
 function TUIplotter(ctrl::AbstractDict)
@@ -241,6 +242,7 @@ function TUIplotter(ctrl::AbstractDict)
         TUIaddPAline!(p,ctrl["PAcutoff"])
     end
     display(p)
+    return nothing
 end
 
 function TUIaddPAline!(p,cutoff::AbstractFloat)
@@ -251,18 +253,19 @@ function TUIaddPAline!(p,cutoff::AbstractFloat)
                     seriestype=:line,label="",
                     linewidth=2,linestyle=:dash)
     end
+    return nothing
 end
 
 function TUInext!(ctrl::AbstractDict)
     ctrl["i"] += 1
     if ctrl["i"]>length(ctrl["run"]) ctrl["i"] = 1 end
-    TUIplotter(ctrl)
+    return TUIplotter(ctrl)
 end
 
 function TUIprevious!(ctrl::AbstractDict)
     ctrl["i"] -= 1
     if ctrl["i"]<1 ctrl["i"] = length(ctrl["run"]) end
-    TUIplotter(ctrl)
+    return TUIplotter(ctrl)
 end
 
 function TUIgoto!(ctrl::AbstractDict,
@@ -295,7 +298,7 @@ end
 
 function TUIoneAutoBlankWindow!(ctrl::AbstractDict)
     setBwin!(ctrl["run"][ctrl["i"]])
-    TUIplotter(ctrl)
+    return TUIplotter(ctrl)
 end
 
 function TUIoneSingleBlankWindow!(ctrl::AbstractDict,
@@ -318,7 +321,7 @@ end
 
 function TUIallAutoBlankWindow!(ctrl::AbstractDict)
     setBwin!(ctrl["run"])
-    TUIplotter(ctrl)
+    return TUIplotter(ctrl)
 end
 
 function TUIallSingleBlankWindow!(ctrl::AbstractDict,
@@ -345,7 +348,7 @@ end
 
 function TUIoneAutoSignalWindow!(ctrl::AbstractDict)
     setSwin!(ctrl["run"][ctrl["i"]])
-    TUIplotter(ctrl)
+    return TUIplotter(ctrl)
 end
 
 function TUIoneSingleSignalWindow!(ctrl::AbstractDict,
@@ -368,7 +371,7 @@ end
 
 function TUIallAutoSignalWindow!(ctrl::AbstractDict)
     setSwin!(ctrl["run"])
-    TUIplotter(ctrl)
+    return TUIplotter(ctrl)
 end
 
 function TUIallSingleSignalWindow!(ctrl::AbstractDict,
@@ -422,6 +425,7 @@ function TUIprocess!(ctrl::AbstractDict)
                                 PAcutoff=ctrl["PAcutoff"])
     ctrl["priority"]["process"] = false
     println("Done")
+    return nothing
 end
 
 function TUIsubset!(ctrl::AbstractDict,
@@ -596,6 +600,7 @@ end
 
 function TUIinit!()
     _PT["ctrl"] = TUIinit()
+    return nothing
 end
 function TUIinit()
     return Dict(

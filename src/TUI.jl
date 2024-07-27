@@ -46,32 +46,35 @@ function dispatch!(ctrl::AbstractDict;
         next = action[response]
     end
     if isa(next,Function)
-        next(ctrl)
-    elseif next == "x"
+        final = next(ctrl)
+    else
+        final = next
+    end
+    if final == "x"
         if length(ctrl["chain"])<1 return end
         pop!(ctrl["chain"])
-    elseif next == "xx"
+    elseif final == "xx"
         if length(ctrl["chain"])<2 return end
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
-    elseif next == "xxx"
+    elseif final == "xxx"
         if length(ctrl["chain"])<3 return end
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
-    elseif next == "xxxx"
+    elseif final == "xxxx"
         if length(ctrl["chain"])<4 return end
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
         pop!(ctrl["chain"])
-    elseif isnothing(next)
+    elseif isnothing(final)
         if length(ctrl["chain"])<1 return end
     else
-        push!(ctrl["chain"],next)
+        push!(ctrl["chain"],final)
     end
     toskip = [TUInext!,TUIprevious!,TUItabulate,"goto"]
-    if !(next in toskip) & !(key in toskip)
+    if !(key in toskip) & !(next in toskip) & !(final in toskip)
         push!(ctrl["history"],[key,response])
     end
 end
