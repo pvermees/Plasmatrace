@@ -6,7 +6,7 @@ function PT!(extensions...;logbook::AbstractString="")
         _PT["ctrl"]["chain"] = ["top"]
     end
     for (i, extension) in enumerate(extensions)
-        extension.PT!(_PT)
+        extension.extend!(_PT)
     end
     if logbook != ""
         TUIimportLog!(_PT["ctrl"],logbook)
