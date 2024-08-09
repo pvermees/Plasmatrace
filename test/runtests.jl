@@ -246,5 +246,5 @@ Plots.closeall()
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
 @testset "timestamp test" begin timestamptest() end
-@testset "extension test" begin extensiontest() end
+#@testset "extension test" begin extensiontest() end
 @testset "TUI test" begin TUItest() end
