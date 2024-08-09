@@ -1,12 +1,12 @@
 function PT!(extensions...;logbook::AbstractString="")
-    for (i, extension) in enumerate(extensions)
-        extension.PTree!(_PT["tree"])
-    end
     TUIwelcome()
     if isnothing(_PT["ctrl"])
         TUIinit!()
     else
         _PT["ctrl"]["chain"] = ["top"]
+    end
+    for (i, extension) in enumerate(extensions)
+        extension.PT!(_PT)
     end
     if logbook != ""
         TUIimportLog!(_PT["ctrl"],logbook)
