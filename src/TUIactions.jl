@@ -590,10 +590,13 @@ function TUIrefresh!(ctrl::AbstractDict)
 end
 
 function TUIclear!(ctrl::AbstractDict)
-    tree = TUIinit()
+    default = TUIinit()
     empty!(ctrl)
-    for (k,v) in tree
+    for (k,v) in default
         ctrl[k] = v
+    end
+    for (i, extension) in enumerate(_PT["extensions"])
+        extension.extend!(_PT)
     end
     return nothing
 end

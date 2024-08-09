@@ -1,11 +1,12 @@
 function PT!(extensions...;logbook::AbstractString="")
+    _PT["extensions"] = extensions
     TUIwelcome()
     if isnothing(_PT["ctrl"])
         TUIinit!()
     else
         _PT["ctrl"]["chain"] = ["top"]
     end
-    for (i, extension) in enumerate(extensions)
+    for (i, extension) in enumerate(_PT["extensions"])
         extension.extend!(_PT)
     end
     if logbook != ""
@@ -22,9 +23,12 @@ function PT!(extensions...;logbook::AbstractString="")
 end
 export PT!
 
+function initialise!()
+end
+
 function dispatch!(ctrl::AbstractDict;
                    key=nothing,response=nothing,verbose=false)
-    if (verbose)
+    if verbose
         println(ctrl["chain"])
     end
     if isnothing(key) key = ctrl["chain"][end] end

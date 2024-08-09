@@ -212,9 +212,9 @@ function timestamptest(verbose=true)
 end
 
 module test
-function PTree!(tree::AbstractDict)
-    old = tree["top"]
-    tree["top"] = (message = "test", help = "test", action = old.action)
+function extend!(_PT::AbstractDict)
+    old = _PT["tree"]["top"]
+    _PT["tree"]["top"] = (message = "test", help = "test", action = old.action)
 end
 export PTree!
 end
@@ -246,5 +246,5 @@ Plots.closeall()
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
 @testset "timestamp test" begin timestamptest() end
-#@testset "extension test" begin extensiontest() end
+@testset "extension test" begin extensiontest() end
 @testset "TUI test" begin TUItest() end
