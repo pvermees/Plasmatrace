@@ -199,6 +199,17 @@ function getiratios(csv::AbstractString=joinpath(@__DIR__,"../settings/iratio.cs
     return out
 end
 export getiratios
+function getNuclides(csv::AbstractString=joinpath(@__DIR__,"../settings/nuclides.csv"))
+    tab = CSV.read(csv, DataFrame)
+    elements = unique(tab[:,:element])
+    out = Dict()
+    for element in elements
+        i = findall(tab[:,:element] .== element)
+        out[element] = tab[i,:isotope]
+    end
+    return out
+end
+export getNuclides
 function getGlass(csv::AbstractString=joinpath(@__DIR__,"../settings/glass.csv"))
     tab = CSV.read(csv, DataFrame)
     out = Dict()

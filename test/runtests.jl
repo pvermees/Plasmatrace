@@ -1,4 +1,4 @@
-using Plasmatrace, Test, CSV, Infiltrator
+using Plasmatrace, Test, CSV, Infiltrator, DataFrames
 import Plots
 
 function loadtest(verbose=false)
@@ -147,7 +147,7 @@ end
 
 function exporttest()
     ratios = PAtest()
-    selection = subset(ratios,"BP") # "hogsbo"
+    selection = prefix2subset(ratios,"BP") # "hogsbo"
     CSV.write("BP.csv",selection)
     export2IsoplotR(selection,"Lu-Hf",fname="BP.json")
 end
@@ -204,11 +204,47 @@ function carbonatetest(verbose=false)
 end
 
 function timestamptest(verbose=true)
-    myrun = load("data/timestamp/MSdata.csv","data/timestamp/timestamp.csv";
+    myrun = load("data/timestamp/MSdata.csv",
+                 "data/timestamp/timestamp.csv";
                  instrument="Agilent")
     if verbose summarise(myrun;verbose=true,n=5) end
     p = plot(myrun[2];transformation="sqrt")
     @test display(p) != NaN
+end
+
+function concentrationtest()
+    method = "concentrations"
+    myrun = load("data/Lu-Hf",instrument="Agilent")
+    elements = channels2elements(myrun)
+    internal = ("Al27 -> 27",1.2e5)
+    glass = Dict("NIST612" => "NIST612p")
+    blank = fitBlanks(myrun;nblank=2)
+    setGroup!(myrun,glass)
+    df = pool(myrun;signal=true,group="NIST612")
+    dat = df[:,2:(end-2)]
+    Xm = dat[:,Not(internal[1])]
+    Sm = dat[:,internal[1]]
+    concs = DataFrame()
+    SRM = collect(keys(glass))[1] # NIST612
+    refconc = getGlass()[SRM]
+    for col in names(elements)
+        element = elements[1,col]
+        concs[!,col] = DataFrame(refconc)[:,element]
+    end
+    ratios = concs[:,Not(internal[1])]./concs[:,internal[1]]
+    R = collect(ratios[1,:])
+    ef = fill(1.0,length(R))
+    t = df[:,:t]
+    T = df[:,:T]
+    drift = [0.0]
+    down = [0.0]
+    ft = polyFac(drift,t)
+    FT = polyFac(down,T)
+    bXt = polyVal(blank[:,Not(internal[1])],t)
+    bSt = polyVal(blank[:,internal[1]],t)
+    pred = predict(t,T,Xm,Sm,R,ef,drift,down,bXt,bSt)
+    #blk, fit = process!(myrun,method,elements,internal,glass;
+    #                    nblank=2,ndrift=1,ndown=1)
 end
 
 module test
@@ -246,5 +282,6 @@ Plots.closeall()
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
 @testset "timestamp test" begin timestamptest() end
+@testset "concentration test" begin concentrationtest() end
 @testset "extension test" begin extensiontest() end
 @testset "TUI test" begin TUItest() end

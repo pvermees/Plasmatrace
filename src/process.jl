@@ -10,9 +10,23 @@ function process!(run::Vector{Sample},
                   nblank::Integer=2,ndrift::Integer=1,ndown::Integer=1,
                   PAcutoff=nothing,verbose::Bool=false)
     blank = fitBlanks(run;nblank=nblank)
-    setGroup!(run,standards)
     setGroup!(run,glass)
+    setGroup!(run,standards)
     fit = fractionation(run,method,blank,channels,standards,glass;
+                        ndrift=ndrift,ndown=ndown,
+                        PAcutoff=PAcutoff,verbose=verbose)
+    return blank, fit
+end
+# concentrations:
+function process!(run::Vector{Sample},
+                  elements::AbstractDataFrame,
+                  internal::AbstractDict,
+                  glass::AbstractDict;
+                  nblank::Integer=2,ndrift::Integer=1,ndown::Integer=1,
+                  PAcutoff=nothing,verbose::Bool=false)
+    blank = fitBlanks(run;nblank=nblank)
+    setGroup!(run,glass)
+    fit = fractionation(run,blank,elements,internal,glass;
                         ndrift=ndrift,ndown=ndown,
                         PAcutoff=PAcutoff,verbose=verbose)
     return blank, fit
@@ -42,13 +56,9 @@ function fractionation(run::Vector{Sample},
                        ndown::Integer=0,
                        PAcutoff=nothing,
                        verbose::Bool=false)
-    if method in ["concentrations","concentration","conc"]
-        # TODO
-    else
-        mf = fractionation(run,method,blank,channels,glass;verbose=verbose)
-        out = fractionation(run,method,blank,channels,standards,mf;
-                            ndrift=ndrift,ndown=ndown,PAcutoff=PAcutoff,verbose=verbose)
-    end
+    mf = fractionation(run,method,blank,channels,glass;verbose=verbose)
+    out = fractionation(run,method,blank,channels,standards,mf;
+                        ndrift=ndrift,ndown=ndown,PAcutoff=PAcutoff,verbose=verbose)
     return out
 end
 function fractionation(run::Vector{Sample},
@@ -210,6 +220,19 @@ function fractionation(run::Vector{Sample},
     return fractionation(run,method,blank,channels,
                          collect(keys(glass));
                          verbose=verbose)
+end
+# for concentration measurements:
+function fractionation(run::Vector{Sample},
+                       blank::AbstractDataFrame,
+                       elements::AbstractDataFrame,
+                       internal::Tuple,
+                       glass::AbstractDict;
+                       ndrift::Integer=1,
+                       ndown::Integer=0,
+                       PAcutoff=nothing,
+                       verbose::Bool=false)
+    # TODO
+    return nothing, nothing
 end
 export fractionation
 

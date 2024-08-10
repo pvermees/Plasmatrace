@@ -224,7 +224,7 @@ function export2IsoplotR(run::Vector{Sample},
     if isnothing(prefix)
         export2IsoplotR(ratios,method;fname=fname)
     else
-        export2IsoplotR(subset(ratios,prefix),method;fname=fname)
+        export2IsoplotR(prefix2subset(ratios,prefix),method;fname=fname)
     end
 end
 function export2IsoplotR(ratios::AbstractDataFrame,

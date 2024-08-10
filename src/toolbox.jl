@@ -68,6 +68,15 @@ function polyVal(p::AbstractVector,t::AbstractVector)
     end
     out
 end
+function polyVal(p::AbstractDataFrame,t::AbstractVector)
+    nc = size(p,2)
+    nr = length(t)
+    out = DataFrame(fill(0.0,(nr,nc)),names(p))
+    for col in names(p)
+        out[:,col] = polyVal(p[:,col],t)
+    end
+    return out
+end
 export polyVal
 
 function polyFac(p::AbstractVector,t::AbstractVector)
@@ -194,16 +203,16 @@ function string2windows(samp::Sample,text::AbstractString,single::Bool)
     return windows
 end
 
-function subset(run::Vector{Sample},
-                prefix::AbstractString)
+function prefix2subset(run::Vector{Sample},
+                       prefix::AbstractString)
     selection = findall(contains(prefix),getGroups(run))
     return run[selection]
 end
-function subset(ratios::AbstractDataFrame,
-                prefix::AbstractString)
+function prefix2subset(ratios::AbstractDataFrame,
+                       prefix::AbstractString)
     return ratios[findall(contains(prefix),ratios[:,1]),:]
 end
-export subset
+export prefix2subset
 
 function isAnalog(samp::Sample,channels::AbstractDict,cutoff=nothing)
     out = true
@@ -358,3 +367,26 @@ function dict2string(dict::AbstractDict)
     out *= ")"
     return out
 end
+
+function channels2elements(run::AbstractVector)
+    channels = getChannels(run)
+    out = DataFrame()
+    elements = collect(keys(_PT["nuclides"]))
+    for channel in channels
+        matches = findall(occursin.(elements,channel))
+        if length(matches)>1 # e.g. "B" and "Be"
+            for element in elements[matches]
+                isotopes = string.(_PT["nuclides"][element])
+                hasisotope = findall(occursin.(isotopes,channel))
+                if !isempty(hasisotope)
+                    out[!,channel] = [element]
+                    break
+                end
+            end
+        else # e.g. "Pb"
+            out[!,channel] = elements[matches]
+        end
+    end
+    return out
+end
+export channels2elements
