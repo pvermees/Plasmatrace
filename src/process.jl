@@ -22,12 +22,11 @@ function process!(run::Vector{Sample},
                   elements::AbstractDataFrame,
                   internal::Tuple,
                   glass::AbstractDict;
-                  nblank::Integer=2,ndown::Integer=1,
-                  PAcutoff=nothing,verbose::Bool=false)
+                  nblank::Integer=2,PAcutoff=nothing,verbose::Bool=false)
     blank = fitBlanks(run;nblank=nblank)
     setGroup!(run,glass)
     fit = fractionation(run,blank,elements,internal,glass;
-                        ndown=ndown,PAcutoff=PAcutoff,verbose=verbose)
+                        PAcutoff=PAcutoff,verbose=verbose)
     return blank, fit
 end
 export process!
@@ -226,46 +225,26 @@ function fractionation(run::Vector{Sample},
                        elements::AbstractDataFrame,
                        internal::Tuple,
                        glass::AbstractDict;
-                       ndown::Integer=0,
                        PAcutoff=nothing,
                        verbose::Bool=false)
-    # initialise
-    fractionation_data = Dict()
-    efdf = DataFrame() # dataframe of ef estimates
+    ne = size(elements,2)
+    num = den = fill(0.0,ne-1)
     for (SRM,prefix) in glass
         dat = pool(run;signal=true,group=SRM)
         concs = elements2concs(elements,SRM)
         bt = polyVal(blank,dat.t)
         sig = getSignals(dat)
         (nr,nc) = size(sig)
-        ef = fill(1.0,nc-1)
-        FT = fill(1.0,nr)
-        pred = predict(sig,concs,ef,FT,bt,internal[1])
-        Xf = pred[:,Not(internal[1])]
         Xm = sig[:,Not(internal[1])]
         Sm = sig[:,internal[1]]
-        R = collect((concs[:,Not(internal[1])]./concs[:,internal[1]])[1,:])
-        efdf = vcat(efdf, Xm./(R'.*Sm.*FT) )
         bXt = bt[:,Not(internal[1])]
         bSt = bt[:,internal[1]]
-        fractionation_data[SRM] = (Xm=Xm,Sm=Sm,R=R,bXt=bXt,bSt=bSt,T=dat.T)
+        S = Sm.-bSt
+        R = collect((concs[:,Not(internal[1])]./concs[:,internal[1]])[1,:])
+        num += sum.(eachcol(R'.*(Xm.-bXt).*S))
+        den += sum.(eachcol((R'.*S).^2))
     end
-    init = [log.(Statistics.mean.(eachcol(efdf)));fill(0.0,ndown)]
-    # misfit function
-    function misfit(par)
-        efrac = par[1:end-ndown]
-        ef = exp.(efrac)
-        down = vcat(0.0,par[end-ndown+1:end])
-        out = 0.0
-        for (SRM,tuple) in fractionation_data
-            FT = polyFac(down,tuple.T)
-            out += SS(tuple.Xm,tuple.Sm,tuple.R,ef,FT,tuple.bXt,tuple.bSt)
-        end
-        return out
-    end
-    # optimise
-    fit = Optim.optimize(misfit,init)
-    return blank, fit
+    return num./den
 end
 export fractionation
 

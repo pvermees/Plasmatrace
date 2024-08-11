@@ -222,8 +222,8 @@ function concentrationtest()
     glass = Dict("NIST612" => "NIST612p")
     blank = fitBlanks(myrun;nblank=2)
     setGroup!(myrun,glass)
-    blk, fit = process!(myrun,elements,internal,glass;
-                        nblank=2,ndown=1)
+    blk, fit = process!(myrun,elements,internal,glass;nblank=2)
+    pred = predict(myrun[4],fit,blk,elements,internal[1])
 end
 
 module test

@@ -14,23 +14,6 @@ function getp(Pm,Dm,dm,x0,y0,y1,ft,FT,mf,bPt,bDt,bdt)
     return p
 end
 export getp
-function getS(Xm::AbstractDataFrame,
-              Sm::AbstractVector,
-              R::AbstractVector,
-              ef::AbstractVector,
-              FT::AbstractVector,
-              bXt::AbstractDataFrame,
-              bSt::AbstractVector)
-    #( FT*Rz*(Zm-bZt)*efZ + FT*Ry*(Ym-bYt)*efY + FT*Rx*(Xm-bXt)*efX + (Sm-bSt))/
-    #( FT^2*Rz^2*efZ^2 + FT^2*Ry^2*efY^2 + FT^2*Rx^2*efX^2 + 1)
-    N = @. (R*ef)'*(Xm-bXt)*FT
-    D = @. ((R*ef)'*FT)^2 + 1
-    num = sum.(eachrow(N)) .+ (Sm.-bSt)
-    den = sum.(eachrow(D))
-    S = num./den
-    return S
-end
-export getS
 
 # isotopic ratios in matrix matched mineral standards
 function SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
@@ -42,18 +25,6 @@ end
 function SS(t,Dm,dm,y0,mfrac,bD,bd)
     pred = predict(t,Dm,dm,y0,mfrac,bD,bd)
     S = @. (pred[:,"D"]-Dm)^2 + (pred[:,"d"]-dm)^2
-    return sum(S)
-end
-# concentrations
-function SS(Xm::AbstractDataFrame,
-            Sm::AbstractVector,
-            R::AbstractVector,
-            ef::AbstractVector,
-            FT::AbstractVector,
-            bXt::AbstractDataFrame,
-            bSt::AbstractVector)
-    Xf, Sf = predict(Xm,Sm,R,ef,FT,bXt,bSt)
-    S = sum.(eachrow((Xf.-Xm).^2)) + (Sf.-Sm).^2
     return sum(S)
 end
 
@@ -138,33 +109,27 @@ function predict(dat::AbstractDataFrame,
     return predict(t,Dm,dm,y0,pars.mfrac,bD,bd)
 end
 # concentrations
-function predict(Xm::AbstractDataFrame,  # size n x (N-1)
-                 Sm::AbstractVector,     # length n
-                 R::AbstractVector,      # length (N-1)
-                 ef::AbstractVector,     # length (N-1)
-                 FT::AbstractVector,     # length n
-                 bXt::AbstractDataFrame, # size n x (N-1)
-                 bSt::AbstractVector)    # length n
-    S = getS(Xm,Sm,R,ef,FT,bXt,bSt)
-    Sf = @. S + bSt
-    Xf = @. (R*ef)'*S*FT + bXt
-    return Xf, Sf
-end
-function predict(sig::AbstractDataFrame,    # size n x N
-                 concs::AbstractDataFrame,  # length N
-                 ef::AbstractVector,        # length N-1
-                 FT::AbstractVector,        # length n
-                 bt::AbstractDataFrame,     # size n x N
+function predict(samp::Sample,
+                 ef::AbstractVector,
+                 blank::AbstractDataFrame,
+                 elements::AbstractDataFrame,
                  internal::AbstractString)
-    Xm = sig[:,Not(internal)]
-    Sm = sig[:,internal]
-    R = collect((concs[:,Not(internal)]./concs[:,internal])[1,:])
-    bXt = bt[:,Not(internal)]
-    bSt = bt[:,internal]
-    Xf, Sf = predict(Xm,Sm,R,ef,FT,bXt,bSt)
-    out = copy(sig)
-    out[!,Not(internal)] = Xf
-    out[!,internal] = Sf
-    return out
+    if samp.group in collect(keys(_PT["glass"]))
+        dat = windowData(samp;signal=true)
+        sig = getSignals(dat)
+        Xm = sig[:,Not(internal)]
+        Sm = sig[:,internal]
+        concs = elements2concs(elements,samp.group)
+        R = collect((concs[:,Not(internal)]./concs[:,internal])[1,:])
+        bt = polyVal(blank,dat.t)
+        bXt = bt[:,Not(internal)]
+        bSt = bt[:,internal]
+        S = Sm.-bSt
+        out = copy(sig)
+        out[!,Not(internal)] = @. (R*ef)'*S + bXt
+        return out
+    else
+        PTerror("notStandard")
+    end
 end
 export predict
