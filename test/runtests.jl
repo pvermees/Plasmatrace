@@ -1,4 +1,4 @@
-using Plasmatrace, Test, CSV, Infiltrator
+using Plasmatrace, Test, CSV, Infiltrator, DataFrames, Statistics
 import Plots
 
 function loadtest(verbose=false)
@@ -50,7 +50,9 @@ function predictest()
     setGroup!(myrun,glass)
     standards = Dict("BP" => "BP")
     setGroup!(myrun,standards)
-    fit = Pars([4.2670587703673934], [0.0, 0.05197296298083967], 0.3838697441780825)
+    fit = (drift=[4.2670587703673934],
+           down=[0.0, 0.05197296298083967],
+           mfrac=0.3838697441780825)
     samp = myrun[4]
     if samp.group == "sample"
         println("Not a standard")
@@ -147,7 +149,7 @@ end
 
 function exporttest()
     ratios = PAtest()
-    selection = subset(ratios,"BP") # "hogsbo"
+    selection = prefix2subset(ratios,"BP") # "hogsbo"
     CSV.write("BP.csv",selection)
     export2IsoplotR(selection,"Lu-Hf",fname="BP.json")
 end
@@ -204,11 +206,24 @@ function carbonatetest(verbose=false)
 end
 
 function timestamptest(verbose=true)
-    myrun = load("data/timestamp/MSdata.csv","data/timestamp/timestamp.csv";
+    myrun = load("data/timestamp/MSdata.csv",
+                 "data/timestamp/timestamp.csv";
                  instrument="Agilent")
     if verbose summarise(myrun;verbose=true,n=5) end
     p = plot(myrun[2];transformation="sqrt")
     @test display(p) != NaN
+end
+
+function concentrationtest()
+    method = "concentrations"
+    myrun = load("data/Lu-Hf",instrument="Agilent")
+    elements = channels2elements(myrun)
+    internal = ("Al27 -> 27",1.2e5)
+    glass = Dict("NIST612" => "NIST612p")
+    blank = fitBlanks(myrun;nblank=2)
+    setGroup!(myrun,glass)
+    blk, fit = process!(myrun,elements,internal,glass;nblank=2)
+    pred = predict(myrun[4],fit,blk,elements,internal[1])
 end
 
 module test
@@ -246,5 +261,6 @@ Plots.closeall()
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
 @testset "timestamp test" begin timestamptest() end
+@testset "concentration test" begin concentrationtest() end
 @testset "extension test" begin extensiontest() end
 @testset "TUI test" begin TUItest() end

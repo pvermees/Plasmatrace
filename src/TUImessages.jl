@@ -27,7 +27,7 @@ end
 
 function TUIcolumnMessage(ctrl::AbstractDict)
     msg = "Choose from the following list of channels:\n"
-    labels = names(getDat(ctrl["run"][1]))
+    labels = names(getSignals(ctrl["run"][1]))
     for i in eachindex(labels)
         msg *= string(i)*". "*labels[i]*"\n"
     end

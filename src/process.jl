@@ -10,10 +10,22 @@ function process!(run::Vector{Sample},
                   nblank::Integer=2,ndrift::Integer=1,ndown::Integer=1,
                   PAcutoff=nothing,verbose::Bool=false)
     blank = fitBlanks(run;nblank=nblank)
-    setGroup!(run,standards)
     setGroup!(run,glass)
+    setGroup!(run,standards)
     fit = fractionation(run,method,blank,channels,standards,glass;
                         ndrift=ndrift,ndown=ndown,
+                        PAcutoff=PAcutoff,verbose=verbose)
+    return blank, fit
+end
+# concentrations:
+function process!(run::Vector{Sample},
+                  elements::AbstractDataFrame,
+                  internal::Tuple,
+                  glass::AbstractDict;
+                  nblank::Integer=2,PAcutoff=nothing,verbose::Bool=false)
+    blank = fitBlanks(run;nblank=nblank)
+    setGroup!(run,glass)
+    fit = fractionation(run,blank,elements,internal,glass;
                         PAcutoff=PAcutoff,verbose=verbose)
     return blank, fit
 end
@@ -42,13 +54,9 @@ function fractionation(run::Vector{Sample},
                        ndown::Integer=0,
                        PAcutoff=nothing,
                        verbose::Bool=false)
-    if method in ["concentrations","concentration","conc"]
-        # TODO
-    else
-        mf = fractionation(run,method,blank,channels,glass;verbose=verbose)
-        out = fractionation(run,method,blank,channels,standards,mf;
-                            ndrift=ndrift,ndown=ndown,PAcutoff=PAcutoff,verbose=verbose)
-    end
+    mf = fractionation(run,method,blank,channels,glass;verbose=verbose)
+    out = fractionation(run,method,blank,channels,standards,mf;
+                        ndrift=ndrift,ndown=ndown,PAcutoff=PAcutoff,verbose=verbose)
     return out
 end
 function fractionation(run::Vector{Sample},
@@ -121,7 +129,7 @@ function fractionation(run::Vector{Sample},
                 println(fit)
             else
                 if fit.iteration_converged
-                    @warn "Reached the maximum number of iterations before reaching " *
+                    @warn "Reached the maximum number of iterations before achieving " *
                         "convergence. Reduce the order of the polynomials or fix the " *
                         "mass fractionation and try again."
                 end
@@ -135,7 +143,7 @@ function fractionation(run::Vector{Sample},
 
         mfrac = isnothing(mf) ? pars[end] : log(mf)
 
-        out = Pars(drift,down,mfrac)
+        out = (drift=drift,down=down,mfrac=mfrac)
     else
         analog = isAnalog(run,channels,PAcutoff)
         out = (analog = fractionation(run[analog],method,blank,channels,standards,mf;
@@ -211,11 +219,38 @@ function fractionation(run::Vector{Sample},
                          collect(keys(glass));
                          verbose=verbose)
 end
+# for concentration measurements:
+function fractionation(run::Vector{Sample},
+                       blank::AbstractDataFrame,
+                       elements::AbstractDataFrame,
+                       internal::Tuple,
+                       glass::AbstractDict;
+                       PAcutoff=nothing,
+                       verbose::Bool=false)
+    ne = size(elements,2)
+    num = den = fill(0.0,ne-1)
+    for (SRM,prefix) in glass
+        dat = pool(run;signal=true,group=SRM)
+        concs = elements2concs(elements,SRM)
+        bt = polyVal(blank,dat.t)
+        sig = getSignals(dat)
+        (nr,nc) = size(sig)
+        Xm = sig[:,Not(internal[1])]
+        Sm = sig[:,internal[1]]
+        bXt = bt[:,Not(internal[1])]
+        bSt = bt[:,internal[1]]
+        S = Sm.-bSt
+        R = collect((concs[:,Not(internal[1])]./concs[:,internal[1]])[1,:])
+        num += sum.(eachcol(R'.*(Xm.-bXt).*S))
+        den += sum.(eachcol((R'.*S).^2))
+    end
+    return num./den
+end
 export fractionation
 
 function atomic(samp::Sample,
                 channels::AbstractDict,
-                pars::Pars,
+                pars::NamedTuple,
                 blank::AbstractDataFrame)
     dat = windowData(samp,signal=true)
     t = dat.t
@@ -238,7 +273,7 @@ export atomic
 
 function averat(samp::Sample,
                 channels::AbstractDict,
-                pars::Pars,
+                pars::NamedTuple,
                 blank::AbstractDataFrame)
     t, T, P, D, d = atomic(samp,channels,pars,blank)
     nr = length(t)
@@ -264,7 +299,7 @@ function averat(samp::Sample,
 end
 function averat(run::Vector{Sample},
                 channels::AbstractDict,
-                pars::Union{Pars,NamedTuple},
+                pars::NamedTuple,
                 blank::AbstractDataFrame;
                 PAcutoff=nothing)
     ns = length(run)
@@ -274,7 +309,7 @@ function averat(run::Vector{Sample},
     for i in 1:ns
         samp = run[i]
         out[i,1] = samp.sname
-        if isa(pars,Pars)
+        if length(pars)==3
             samp_pars = pars
         elseif analog[i]
             samp_pars = pars.analog

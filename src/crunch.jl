@@ -14,11 +14,6 @@ function getp(Pm,Dm,dm,x0,y0,y1,ft,FT,mf,bPt,bDt,bdt)
     return p
 end
 export getp
-function getS(Xm,Sm,a,ft,FT,bXt,bSt)
-    S = -((FT*a*bXt-FT*Xm*a)*ft+bSt-Sm)/(FT^2*a^2*ft^2+1)
-    return S
-end
-export getS
 
 # isotopic ratios in matrix matched mineral standards
 function SS(t,T,Pm,Dm,dm,x0,y0,y1,drift,down,mfrac,bP,bD,bd)
@@ -30,12 +25,6 @@ end
 function SS(t,Dm,dm,y0,mfrac,bD,bd)
     pred = predict(t,Dm,dm,y0,mfrac,bD,bd)
     S = @. (pred[:,"D"]-Dm)^2 + (pred[:,"d"]-dm)^2
-    return sum(S)
-end
-# concentrations
-function SS(t,T,Xm,Sm,R,drift,down,bX,bS)
-    pred = predict(t,T,Xm,Sm,R,drift,down,bX,bS)
-    S = @. (pred[:,"X"]-Xm)^2 + (pred[:,"S"]-Sm)^2
     return sum(S)
 end
 
@@ -64,20 +53,9 @@ function predict(t,Dm,dm,y0,mfrac,bD,bd)
     df = @. D*y0*mf + bdt
     return DataFrame(D=Df,d=df)
 end
-# concentrations
-function predict(t,T,Xm,Sm,R,drift,down,bX,bS)
-    ft = polyFac(drift,t)
-    FT = polyFac(down,T)
-    bXt = polyVal(bX,t)
-    bSt = polyVal(bS,t)
-    S = getS(Xm,Sm,R,ft,FT,bXt,bSt)
-    Xf = @. S*R*ft*FT + bXt
-    Sf = @. S + bSt
-    return DataFrame(X=Xf,S=Sf)
-end
 function predict(samp::Sample,
                  method::AbstractString,
-                 pars::Pars,
+                 pars::NamedTuple,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
                  standards::AbstractDict,
@@ -86,7 +64,7 @@ function predict(samp::Sample,
     return predict(samp,pars,blank,channels,anchors)
 end
 function predict(samp::Sample,
-                 pars::Pars,
+                 pars::NamedTuple,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
                  anchors::AbstractDict)
@@ -100,7 +78,7 @@ function predict(samp::Sample,
 end
 # minerals
 function predict(dat::AbstractDataFrame,
-                 pars::Pars,
+                 pars::NamedTuple,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
                  anchor::NamedTuple)
@@ -119,7 +97,7 @@ function predict(dat::AbstractDataFrame,
 end
 # glass
 function predict(dat::AbstractDataFrame,
-                 pars::Pars,
+                 pars::NamedTuple,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
                  y0::AbstractFloat)
@@ -129,5 +107,29 @@ function predict(dat::AbstractDataFrame,
     bD = blank[:,channels["D"]]
     bd = blank[:,channels["d"]]
     return predict(t,Dm,dm,y0,pars.mfrac,bD,bd)
+end
+# concentrations
+function predict(samp::Sample,
+                 ef::AbstractVector,
+                 blank::AbstractDataFrame,
+                 elements::AbstractDataFrame,
+                 internal::AbstractString)
+    if samp.group in collect(keys(_PT["glass"]))
+        dat = windowData(samp;signal=true)
+        sig = getSignals(dat)
+        Xm = sig[:,Not(internal)]
+        Sm = sig[:,internal]
+        concs = elements2concs(elements,samp.group)
+        R = collect((concs[:,Not(internal)]./concs[:,internal])[1,:])
+        bt = polyVal(blank,dat.t)
+        bXt = bt[:,Not(internal)]
+        bSt = bt[:,internal]
+        S = Sm.-bSt
+        out = copy(sig)
+        out[!,Not(internal)] = @. (R*ef)'*S + bXt
+        return out
+    else
+        PTerror("notStandard")
+    end
 end
 export predict

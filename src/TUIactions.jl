@@ -94,7 +94,7 @@ end
 
 function TUIcolumns!(ctrl::AbstractDict,
                      response::AbstractString)
-    labels = names(getDat(ctrl["run"][1]))
+    labels = names(getSignals(ctrl["run"][1]))
     selected = parse.(Int,split(response,","))
     PDd = labels[selected]
     ctrl["channels"] = Dict("d" => PDd[3], "D" => PDd[2], "P" => PDd[1])
@@ -533,7 +533,7 @@ end
 function TUIPAlist(ctrl::AbstractDict)
     snames = getSnames(ctrl["run"])
     for i in eachindex(snames)
-        dat = getDat(ctrl["run"][i],ctrl["channels"])
+        dat = getSignals(ctrl["run"][i],ctrl["channels"])
         maxval = maximum(Matrix(dat))
         formatted = @sprintf("%.*e", 3, maxval)
         println(formatted*" ("*snames[i]*")")

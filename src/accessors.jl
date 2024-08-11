@@ -10,7 +10,7 @@ function getChannels(run::Vector{Sample})
     return getChannels(run[1])
 end
 function getChannels(samp::Sample)
-    return names(getDat(samp))
+    return names(getSignals(samp))
 end
 export getChannels
 
@@ -103,7 +103,7 @@ end
 export geti0
 
 function sett0!(samp::Sample)
-    dat = getDat(samp)
+    dat = getSignals(samp)
     i0 = geti0(dat)
     samp.t0 = samp.dat[i0,1]
 end
@@ -156,13 +156,17 @@ function getAnchors(method::AbstractString,refmats::AbstractDict,glass::Bool=fal
 end
 export getAnchors
 
-function getDat(samp::Sample)
-    return samp.dat[:,2:end-1]
+function getSignals(dat::AbstractDataFrame)
+    tail = "T" in names(dat) ? 2 : 1
+    return dat[:,2:end-tail]
 end
-function getDat(samp::Sample,channels::AbstractDict)
+function getSignals(samp::Sample)
+    return getSignals(samp.dat)
+end
+function getSignals(samp::Sample,channels::AbstractDict)
     return samp.dat[:,collect(values(channels))]
 end
-export getDat
+export getSignals
 
 function getPDd(method::AbstractString)
     i = findfirst(==(method),_PT["methods"][:,"method"])
@@ -199,6 +203,17 @@ function getiratios(csv::AbstractString=joinpath(@__DIR__,"../settings/iratio.cs
     return out
 end
 export getiratios
+function getNuclides(csv::AbstractString=joinpath(@__DIR__,"../settings/nuclides.csv"))
+    tab = CSV.read(csv, DataFrame)
+    elements = unique(tab[:,:element])
+    out = Dict()
+    for element in elements
+        i = findall(tab[:,:element] .== element)
+        out[element] = tab[i,:isotope]
+    end
+    return out
+end
+export getNuclides
 function getGlass(csv::AbstractString=joinpath(@__DIR__,"../settings/glass.csv"))
     tab = CSV.read(csv, DataFrame)
     out = Dict()
