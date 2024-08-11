@@ -18,13 +18,14 @@ function getS(Xm::AbstractDataFrame,
               Sm::AbstractVector,
               R::AbstractVector,
               ef::AbstractVector,
-              ft::AbstractVector,
               FT::AbstractVector,
               bXt::AbstractDataFrame,
               bSt::AbstractVector)
-    N = @. (ef*R)'*(Xm-bXt)*(ft*FT)
-    D = @. (R'*FT*ft)^2 + 1
-    num = sum.(eachrow(N)) .+ Sm.-bSt
+    #( FT*Rz*(Zm-bZt)*efZ + FT*Ry*(Ym-bYt)*efY + FT*Rx*(Xm-bXt)*efX + (Sm-bSt))/
+    #( FT^2*Rz^2*efZ^2 + FT^2*Ry^2*efY^2 + FT^2*Rx^2*efX^2 + 1)
+    N = @. (R*ef)'*(Xm-bXt)*FT
+    D = @. ((R*ef)'*FT)^2 + 1
+    num = sum.(eachrow(N)) .+ (Sm.-bSt)
     den = sum.(eachrow(D))
     S = num./den
     return S
@@ -44,18 +45,15 @@ function SS(t,Dm,dm,y0,mfrac,bD,bd)
     return sum(S)
 end
 # concentrations
-function SS(t::AbstractVector,
-            T::AbstractVector,
-            Xm::AbstractDataFrame,
+function SS(Xm::AbstractDataFrame,
             Sm::AbstractVector,
             R::AbstractVector,
             ef::AbstractVector,
-            drift::AbstractVector,
-            down::AbstractVector,
+            FT::AbstractVector,
             bXt::AbstractDataFrame,
             bSt::AbstractVector)
-    pred = predict(t,T,Xm,Sm,R,ef,drift,down,bXt,bSt)
-    S = @. (pred[:,"X"]-Xm)^2 + (pred[:,"S"]-Sm)^2
+    Xf, Sf = predict(Xm,Sm,R,ef,FT,bXt,bSt)
+    S = sum.(eachrow((Xf.-Xm).^2)) + (Sf.-Sm).^2
     return sum(S)
 end
 
@@ -140,27 +138,31 @@ function predict(dat::AbstractDataFrame,
     return predict(t,Dm,dm,y0,pars.mfrac,bD,bd)
 end
 # concentrations
-function predict(dat::AbstractDataFrame,     # size n x (N+3)
-                 pars::NamedTuple,          # efrac, drift, down
-                 concs::AbstractDataFrame,  # length 1 x N
+function predict(Xm::AbstractDataFrame,  # size n x (N-1)
+                 Sm::AbstractVector,     # length n
+                 R::AbstractVector,      # length (N-1)
+                 ef::AbstractVector,     # length (N-1)
+                 FT::AbstractVector,     # length n
+                 bXt::AbstractDataFrame, # size n x (N-1)
+                 bSt::AbstractVector)    # length n
+    S = getS(Xm,Sm,R,ef,FT,bXt,bSt)
+    Sf = @. S + bSt
+    Xf = @. (R*ef)'*S*FT + bXt
+    return Xf, Sf
+end
+function predict(sig::AbstractDataFrame,    # size n x N
+                 concs::AbstractDataFrame,  # length N
+                 ef::AbstractVector,        # length N-1
+                 FT::AbstractVector,        # length n
                  bt::AbstractDataFrame,     # size n x N
                  internal::AbstractString)
-    sig = getSignals(dat)
-    (n,N) = size(sig)
-    out = copy(sig)
     Xm = sig[:,Not(internal)]
     Sm = sig[:,internal]
     R = collect((concs[:,Not(internal)]./concs[:,internal])[1,:])
-    t = dat[:,:t]
-    T = dat[:,:T]
-    ef = exp.(pars.efrac)
-    ft = polyFac(pars.drift,t)
-    FT = polyFac(pars.down,T)
     bXt = bt[:,Not(internal)]
     bSt = bt[:,internal]
-    S = getS(Xm,Sm,R,ef,ft,FT,bXt,bSt)
-    Sf = @. S + bSt
-    Xf = @. R'*S*ft*FT + bXt
+    Xf, Sf = predict(Xm,Sm,R,ef,FT,bXt,bSt)
+    out = copy(sig)
     out[!,Not(internal)] = Xf
     out[!,internal] = Sf
     return out

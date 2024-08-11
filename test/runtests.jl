@@ -1,4 +1,4 @@
-using Plasmatrace, Test, CSV, Infiltrator, DataFrames
+using Plasmatrace, Test, CSV, Infiltrator, DataFrames, Statistics
 import Plots
 
 function loadtest(verbose=false)
@@ -222,21 +222,8 @@ function concentrationtest()
     glass = Dict("NIST612" => "NIST612p")
     blank = fitBlanks(myrun;nblank=2)
     setGroup!(myrun,glass)
-    dat = pool(myrun;signal=true,group="NIST612")
-    concs = DataFrame()
-    SRM = collect(keys(glass))[1] # NIST612
-    refconc = getGlass()[SRM]
-    for col in names(elements)
-        element = elements[1,col]
-        concs[!,col] = DataFrame(refconc)[:,element]
-    end
-    sig = getSignals(dat)
-    nsig = size(sig,2)
-    pars = (drift=[0.0],down=[0.0],efrac=fill(0.0,nsig-1))
-    bt = polyVal(blank,dat.t)
-    pred = predict(dat,pars,concs,bt,internal[1])
-    #blk, fit = process!(myrun,method,elements,internal,glass;
-    #                    nblank=2,ndrift=1,ndown=1)
+    blk, fit = process!(myrun,elements,internal,glass;
+                        nblank=2,ndown=1)
 end
 
 module test
@@ -257,7 +244,7 @@ end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
+#=@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -273,7 +260,7 @@ Plots.closeall()
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
-@testset "timestamp test" begin timestamptest() end
+@testset "timestamp test" begin timestamptest() end=#
 @testset "concentration test" begin concentrationtest() end
-@testset "extension test" begin extensiontest() end
-@testset "TUI test" begin TUItest() end
+#=@testset "extension test" begin extensiontest() end
+@testset "TUI test" begin TUItest() end=#

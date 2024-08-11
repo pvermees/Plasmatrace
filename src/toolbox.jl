@@ -390,3 +390,17 @@ function channels2elements(run::AbstractVector)
     return out
 end
 export channels2elements
+
+# elements = 1-row dataframe of elements with channels as column names
+# SRM = the name of a glass
+# returns a 1-row dataframe with the concentrations
+function elements2concs(elements::AbstractDataFrame,
+                        SRM::AbstractString)
+    refconc = _PT["glass"][SRM]
+    out = copy(elements)
+    for col in names(elements)
+        element = elements[1,col]
+        out[!,col] = DataFrame(refconc)[:,element]
+    end
+    return out
+end
