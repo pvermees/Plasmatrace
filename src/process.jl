@@ -145,7 +145,7 @@ function fractionation(run::Vector{Sample},
 
         mfrac = isnothing(mf) ? pars[end] : log(mf)
 
-        out = Pars(drift,down,mfrac)
+        out = (drift=drift,down=down,mfrac=mfrac)
     else
         analog = isAnalog(run,channels,PAcutoff)
         out = (analog = fractionation(run[analog],method,blank,channels,standards,mf;
@@ -231,14 +231,14 @@ function fractionation(run::Vector{Sample},
                        ndown::Integer=0,
                        PAcutoff=nothing,
                        verbose::Bool=false)
-    # TODO
+    
     return nothing, nothing
 end
 export fractionation
 
 function atomic(samp::Sample,
                 channels::AbstractDict,
-                pars::Pars,
+                pars::NamedTuple,
                 blank::AbstractDataFrame)
     dat = windowData(samp,signal=true)
     t = dat.t
@@ -261,7 +261,7 @@ export atomic
 
 function averat(samp::Sample,
                 channels::AbstractDict,
-                pars::Pars,
+                pars::NamedTuple,
                 blank::AbstractDataFrame)
     t, T, P, D, d = atomic(samp,channels,pars,blank)
     nr = length(t)
@@ -287,7 +287,7 @@ function averat(samp::Sample,
 end
 function averat(run::Vector{Sample},
                 channels::AbstractDict,
-                pars::Union{Pars,NamedTuple},
+                pars::NamedTuple,
                 blank::AbstractDataFrame;
                 PAcutoff=nothing)
     ns = length(run)
@@ -297,7 +297,7 @@ function averat(run::Vector{Sample},
     for i in 1:ns
         samp = run[i]
         out[i,1] = samp.sname
-        if isa(pars,Pars)
+        if length(pars)==3
             samp_pars = pars
         elseif analog[i]
             samp_pars = pars.analog

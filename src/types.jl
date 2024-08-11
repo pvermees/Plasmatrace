@@ -12,13 +12,6 @@ mutable struct Sample
 end
 export Sample
 
-mutable struct Pars
-    drift::Vector{Float64}
-    down::Vector{Float64}
-    mfrac::Float64
-end
-export Pars
-
 _PT::AbstractDict = Dict()
 
 function init_PT!()

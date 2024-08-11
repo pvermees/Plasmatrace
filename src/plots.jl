@@ -3,42 +3,6 @@ plot
 
 Plot selected channels for a sample or a vector of samples
 
-# Methods
-
-- `plot(samp::Sample,
-        method::AbstractString,
-        channels::AbstractDict,
-        blank::AbstractDataFrame,
-        pars::Pars,
-        standards::Union{AbstractVector,AbstractDict},
-        glass::Union{AbstractVector,AbstractDict};
-        num=nothing,den=nothing,
-        transformation=nothing,
-        seriestype=:scatter,titlefontsize=10,
-        ms=2,ma=0.5,xlim=:auto,ylim=:auto,
-        linecol="black",linestyle=:solid)`
-- `plot(samp::Sample,
-        channels::AbstractDict,
-        blank::AbstractDataFrame,
-        pars::Pars,
-        anchors::AbstractDict;
-        num=nothing,den=nothing,
-        transformation=nothing,
-        seriestype=:scatter,titlefontsize=10,
-        ms=2,ma=0.5,xlim=:auto,ylim=:auto,
-        linecol="black",linestyle=:solid)`
-- `plot(samp::Sample,
-        channels::Union{AbstractVector,AbstractDict};
-        num=nothing,den=nothing,
-        transformation=nothing,offset=nothing,
-        seriestype=:scatter,titlefontsize=10,
-        ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)`
-- `plot(samp::Sample;
-        num=nothing,den=nothing,
-        transformation=nothing,offset=nothing,
-        seriestype=:scatter,titlefontsize=10,
-        ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)`
-
 # Arguments
 
 - `method`: either "U-Pb", "Lu-Hf" or "Rb-Sr"
@@ -67,7 +31,7 @@ function plot(samp::Sample,
               method::AbstractString,
               channels::AbstractDict,
               blank::AbstractDataFrame,
-              pars::Pars,
+              pars::NamedTuple,
               standards::AbstractVector,
               glass::AbstractVector;
               num=nothing,den=nothing,
@@ -87,7 +51,7 @@ function plot(samp::Sample,
               method::AbstractString,
               channels::AbstractDict,
               blank::AbstractDataFrame,
-              pars::Pars,
+              pars::NamedTuple,
               standards::AbstractDict,
               glass::AbstractDict;
               num=nothing,den=nothing,
@@ -105,7 +69,7 @@ end
 function plot(samp::Sample,
               channels::AbstractDict,
               blank::AbstractDataFrame,
-              pars::Pars,
+              pars::NamedTuple,
               anchors::AbstractDict;
               num=nothing,den=nothing,
               transformation=nothing,
@@ -199,8 +163,7 @@ end
 export plot
 
 """
-plotFitted!(p,samp,pars,blank,channels,anchors;
-            num,den,transformation,offset,linecolor,linestyle)
+plotFitted
 
 Add a model fit to an existing sample plot
 
@@ -218,7 +181,7 @@ Add a model fit to an existing sample plot
 - `offset`: a dictionary with the offset for each channel
 - `linecolor`, `linestyle`: see ?Plots.plot
 """
-function plotFitted!(p,samp::Sample,pars::Pars,blank::AbstractDataFrame,
+function plotFitted!(p,samp::Sample,pars::NamedTuple,blank::AbstractDataFrame,
                      channels::AbstractDict,anchors::AbstractDict;
                      num=nothing,den=nothing,transformation=nothing,
                      offset::AbstractDict,linecolor="black",linestyle=:solid)

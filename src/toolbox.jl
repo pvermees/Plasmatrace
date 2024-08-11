@@ -217,7 +217,7 @@ export prefix2subset
 function isAnalog(samp::Sample,channels::AbstractDict,cutoff=nothing)
     out = true
     if !isnothing(cutoff)
-        dat = getDat(samp,channels)
+        dat = getSignals(samp,channels)
         out = true in Matrix(dat .> cutoff)
     end
     return out
@@ -317,7 +317,7 @@ end
 function getOffset(samp::Sample,
                    channels::AbstractDict,
                    blank::AbstractDataFrame,
-                   pars::Pars,
+                   pars::NamedTuple,
                    anchors::AbstractDict,
                    transformation=nothing;
                    num=nothing,den=nothing)

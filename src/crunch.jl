@@ -49,11 +49,12 @@ function SS(t::AbstractVector,
             Xm::AbstractDataFrame,
             Sm::AbstractVector,
             R::AbstractVector,
+            ef::AbstractVector,
             drift::AbstractVector,
             down::AbstractVector,
-            bX::AbstractDataFrame,
-            bS::AbstractVector)
-    pred = predict(t,T,Xm,Sm,R,drift,down,bX,bS)
+            bXt::AbstractDataFrame,
+            bSt::AbstractVector)
+    pred = predict(t,T,Xm,Sm,R,ef,drift,down,bXt,bSt)
     S = @. (pred[:,"X"]-Xm)^2 + (pred[:,"S"]-Sm)^2
     return sum(S)
 end
@@ -85,7 +86,7 @@ function predict(t,Dm,dm,y0,mfrac,bD,bd)
 end
 function predict(samp::Sample,
                  method::AbstractString,
-                 pars::Pars,
+                 pars::NamedTuple,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
                  standards::AbstractDict,
@@ -94,7 +95,7 @@ function predict(samp::Sample,
     return predict(samp,pars,blank,channels,anchors)
 end
 function predict(samp::Sample,
-                 pars::Pars,
+                 pars::NamedTuple,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
                  anchors::AbstractDict)
@@ -108,7 +109,7 @@ function predict(samp::Sample,
 end
 # minerals
 function predict(dat::AbstractDataFrame,
-                 pars::Pars,
+                 pars::NamedTuple,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
                  anchor::NamedTuple)
@@ -127,7 +128,7 @@ function predict(dat::AbstractDataFrame,
 end
 # glass
 function predict(dat::AbstractDataFrame,
-                 pars::Pars,
+                 pars::NamedTuple,
                  blank::AbstractDataFrame,
                  channels::AbstractDict,
                  y0::AbstractFloat)
@@ -139,25 +140,29 @@ function predict(dat::AbstractDataFrame,
     return predict(t,Dm,dm,y0,pars.mfrac,bD,bd)
 end
 # concentrations
-function predict(t::AbstractVector,      # length n
-                 T::AbstractVector,      # length n
-                 Xm::AbstractDataFrame,  # size n x (N-1) where N = number of channels
-                 Sm::AbstractVector,     # length n
-                 R::AbstractVector,      # length (N-1)
-                 ef::AbstractVector,     # length (N-1)
-                 drift::AbstractVector,  # length ndrift
-                 down::AbstractVector,   # length ndown
-                 bXt::AbstractDataFrame, # size nblank x (N-1)
-                 bSt::AbstractVector)    # length nblank
-    ft = polyFac(drift,t)
-    FT = polyFac(down,T)
+function predict(dat::AbstractDataFrame,     # size n x (N+3)
+                 pars::NamedTuple,          # efrac, drift, down
+                 concs::AbstractDataFrame,  # length 1 x N
+                 bt::AbstractDataFrame,     # size n x N
+                 internal::AbstractString)
+    sig = getSignals(dat)
+    (n,N) = size(sig)
+    out = copy(sig)
+    Xm = sig[:,Not(internal)]
+    Sm = sig[:,internal]
+    R = collect((concs[:,Not(internal)]./concs[:,internal])[1,:])
+    t = dat[:,:t]
+    T = dat[:,:T]
+    ef = exp.(pars.efrac)
+    ft = polyFac(pars.drift,t)
+    FT = polyFac(pars.down,T)
+    bXt = bt[:,Not(internal)]
+    bSt = bt[:,internal]
     S = getS(Xm,Sm,R,ef,ft,FT,bXt,bSt)
     Sf = @. S + bSt
     Xf = @. R'*S*ft*FT + bXt
-    out = Xf
-    @infiltrate
-    # TODO: rewrite predict so that channel of internal standard is preserved
-    out[!,:S] = Sf
+    out[!,Not(internal)] = Xf
+    out[!,internal] = Sf
     return out
 end
 export predict

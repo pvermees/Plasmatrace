@@ -216,7 +216,7 @@ end
 function export2IsoplotR(run::Vector{Sample},
                          method::AbstractString,
                          channels::AbstractDict,
-                         pars::Union{Pars,NamedTuple},
+                         pars::NamedTuple,
                          blank::AbstractDataFrame;
                          PAcutoff=nothing,prefix=nothing,
                          fname::AbstractString="PT.json")

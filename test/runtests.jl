@@ -50,7 +50,9 @@ function predictest()
     setGroup!(myrun,glass)
     standards = Dict("BP" => "BP")
     setGroup!(myrun,standards)
-    fit = Pars([4.2670587703673934], [0.0, 0.05197296298083967], 0.3838697441780825)
+    fit = (drift=[4.2670587703673934],
+           down=[0.0, 0.05197296298083967],
+           mfrac=0.3838697441780825)
     samp = myrun[4]
     if samp.group == "sample"
         println("Not a standard")
@@ -220,10 +222,7 @@ function concentrationtest()
     glass = Dict("NIST612" => "NIST612p")
     blank = fitBlanks(myrun;nblank=2)
     setGroup!(myrun,glass)
-    df = pool(myrun;signal=true,group="NIST612")
-    dat = df[:,2:(end-2)]
-    Xm = dat[:,Not(internal[1])]
-    Sm = dat[:,internal[1]]
+    dat = pool(myrun;signal=true,group="NIST612")
     concs = DataFrame()
     SRM = collect(keys(glass))[1] # NIST612
     refconc = getGlass()[SRM]
@@ -231,18 +230,11 @@ function concentrationtest()
         element = elements[1,col]
         concs[!,col] = DataFrame(refconc)[:,element]
     end
-    ratios = concs[:,Not(internal[1])]./concs[:,internal[1]]
-    R = collect(ratios[1,:])
-    ef = fill(1.0,length(R))
-    t = df[:,:t]
-    T = df[:,:T]
-    drift = [0.0]
-    down = [0.0]
-    ft = polyFac(drift,t)
-    FT = polyFac(down,T)
-    bXt = polyVal(blank[:,Not(internal[1])],t)
-    bSt = polyVal(blank[:,internal[1]],t)
-    pred = predict(t,T,Xm,Sm,R,ef,drift,down,bXt,bSt)
+    sig = getSignals(dat)
+    nsig = size(sig,2)
+    pars = (drift=[0.0],down=[0.0],efrac=fill(0.0,nsig-1))
+    bt = polyVal(blank,dat.t)
+    pred = predict(dat,pars,concs,bt,internal[1])
     #blk, fit = process!(myrun,method,elements,internal,glass;
     #                    nblank=2,ndrift=1,ndown=1)
 end
