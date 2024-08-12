@@ -110,7 +110,7 @@ end
 
 function averatest()
     myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
-    t, T, P, D, d = atomic(myrun[1],channels,fit,blk)
+    P, D, d = atomic(myrun[1],channels,fit,blk)
     ratios = averat(myrun,channels,fit,blk)
     println(first(ratios,5))
     return ratios
@@ -220,12 +220,11 @@ function concentrationtest()
     elements = channels2elements(myrun)
     internal = ("Al27 -> 27",1.2e5)
     glass = Dict("NIST612" => "NIST612p")
-    blank = fitBlanks(myrun;nblank=2)
     setGroup!(myrun,glass)
     blk, fit = process!(myrun,elements,internal,glass;nblank=2)
-    pred = predict(myrun[4],fit,blk,elements,internal[1])
-    p = plot(myrun[4],blank,fit,elements,internal[1];
+    p = plot(myrun[4],blk,fit,elements,internal[1];
              transformation="log",den=internal[1])
+    conc = concentrations(myrun[1],elements,blk,fit,internal)
     @test display(p) != NaN
 end
 
@@ -247,7 +246,7 @@ end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -263,7 +262,7 @@ Plots.closeall()
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
-@testset "timestamp test" begin timestamptest() end=#
+@testset "timestamp test" begin timestamptest() end
 @testset "concentration test" begin concentrationtest() end
-#=@testset "extension test" begin extensiontest() end
-@testset "TUI test" begin TUItest() end=#
+@testset "extension test" begin extensiontest() end
+@testset "TUI test" begin TUItest() end
