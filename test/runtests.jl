@@ -224,7 +224,7 @@ function concentrationtest()
     blk, fit = process!(myrun,elements,internal,glass;nblank=2)
     p = plot(myrun[4],blk,fit,elements,internal[1];
              transformation="log",den=internal[1])
-    conc = concentrations(myrun[1],elements,blk,fit,internal)
+    conc = concentrations(myrun,elements,blk,fit,internal)
     @test display(p) != NaN
 end
 

@@ -337,6 +337,33 @@ function concentrations(samp::Sample,
     num = @. (Xm-bXt)*internal[2]
     den = @. pars'*(Sm-bSt)
     out[!,Not(internal[1])] .= num./den
+    elementnames = collect(elements[1,:])
+    channelnames = names(sig)
+    nms = "ppm[" .* elementnames .* "] from " .* channelnames
+    rename!(out,Symbol.(nms))
+    return out
+end
+function concentrations(run::Vector{Sample},
+                        elements::AbstractDataFrame,
+                        blank::AbstractDataFrame,
+                        pars::AbstractVector,
+                        internal::Tuple)
+    nr = length(run)
+    nc = 2*size(elements,2)
+    mat = fill(0.0,nr,nc)
+    conc = nothing
+    for i in eachindex(run)
+        samp = run[i]
+        conc = concentrations(samp,elements,blank,pars,internal)
+        mu = Statistics.mean.(eachcol(conc))
+        sigma = Statistics.std.(eachcol(conc))
+        mat[i,1:2:nc-1] .= mu
+        mat[i,2:2:nc] .= sigma
+    end
+    nms = fill("",nc)
+    nms[1:2:nc-1] .= names(conc)
+    nms[2:2:nc] .= "s[" .* names(conc) .* "]"
+    out = hcat(DataFrame(sample=getSnames(run)),DataFrame(mat,Symbol.(nms)))
     return out
 end
 export concentrations
