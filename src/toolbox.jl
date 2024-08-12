@@ -342,6 +342,32 @@ function getOffset(samp::Sample,
     end
     return out
 end
+# concentrations
+function getOffset(samp::Sample,
+                   blank::AbstractDataFrame,
+                   pars::AbstractVector,
+                   elements::AbstractDataFrame,
+                   internal::AbstractString,
+                   transformation=nothing;
+                   num=nothing,den=nothing)
+    obs = windowData(samp;signal=true)
+    yobs = formRatios(obs,num,den)
+    offset_obs = getOffset(yobs,transformation)
+    
+    pred = predict(samp,pars,blank,elements,internal)
+    ypred = formRatios(pred,num,den)
+    offset_pred = getOffset(ypred,transformation)
+    
+    out = offset_obs
+    for key in keys(out)
+        if key in keys(offset_pred)
+            out[key] = maximum([offset_obs[key],offset_pred[key]])
+        else
+            out[key] = offset_obs[key]
+        end
+    end
+    return out
+end
     
 function transformeer(df::AbstractDataFrame;transformation=nothing,offset::AbstractDict)
     if isnothing(transformation)

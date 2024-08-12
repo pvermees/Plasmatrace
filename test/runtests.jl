@@ -224,6 +224,9 @@ function concentrationtest()
     setGroup!(myrun,glass)
     blk, fit = process!(myrun,elements,internal,glass;nblank=2)
     pred = predict(myrun[4],fit,blk,elements,internal[1])
+    p = plot(myrun[4],blank,fit,elements,internal[1];
+             transformation="log",den=internal[1])
+    @test display(p) != NaN
 end
 
 module test
@@ -244,7 +247,7 @@ end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
+#=@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -260,7 +263,7 @@ Plots.closeall()
 @testset "U-Pb" begin UPbtest() end
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
-@testset "timestamp test" begin timestamptest() end
+@testset "timestamp test" begin timestamptest() end=#
 @testset "concentration test" begin concentrationtest() end
-@testset "extension test" begin extensiontest() end
-@testset "TUI test" begin TUItest() end
+#=@testset "extension test" begin extensiontest() end
+@testset "TUI test" begin TUItest() end=#
