@@ -67,6 +67,27 @@ function plot(samp::Sample,
                 linecol=linecol,linestyle=linestyle)
 end
 function plot(samp::Sample,
+              channels::AbstractDict;
+              num=nothing,den=nothing,
+              transformation=nothing,offset=nothing,
+              seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
+    return plot(samp,collect(values(channels));
+                num=num,den=den,transformation=transformation,
+                offset=offset,seriestype=seriestype,titlefontsize=titlefontsize,
+                ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+end
+function plot(samp::Sample;
+              num=nothing,den=nothing,
+              transformation=nothing,offset=nothing,
+              seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
+    return plot(samp,getChannels(samp);
+                num=num,den=den,transformation=transformation,
+                offset=offset,seriestype=seriestype,titlefontsize=titlefontsize,
+                ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+end
+function plot(samp::Sample,
               channels::AbstractDict,
               blank::AbstractDataFrame,
               pars::NamedTuple,
@@ -94,33 +115,47 @@ function plot(samp::Sample,
                  seriestype=seriestype,titlefontsize=titlefontsize,
                  ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
 
-        plotFitted!(p,samp,pars,blank,channels,anchors;
+        plotFitted!(p,samp,blank,pars,channels,anchors;
                      num=num,den=den,transformation=transformation,
                      offset=offset,linecolor=linecol,linestyle=linestyle)
         
     end
     return p
 end
+# concentrations
 function plot(samp::Sample,
-              channels::AbstractDict;
+              blank::AbstractDataFrame,
+              pars::AbstractVector,
+              elements::AbstractDataFrame,
+              internal::AbstractString;
               num=nothing,den=nothing,
-              transformation=nothing,offset=nothing,
+              transformation=nothing,
               seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
-    return plot(samp,collect(values(channels));
-                num=num,den=den,transformation=transformation,
-                offset=offset,seriestype=seriestype,titlefontsize=titlefontsize,
-                ms=ms,ma=ma,xlim=xlim,ylim=ylim)
-end
-function plot(samp::Sample;
-              num=nothing,den=nothing,
-              transformation=nothing,offset=nothing,
-              seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
-    return plot(samp,getChannels(samp);
-                num=num,den=den,transformation=transformation,
-                offset=offset,seriestype=seriestype,titlefontsize=titlefontsize,
-                ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+              linecol="black",linestyle=:solid)
+    if samp.group == "sample"
+
+        p = plot(samp;
+                 num=num,den=den,transformation=transformation,
+                 seriestype=seriestype,titlefontsize=titlefontsize,
+                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+        
+    else
+
+        offset = getOffset(samp,blank,pars,elements,internal,transformation;
+                           num=num,den=den)
+
+        p = plot(samp;
+                 num=num,den=den,transformation=transformation,offset=offset,
+                 seriestype=seriestype,titlefontsize=titlefontsize,
+                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+
+        plotFitted!(p,samp,blank,pars,elements,internal;
+                     num=num,den=den,transformation=transformation,
+                     offset=offset,linecolor=linecol,linestyle=linestyle)
+        
+    end
+    return p
 end
 function plot(samp::Sample,
               channels::AbstractVector;
@@ -181,8 +216,12 @@ Add a model fit to an existing sample plot
 - `offset`: a dictionary with the offset for each channel
 - `linecolor`, `linestyle`: see ?Plots.plot
 """
-function plotFitted!(p,samp::Sample,pars::NamedTuple,blank::AbstractDataFrame,
-                     channels::AbstractDict,anchors::AbstractDict;
+function plotFitted!(p,
+                     samp::Sample,
+                     blank::AbstractDataFrame,
+                     pars::NamedTuple,
+                     channels::AbstractDict,
+                     anchors::AbstractDict;
                      num=nothing,den=nothing,transformation=nothing,
                      offset::AbstractDict,linecolor="black",linestyle=:solid)
     x = windowData(samp,signal=true)[:,1]
@@ -193,4 +232,20 @@ function plotFitted!(p,samp::Sample,pars::NamedTuple,blank::AbstractDataFrame,
     for tyi in eachcol(ty)
         Plots.plot!(p,x,tyi;linecolor=linecolor,linestyle=linestyle,label="")
     end
+end
+function plotFitted!(p,
+                     samp::Sample,
+                     blank::AbstractDataFrame,
+                     pars::AbstractVector,
+                     elements::AbstractDataFrame,
+                     internal::AbstractString;
+                     num=nothing,den=nothing,transformation=nothing,
+                     offset::AbstractDict,linecolor="black",linestyle=:solid)
+    x = windowData(samp,signal=true)[:,1]
+    pred = predict(samp,pars,blank,elements,internal)
+    y = formRatios(pred,num,den)
+    ty = transformeer(y;transformation=transformation,offset=offset)
+    for tyi in eachcol(ty)
+        Plots.plot!(p,x,tyi;linecolor=linecolor,linestyle=linestyle,label="")
+    end   
 end

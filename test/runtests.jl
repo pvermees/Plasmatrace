@@ -110,7 +110,7 @@ end
 
 function averatest()
     myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
-    t, T, P, D, d = atomic(myrun[1],channels,fit,blk)
+    P, D, d = atomic(myrun[1],channels,fit,blk)
     ratios = averat(myrun,channels,fit,blk)
     println(first(ratios,5))
     return ratios
@@ -220,10 +220,12 @@ function concentrationtest()
     elements = channels2elements(myrun)
     internal = ("Al27 -> 27",1.2e5)
     glass = Dict("NIST612" => "NIST612p")
-    blank = fitBlanks(myrun;nblank=2)
     setGroup!(myrun,glass)
     blk, fit = process!(myrun,elements,internal,glass;nblank=2)
-    pred = predict(myrun[4],fit,blk,elements,internal[1])
+    p = plot(myrun[4],blk,fit,elements,internal[1];
+             transformation="log",den=internal[1])
+    conc = concentrations(myrun,elements,blk,fit,internal)
+    @test display(p) != NaN
 end
 
 module test
