@@ -399,23 +399,29 @@ function channels2elements(run::AbstractVector)
     out = DataFrame()
     elements = collect(keys(_PT["nuclides"]))
     for channel in channels
-        matches = findall(occursin.(elements,channel))
-        if length(matches)>1 # e.g. "B" and "Be"
-            for element in elements[matches]
-                isotopes = string.(_PT["nuclides"][element])
-                hasisotope = findall(occursin.(isotopes,channel))
-                if !isempty(hasisotope)
-                    out[!,channel] = [element]
-                    break
-                end
-            end
-        else # e.g. "Pb"
-            out[!,channel] = elements[matches]
-        end
+        out[!,channel] = channel2element(channel,elements)
     end
     return out
 end
 export channels2elements
+
+function channel2element(channel::AbstractString,
+                         elements::AbstractVector)
+    matches = findall(occursin.(elements,channel))
+    if length(matches)>1 # e.g. "B" and "Be"
+        for element in elements[matches]
+            isotopes = string.(_PT["nuclides"][element])
+            hasisotope = findall(occursin.(isotopes,channel))
+            if !isempty(hasisotope)
+                return [element]
+                break
+            end
+        end
+    else # e.g. "Pb"
+        return elements[matches]
+    end
+    return nothing
+end
 
 # elements = 1-row dataframe of elements with channels as column names
 # SRM = the name of a glass

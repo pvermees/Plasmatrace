@@ -172,10 +172,20 @@ function getPTree()
             "find the one you're looking for.",
             action = TUImethod!
         ),
+        "internal" => (
+            message = TUIinternalMessage,
+            help = nothing,
+            action = TUIinternal!
+        ),
         "columns" => (
             message = TUIcolumnMessage,
             help = nothing,
             action = TUIcolumns!
+        ),
+        "mineral" => (
+            message = TUImineralMessage,
+            help = nothing,
+            action = TUIchooseMineral!
         ),
         "standards" => (
             message =

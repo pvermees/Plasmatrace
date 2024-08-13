@@ -115,9 +115,7 @@ function TUImethod!(ctrl::AbstractDict,
     i = parse(Int,response)
     if i==1
         ctrl["method"] = "concentrations"
-        ctrl["priority"]["method"] = false
-        ctrl["priority"]["standards"] = false
-        return "x"
+        return "internal"
     elseif i > length(methods)
         return "x"
     else
@@ -129,6 +127,27 @@ end
 function TUItabulate(ctrl::AbstractDict)
     summarise(ctrl["run"])
     return nothing
+end
+
+function TUIinternal!(ctrl::AbstractDict,
+                      response::AbstractString)
+    channels = getChannels(ctrl["run"])
+    ctrl["cache"] = channels[parse(Int,response)]
+    return "mineral"
+end
+
+function TUIchooseMineral!(ctrl::AbstractDict,
+                           response::AbstractString)
+    if response == "m"
+        return "manualInternal"
+    else
+        i = parse(Int,response)
+        mineral = collect(keys(_PT["stoichiometry"]))[i]
+        channel = ctrl["cache"]
+        ctrl["internal"] = getInternal(mineral,channel)
+        ctrl["priority"]["method"] = false
+        return "xxx"
+    end
 end
 
 function TUIcolumns!(ctrl::AbstractDict,

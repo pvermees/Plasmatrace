@@ -25,6 +25,27 @@ function TUIshowMethods(ctrl::AbstractDict)
     return msg
 end
 
+function TUIinternalMessage(ctrl::AbstractDict)
+    msg = "Choose an internal standard from the following list of channels:\n"
+    channels = getChannels(ctrl["run"])
+    for i in eachindex(channels)
+        msg *= string(i)*". "*channels[i]*"\n"
+    end
+    msg *= "x: Exit\n"*"?: Help"
+    return msg
+end
+
+function TUImineralMessage(ctrl::AbstractDict)
+    msg = "Automatically set the concentration of the internal standard " *
+        "by selecting one of the following minerals, or specify a value manually:\n"
+    minerals = collect(keys(_PT["stoichiometry"]))
+    for i in eachindex(minerals)
+        msg *= string(i)*". "*minerals[i]*"\n"
+    end
+    msg *= "m. manual\n"
+    return msg
+end
+
 function TUIcolumnMessage(ctrl::AbstractDict)
     msg = "Choose from the following list of channels:\n"
     labels = names(getSignals(ctrl["run"][1]))
