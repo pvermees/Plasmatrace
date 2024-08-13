@@ -1,3 +1,37 @@
+function TUIinit!()
+    _PT["ctrl"] = TUIinit()
+    return nothing
+end
+function TUIinit()
+    return Dict(
+        "priority" => Dict("load" => true, "method" => true,
+                           "standards" => true, "glass" => true,
+                           "process" => true),
+        "history" => DataFrame(task=String[],action=String[]),
+        "chain" => ["top"],
+        "run" => nothing,
+        "i" => 1,
+        "den" => nothing,
+        "multifile" => true,
+        "head2name" => true,
+        "method" => "",
+        "instrument" => "",
+        "ICPpath" => "",
+        "LApath" => "",
+        "channels" => Dict(),
+        "standards" => AbstractString[],
+        "glass" => AbstractString[],
+        "internal" => nothing,
+        "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
+        "PAcutoff" => nothing,
+        "blank" => nothing,
+        "par" => nothing,
+        "cache" => nothing,
+        "transformation" => "sqrt",
+        "template" => false
+    )
+end
+
 function TUI(key::AbstractString)
     return _PT["ctrl"][key]
 end
@@ -79,12 +113,17 @@ function TUImethod!(ctrl::AbstractDict,
                     response::AbstractString)
     methods = _PT["methods"].method
     i = parse(Int,response)
-    if i > length(methods)
+    if i==1
+        ctrl["method"] = "concentrations"
+        ctrl["priority"]["method"] = false
+        ctrl["priority"]["standards"] = false
+        return "x"
+    elseif i > length(methods)
         return "x"
     else
         ctrl["method"] = methods[i]
+        return "columns"
     end
-    return "columns"
 end
 
 function TUItabulate(ctrl::AbstractDict)
@@ -220,13 +259,36 @@ end
 
 function TUIplotter(ctrl::AbstractDict)
     samp = ctrl["run"][ctrl["i"]]
+    if ctrl["method"] == "concentrations"
+        TUIconcentrationPlotter(ctrl)
+    else
+        TUIgeochronPlotter(ctrl)
+    end
+    if !isnothing(ctrl["PAcutoff"])
+        TUIaddPAline!(p,ctrl["PAcutoff"])
+    end
+    display(p)
+    return nothing
+end
+
+function TUIconcentrationPlotter(ctrl::AbstractDict)
+    if (samp.group in ctrl.glass) & !isnothing(ctrl["blank"])
+        elements = channels2elements(ctrl["run"])
+        p = plot(samp,ctrl["blank"],ctrl["par"],elements,ctrl["internal"][1];
+                 den=ctrl["den"],transformation=ctrl["transformation"])
+    else
+        p = plot(samp;den=ctrl["den"],transformation=ctrl["transformation"])
+    end
+end
+
+function TUIgeochronPlotter(ctrl::AbstractDict)
     if haskey(ctrl,"channels")
         channels = ctrl["channels"]
     else
         channels = getChannels(samp)
     end
     if isnothing(ctrl["blank"]) | (samp.group=="sample")
-        p = plot(samp,channels,den=ctrl["den"],transformation=ctrl["transformation"])
+        p = plot(samp,channels;den=ctrl["den"],transformation=ctrl["transformation"])
     else
         if isnothing(ctrl["PAcutoff"])
             par = ctrl["par"]
@@ -238,11 +300,6 @@ function TUIplotter(ctrl::AbstractDict)
         p = plot(samp,ctrl["method"],channels,ctrl["blank"],par,ctrl["standards"],ctrl["glass"];
                  den=ctrl["den"],transformation=ctrl["transformation"])
     end
-    if !isnothing(ctrl["PAcutoff"])
-        TUIaddPAline!(p,ctrl["PAcutoff"])
-    end
-    display(p)
-    return nothing
 end
 
 function TUIaddPAline!(p,cutoff::AbstractFloat)
@@ -599,37 +656,4 @@ function TUIclear!(ctrl::AbstractDict)
         extension.extend!(_PT)
     end
     return nothing
-end
-
-function TUIinit!()
-    _PT["ctrl"] = TUIinit()
-    return nothing
-end
-function TUIinit()
-    return Dict(
-        "priority" => Dict("load" => true, "method" => true,
-                           "standards" => true, "glass" => true,
-                           "process" => true),
-        "history" => DataFrame(task=String[],action=String[]),
-        "chain" => ["top"],
-        "run" => nothing,
-        "i" => 1,
-        "den" => nothing,
-        "multifile" => true,
-        "head2name" => true,
-        "method" => "",
-        "instrument" => "",
-        "ICPpath" => "",
-        "LApath" => "",
-        "channels" => Dict(),
-        "standards" => AbstractString[],
-        "glass" => AbstractString[],
-        "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
-        "PAcutoff" => nothing,
-        "blank" => nothing,
-        "par" => nothing,
-        "cache" => nothing,
-        "transformation" => "sqrt",
-        "template" => false
-    )
 end

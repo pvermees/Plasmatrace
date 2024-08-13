@@ -1,0 +1,14 @@
+task,action
+top,c
+top,r
+instrument,a
+dir|file,d
+loadICPdir,data/Lu-Hf
+top,m
+method,1
+top,g
+glass,a
+chooseGlass,2
+addGlassGroup,p
+addGlassByPrefix,NIST612
+glass,x

@@ -168,8 +168,8 @@ function getPTree()
         ),
         "method" => (
             message = TUIshowMethods,
-            help = "Choose a geochronometer. Email us if you can't "*
-            "find your chosen method.",
+            help = "Choose a method. Email us if you can't "*
+            "find the one you're looking for.",
             action = TUImethod!
         ),
         "columns" => (
