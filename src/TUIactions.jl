@@ -132,14 +132,24 @@ end
 function TUIinternal!(ctrl::AbstractDict,
                       response::AbstractString)
     channels = getChannels(ctrl["run"])
-    ctrl["cache"] = channels[parse(Int,response)]
+    i = parse(Int,response)
+    ctrl["cache"] = channels[i]
     return "mineral"
+end
+
+function TUIstoichiometry!(ctrl::AbstractDict,
+                           response::AbstractString)
+    channel = ctrl["cache"]
+    concentration = parse(Float64,response)
+    ctrl["internal"] = (channel,concentration)
+    ctrl["priority"]["method"] = false
+    return "xxxx"
 end
 
 function TUIchooseMineral!(ctrl::AbstractDict,
                            response::AbstractString)
     if response == "m"
-        return "manualInternal"
+        return "stoichiometry"
     else
         i = parse(Int,response)
         mineral = collect(keys(_PT["stoichiometry"]))[i]

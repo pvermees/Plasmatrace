@@ -187,6 +187,11 @@ function getPTree()
             help = nothing,
             action = TUIchooseMineral!
         ),
+        "stoichiometry" => (
+            message = TUIstoichiometryMessage,
+            help = nothing,
+            action = TUIstoichiometry!
+        ),
         "standards" => (
             message =
             "a: Add a mineral standard\n"*

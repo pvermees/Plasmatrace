@@ -46,6 +46,12 @@ function TUImineralMessage(ctrl::AbstractDict)
     return msg
 end
 
+function TUIstoichiometryMessage(ctrl::AbstractDict)
+    element = channel2element(ctrl["cache"])[1]
+    msg = "Specify the concentration (in wt%) of " * element * " in the sample:"
+    return msg
+end
+
 function TUIcolumnMessage(ctrl::AbstractDict)
     msg = "Choose from the following list of channels:\n"
     labels = names(getSignals(ctrl["run"][1]))

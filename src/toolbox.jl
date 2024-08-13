@@ -422,6 +422,10 @@ function channel2element(channel::AbstractString,
     end
     return nothing
 end
+function channel2element(channel::AbstractString)
+    elements = collect(keys(_PT["nuclides"]))
+    return channel2element(channel,elements)
+end
 
 # elements = 1-row dataframe of elements with channels as column names
 # SRM = the name of a glass
