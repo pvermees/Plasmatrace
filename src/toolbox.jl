@@ -394,14 +394,17 @@ function dict2string(dict::AbstractDict)
     return out
 end
 
-function channels2elements(run::AbstractVector)
-    channels = getChannels(run)
+function channels2elements(samp::Sample)
+    channels = getChannels(samp)
     out = DataFrame()
     elements = collect(keys(_PT["nuclides"]))
     for channel in channels
         out[!,channel] = channel2element(channel,elements)
     end
-    return out
+    return out    
+end
+function channels2elements(run::AbstractVector)
+    return channels2elements(run[1])
 end
 export channels2elements
 

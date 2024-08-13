@@ -289,9 +289,9 @@ end
 function TUIplotter(ctrl::AbstractDict)
     samp = ctrl["run"][ctrl["i"]]
     if ctrl["method"] == "concentrations"
-        TUIconcentrationPlotter(ctrl)
+        p = TUIconcentrationPlotter(ctrl,samp)
     else
-        TUIgeochronPlotter(ctrl)
+        p = TUIgeochronPlotter(ctrl,samp)
     end
     if !isnothing(ctrl["PAcutoff"])
         TUIaddPAline!(p,ctrl["PAcutoff"])
@@ -300,17 +300,18 @@ function TUIplotter(ctrl::AbstractDict)
     return nothing
 end
 
-function TUIconcentrationPlotter(ctrl::AbstractDict)
-    if (samp.group in ctrl.glass) & !isnothing(ctrl["blank"])
-        elements = channels2elements(ctrl["run"])
+function TUIconcentrationPlotter(ctrl::AbstractDict,samp::Sample)
+    if (samp.group in ctrl["glass"]) & !isnothing(ctrl["blank"])
+        elements = channels2elements(samp)
         p = plot(samp,ctrl["blank"],ctrl["par"],elements,ctrl["internal"][1];
                  den=ctrl["den"],transformation=ctrl["transformation"])
     else
         p = plot(samp;den=ctrl["den"],transformation=ctrl["transformation"])
     end
+    return p
 end
 
-function TUIgeochronPlotter(ctrl::AbstractDict)
+function TUIgeochronPlotter(ctrl::AbstractDict,samp::Sample)
     if haskey(ctrl,"channels")
         channels = ctrl["channels"]
     else
@@ -329,6 +330,7 @@ function TUIgeochronPlotter(ctrl::AbstractDict)
         p = plot(samp,ctrl["method"],channels,ctrl["blank"],par,ctrl["standards"],ctrl["glass"];
                  den=ctrl["den"],transformation=ctrl["transformation"])
     end
+    return p
 end
 
 function TUIaddPAline!(p,cutoff::AbstractFloat)
