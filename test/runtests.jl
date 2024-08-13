@@ -214,6 +214,10 @@ function timestamptest(verbose=true)
     @test display(p) != NaN
 end
 
+function mineraltest()
+    internal = getInternal("zircon","Si29")
+end
+
 function concentrationtest()
     method = "concentrations"
     myrun = load("data/Lu-Hf",instrument="Agilent")
@@ -263,6 +267,7 @@ Plots.closeall()
 @testset "iCap test" begin iCaptest() end
 @testset "carbonate test" begin carbonatetest() end
 @testset "timestamp test" begin timestamptest() end
+@testset "stoichiometry test" begin mineraltest() end
 @testset "concentration test" begin concentrationtest() end
 @testset "extension test" begin extensiontest() end
 @testset "TUI test" begin TUItest() end

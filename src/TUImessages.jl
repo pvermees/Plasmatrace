@@ -17,11 +17,37 @@ function TUIwelcomeMessage(ctrl::AbstractDict)
 end
 function TUIshowMethods(ctrl::AbstractDict)
     methods = _PT["methods"].method
-    msg = ""
+    msg = "1. concentrations\n"
     for i in eachindex(methods)
-        msg *= string(i)*": "*methods[i]*"\n"
+        msg *= string(i+1)*": "*methods[i]*"\n"
     end
     msg *= "x: Exit\n"*"?: Help"
+    return msg
+end
+
+function TUIinternalMessage(ctrl::AbstractDict)
+    msg = "Choose an internal standard from the following list of channels:\n"
+    for i in eachindex(ctrl["channels"])
+        msg *= string(i)*". "*ctrl["channels"][i]*"\n"
+    end
+    msg *= "x: Exit\n"*"?: Help"
+    return msg
+end
+
+function TUImineralMessage(ctrl::AbstractDict)
+    msg = "Automatically set the concentration of the internal standard " *
+        "by selecting one of the following minerals, or specify a value manually:\n"
+    minerals = collect(keys(_PT["stoichiometry"]))
+    for i in eachindex(minerals)
+        msg *= string(i)*". "*minerals[i]*"\n"
+    end
+    msg *= "m. manual\n"
+    return msg
+end
+
+function TUIstoichiometryMessage(ctrl::AbstractDict)
+    element = channel2element(ctrl["cache"])[1]
+    msg = "Specify the concentration (in wt%) of " * element * " in the sample:"
     return msg
 end
 
@@ -74,10 +100,12 @@ function TUIaddByNumberMessage(ctrl::AbstractDict)
 end
 
 function TUIratioMessage(ctrl::AbstractDict)
-    if haskey(ctrl,"channels")
+    if isa(ctrl["channels"],AbstractVector)
+        channels = ctrl["channels"]
+    elseif isa(ctrl["channels"],AbstractDict)
         channels = collect(values(ctrl["channels"]))
     else
-        channels = names(ctrl["run"][1].dat)[3:end]
+        channels = getChannels(ctrl["run"])
     end
     msg = "Choose one of the following denominators:\n"
     for i in 1:length(channels)

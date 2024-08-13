@@ -214,6 +214,29 @@ function getNuclides(csv::AbstractString=joinpath(@__DIR__,"../settings/nuclides
     return out
 end
 export getNuclides
+function getStoichiometry(csv::AbstractString=joinpath(@__DIR__,"../settings/stoichiometry.csv"))
+    tab = CSV.read(csv, DataFrame)
+    out = Dict()
+    good = .!ismissing.(tab)
+    (nr,nc) = size(tab)
+    for i in 1:nr
+        mineral = tab[i,"mineral"]
+        out[mineral] = Dict()
+        for j in 2:nc
+            element = names(tab)[j]
+            concentration = tab[i,j]
+            if !ismissing(concentration)
+                out[mineral][element] = concentration
+            end
+        end
+    end
+    return out
+end
+export getStoichiometry
+function setStoichiometry(csv::AbstractString=joinpath(@__DIR__,"../settings/stoichiometry.csv"))
+    _PT["stoichiometry"] = getStoichiometry(csv)
+end
+export setStoichiometry
 function getGlass(csv::AbstractString=joinpath(@__DIR__,"../settings/glass.csv"))
     tab = CSV.read(csv, DataFrame)
     out = Dict()
@@ -244,3 +267,8 @@ function setReferenceMaterials!(csv::AbstractString=joinpath(@__DIR__,"../settin
     _PT["refmat"] = getReferenceMaterials(csv)
 end
 export setReferenceMaterials!
+function getInternal(mineral::AbstractString,channel::AbstractString)
+    element = channel2element(channel,collect(keys(_PT["nuclides"])))
+    return (channel,_PT["stoichiometry"][mineral][element[1]])
+end
+export getInternal

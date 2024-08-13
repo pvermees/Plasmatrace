@@ -168,14 +168,29 @@ function getPTree()
         ),
         "method" => (
             message = TUIshowMethods,
-            help = "Choose a geochronometer. Email us if you can't "*
-            "find your chosen method.",
+            help = "Choose a method. Email us if you can't "*
+            "find the one you're looking for.",
             action = TUImethod!
+        ),
+        "internal" => (
+            message = TUIinternalMessage,
+            help = nothing,
+            action = TUIinternal!
         ),
         "columns" => (
             message = TUIcolumnMessage,
             help = nothing,
             action = TUIcolumns!
+        ),
+        "mineral" => (
+            message = TUImineralMessage,
+            help = nothing,
+            action = TUIchooseMineral!
+        ),
+        "stoichiometry" => (
+            message = TUIstoichiometryMessage,
+            help = nothing,
+            action = TUIstoichiometry!
         ),
         "standards" => (
             message =

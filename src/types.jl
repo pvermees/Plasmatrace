@@ -21,6 +21,7 @@ function init_PT!()
     _PT["nuclides"] = getNuclides()
     _PT["refmat"] = getReferenceMaterials()
     _PT["glass"] = getGlass()
+    _PT["stoichiometry"] = getStoichiometry()
     _PT["tree"] = getPTree()
     _PT["ctrl"] = nothing
     _PT["extensions"] = nothing

@@ -1,0 +1,16 @@
+task,action
+top,c
+top,r
+instrument,a
+dir|file,d
+loadICPdir,data/apatite
+top,m
+method,1
+internal,1
+mineral,1
+top,g
+glass,a
+chooseGlass,2
+addGlassGroup,p
+addGlassByPrefix,GLASS
+glass,x
