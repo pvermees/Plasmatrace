@@ -18,7 +18,7 @@ function TUIinit()
         "instrument" => "",
         "ICPpath" => "",
         "LApath" => "",
-        "channels" => Dict(),
+        "channels" => nothing,
         "standards" => AbstractString[],
         "glass" => AbstractString[],
         "internal" => nothing,
@@ -78,6 +78,7 @@ function TUIloadICPdir!(ctrl::AbstractDict,
     ctrl["run"] = load(response;
                        instrument=ctrl["instrument"],
                        head2name=ctrl["head2name"])
+    ctrl["channels"] = getChannels(ctrl["run"])
     ctrl["priority"]["load"] = false
     ctrl["multifile"] = true
     ctrl["ICPpath"] = response
@@ -99,6 +100,7 @@ function TUIloadLAfile!(ctrl::AbstractDict,
     ctrl["LApath"] = response
     ctrl["run"] = load(ctrl["ICPpath"],ctrl["LApath"];
                        instrument=ctrl["instrument"])
+    ctrl["channels"] = getChannels(ctrl["run"]) # reset
     ctrl["priority"]["load"] = false
     ctrl["head2name"] = true
     ctrl["multifile"] = false
@@ -119,7 +121,7 @@ function TUImethod!(ctrl::AbstractDict,
     elseif i > length(methods)
         return "x"
     else
-        ctrl["method"] = methods[i]
+        ctrl["method"] = methods[i+1]
         return "columns"
     end
 end
@@ -131,9 +133,8 @@ end
 
 function TUIinternal!(ctrl::AbstractDict,
                       response::AbstractString)
-    channels = getChannels(ctrl["run"])
     i = parse(Int,response)
-    ctrl["cache"] = channels[i]
+    ctrl["cache"] = ctrl["channels"][i]
     return "mineral"
 end
 
@@ -143,6 +144,7 @@ function TUIstoichiometry!(ctrl::AbstractDict,
     concentration = parse(Float64,response)
     ctrl["internal"] = (channel,concentration)
     ctrl["priority"]["method"] = false
+    ctrl["priority"]["standards"] = false
     return "xxxx"
 end
 
@@ -156,6 +158,7 @@ function TUIchooseMineral!(ctrl::AbstractDict,
         channel = ctrl["cache"]
         ctrl["internal"] = getInternal(mineral,channel)
         ctrl["priority"]["method"] = false
+        ctrl["priority"]["standards"] = false
         return "xxx"
     end
 end
@@ -312,13 +315,8 @@ function TUIconcentrationPlotter(ctrl::AbstractDict,samp::Sample)
 end
 
 function TUIgeochronPlotter(ctrl::AbstractDict,samp::Sample)
-    if haskey(ctrl,"channels")
-        channels = ctrl["channels"]
-    else
-        channels = getChannels(samp)
-    end
     if isnothing(ctrl["blank"]) | (samp.group=="sample")
-        p = plot(samp,channels;den=ctrl["den"],transformation=ctrl["transformation"])
+        p = plot(samp,ctrl["channels"];den=ctrl["den"],transformation=ctrl["transformation"])
     else
         if isnothing(ctrl["PAcutoff"])
             par = ctrl["par"]
@@ -327,7 +325,7 @@ function TUIgeochronPlotter(ctrl::AbstractDict,samp::Sample)
             par = analog ? ctrl["par"].analog : ctrl["par"].pulse
         end
         anchors = getAnchors(ctrl["method"],ctrl["standards"],ctrl["glass"])
-        p = plot(samp,ctrl["method"],channels,ctrl["blank"],par,ctrl["standards"],ctrl["glass"];
+        p = plot(samp,ctrl["method"],ctrl["channels"],ctrl["blank"],par,ctrl["standards"],ctrl["glass"];
                  den=ctrl["den"],transformation=ctrl["transformation"])
     end
     return p
@@ -373,10 +371,12 @@ function TUIratios!(ctrl::AbstractDict,
         return "xx"
     else
         i = parse(Int,response)
-        if haskey(ctrl,"channels")
+        if isa(ctrl["channels"],AbstractVector)
+            channels = ctrl["channels"]
+        elseif isa(ctrl["channels"],AbstractDict)
             channels = collect(values(ctrl["channels"]))
         else
-            channels = names(ctrl["run"][1].dat)[3:end]
+            channels = getChannels(ctrl["run"])
         end
         ctrl["den"] = channels[i]
     end
@@ -498,19 +498,28 @@ function TUItransformation!(ctrl::AbstractDict,
 end
 
 function TUIprocess!(ctrl::AbstractDict)
-    ctrl["anchors"] = getAnchors(ctrl["method"],ctrl["standards"],ctrl["glass"])
     println("Fitting blanks...")
     ctrl["blank"] = fitBlanks(ctrl["run"],nblank=ctrl["options"]["blank"])
     println("Fractionation correction...")
-    ctrl["par"] = fractionation(ctrl["run"],
-                                ctrl["method"],
-                                ctrl["blank"],
-                                ctrl["channels"],
-                                ctrl["standards"],
-                                ctrl["glass"];
-                                ndrift=ctrl["options"]["drift"],
-                                ndown=ctrl["options"]["down"],
-                                PAcutoff=ctrl["PAcutoff"])
+    if ctrl["method"] == "concentrations"
+        elements = channels2elements(ctrl["run"])
+        ctrl["par"] = fractionation(ctrl["run"],
+                                    ctrl["blank"],
+                                    elements,
+                                    ctrl["internal"],
+                                    ctrl["glass"])
+    else
+        ctrl["anchors"] = getAnchors(ctrl["method"],ctrl["standards"],ctrl["glass"])
+        ctrl["par"] = fractionation(ctrl["run"],
+                                    ctrl["method"],
+                                    ctrl["blank"],
+                                    ctrl["channels"],
+                                    ctrl["standards"],
+                                    ctrl["glass"];
+                                    ndrift=ctrl["options"]["drift"],
+                                    ndown=ctrl["options"]["down"],
+                                    PAcutoff=ctrl["PAcutoff"])
+    end
     ctrl["priority"]["process"] = false
     println("Done")
     return nothing
@@ -592,7 +601,11 @@ function TUIsaveTemplate(ctrl::AbstractDict,
         write(file,"instrument = \"" * ctrl["instrument"] * "\"\n")
         write(file,"multifile = " * string(ctrl["multifile"]) * "\n")
         write(file,"head2name = " * string(ctrl["head2name"]) * "\n")
-        write(file,"channels = " * dict2string(ctrl["channels"]) * "\n")
+        if ctrl["method"] == "concentrations"
+            write(file,"channels = " * dict2string(ctrl["channels"]) * "\n")
+        else
+            write(file,"channels = " * vec2string(ctrl["channels"]) * "\n")
+        end
         write(file,"options = " * dict2string(ctrl["options"]) * "\n")
         write(file,"PAcutoff = " * PAcutoff * "\n")
         write(file,"transformation = \"" * ctrl["transformation"] * "\"\n")

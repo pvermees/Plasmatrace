@@ -22,11 +22,10 @@ function process!(run::Vector{Sample},
                   elements::AbstractDataFrame,
                   internal::Tuple,
                   glass::AbstractDict;
-                  nblank::Integer=2,PAcutoff=nothing,verbose::Bool=false)
+                  nblank::Integer=2)
     blank = fitBlanks(run;nblank=nblank)
     setGroup!(run,glass)
-    fit = fractionation(run,blank,elements,internal,glass;
-                        PAcutoff=PAcutoff,verbose=verbose)
+    fit = fractionation(run,blank,elements,internal,glass)
     return blank, fit
 end
 export process!
@@ -224,12 +223,18 @@ function fractionation(run::Vector{Sample},
                        blank::AbstractDataFrame,
                        elements::AbstractDataFrame,
                        internal::Tuple,
-                       glass::AbstractDict;
-                       PAcutoff=nothing,
-                       verbose::Bool=false)
+                       glass::AbstractDict)
+    return fractionation(run,blank,elements,internal,
+                         collect(keys(glass)))
+end
+function fractionation(run::Vector{Sample},
+                       blank::AbstractDataFrame,
+                       elements::AbstractDataFrame,
+                       internal::Tuple,
+                       glass::AbstractVector)
     ne = size(elements,2)
     num = den = fill(0.0,ne-1)
-    for (SRM,prefix) in glass
+    for SRM in glass
         dat = pool(run;signal=true,group=SRM)
         concs = elements2concs(elements,SRM)
         bt = polyVal(blank,dat.t)

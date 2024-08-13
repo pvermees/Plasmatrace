@@ -27,9 +27,8 @@ end
 
 function TUIinternalMessage(ctrl::AbstractDict)
     msg = "Choose an internal standard from the following list of channels:\n"
-    channels = getChannels(ctrl["run"])
-    for i in eachindex(channels)
-        msg *= string(i)*". "*channels[i]*"\n"
+    for i in eachindex(ctrl["channels"])
+        msg *= string(i)*". "*ctrl["channels"][i]*"\n"
     end
     msg *= "x: Exit\n"*"?: Help"
     return msg
@@ -101,10 +100,12 @@ function TUIaddByNumberMessage(ctrl::AbstractDict)
 end
 
 function TUIratioMessage(ctrl::AbstractDict)
-    if haskey(ctrl,"channels")
+    if isa(ctrl["channels"],AbstractVector)
+        channels = ctrl["channels"]
+    elseif isa(ctrl["channels"],AbstractDict)
         channels = collect(values(ctrl["channels"]))
     else
-        channels = names(ctrl["run"][1].dat)[3:end]
+        channels = getChannels(ctrl["run"])
     end
     msg = "Choose one of the following denominators:\n"
     for i in 1:length(channels)

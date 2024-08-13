@@ -9,5 +9,3 @@ end
 rerun = true
 
 include("runtests.jl")
-
-PT!(logbook="logs/concentrations.log")

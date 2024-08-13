@@ -394,6 +394,10 @@ function dict2string(dict::AbstractDict)
     return out
 end
 
+function vec2string(v::AbstractVector)
+    return "[\"" * join(map(string,v,"\",\"")) * "\"]"
+end
+
 function channels2elements(samp::Sample)
     channels = getChannels(samp)
     out = DataFrame()
