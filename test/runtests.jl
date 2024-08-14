@@ -241,17 +241,17 @@ export PTree!
 end
 using .test
 function extensiontest(verbose=true)
-    PT!(test,logbook="logs/extension.log")
+    PT(test,logbook="logs/extension.log")
 end
 
 function TUItest()
-    #PT!(logbook="logs/test.log")
-    PT!(logbook="logs/concentrations.log")
+    PT(logbook="logs/test.log")
+    #PT(logbook="logs/concentrations.log")
 end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -270,5 +270,5 @@ Plots.closeall()
 @testset "timestamp test" begin timestamptest() end
 @testset "stoichiometry test" begin mineraltest() end
 @testset "concentration test" begin concentrationtest() end
-@testset "extension test" begin extensiontest() end=#
+@testset "extension test" begin extensiontest() end
 @testset "TUI test" begin TUItest() end

@@ -1,3 +1,13 @@
+function getPTctrl()
+    return _PT["ctrl"]
+end
+export getPTctrl
+
+function setPTctrl!(ctrl::AbstractDict)
+    _PT["ctrl"] = ctrl
+end
+export setPTctrl!
+
 function getExt(instrument)
     if instrument in ["Agilent","ThermoFisher"]
         return ".csv"
