@@ -29,7 +29,7 @@ Here is a short example of a menu-driven Plasmatrace session:
 julia> using Plasmatrace
 julia> PT()
 -------------------
- Plasmatrace 0.6.4
+ Plasmatrace 0.6.5
 -------------------
 
 r: Read data files[*]
@@ -79,6 +79,8 @@ x: Exit
 v
 ```
 
+![Lu-Hf dataset](./img/plot.png)
+
 ## TUI + GUI extension
 
 You can augment the TUI with GUI elements (currently just file choosers) by installing the
@@ -88,7 +90,7 @@ You can augment the TUI with GUI elements (currently just file choosers) by inst
 julia> using Plasmatrace, PTgui
 julia> PT(PTgui)
 -------------------
- Plasmatrace 0.6.4
+ Plasmatrace 0.6.5
 -------------------
 
 r: Read data files[*]
@@ -118,6 +120,8 @@ p: Parse the data from a single file using a laser log
 (? for help, x to exit):
 d
 ```
+
+![PTgui file reader dialog](./img/dialog.png)
 
 ## REPL (command-line interface)
 
