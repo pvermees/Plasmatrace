@@ -403,7 +403,7 @@ function dict2string(dict::AbstractDict)
 end
 
 function vec2string(v::AbstractVector)
-    return "[\"" * join(map(string,v,"\",\"")) * "\"]"
+    return "[\"" * join(v .* "\",\"")[1:end-3] * "\"]"
 end
 
 function channels2elements(samp::Sample)
