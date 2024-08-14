@@ -1,8 +1,39 @@
+"""
+getPTctrl
+
+Access the control parameters of a TUI session
+
+# Returns
+
+A dictionary with control parameters
+
+# Examples
+
+See [`PT`](@ref).
+
+See also [`setPTctrl!`](@ref).
+"""
 function getPTctrl()
     return _PT["ctrl"]
 end
 export getPTctrl
 
+"""
+setPTctrl
+
+Set the control parameters of a TUI session
+
+# Examples
+```julia
+PT(logbook="logs/test.log")
+ctrl = getPTctrl()
+ctrl["transformation"] = "log"
+setPTctrl!(ctrl)
+PT()
+```
+
+See also [`getPTctrl`](@ref).
+"""
 function setPTctrl!(ctrl::AbstractDict)
     _PT["ctrl"] = ctrl
 end
@@ -28,10 +59,12 @@ function getSnames(run::Vector{Sample})
     return getAttr(run,:sname)
 end
 export getSnames
+
 function getGroups(run::Vector{Sample})
     return getAttr(run,:group)
 end
 export getGroups
+
 function getAttr(run::Vector{Sample},attr::Symbol)
     ns = length(run)
     first = getproperty(run[1],attr)

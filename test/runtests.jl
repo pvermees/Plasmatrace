@@ -221,14 +221,13 @@ end
 function concentrationtest()
     method = "concentrations"
     myrun = load("data/Lu-Hf",instrument="Agilent")
-    elements = channels2elements(myrun)
     internal = ("Al27 -> 27",1.2e5)
     glass = Dict("NIST612" => "NIST612p")
     setGroup!(myrun,glass)
-    blk, fit = process!(myrun,elements,internal,glass;nblank=2)
-    p = plot(myrun[4],blk,fit,elements,internal[1];
+    blk, fit = process!(myrun,internal,glass;nblank=2)
+    p = plot(myrun[4],blk,fit,internal[1];
              transformation="log",den=internal[1])
-    conc = concentrations(myrun,elements,blk,fit,internal)
+    conc = concentrations(myrun,blk,fit,internal)
     @test display(p) != NaN
 end
 

@@ -1,6 +1,54 @@
 """
-modifies run (adds standards to it)
-returns blk, anchors, fit
+process!
+
+Fits blanks and fractionation effects
+
+# Returns
+
+- `blank`: a dataframe with blank parameters for all specified channels
+- `fit`: a tuple or (if method is omitted) vector of fit parameters
+
+# Methods
+
+- `process!(run::Vector{Sample},
+            method::AbstractString,
+            channels::AbstractDict,
+            standards::AbstractDict,
+            glass::AbstractDict;
+            nblank::Integer=2,ndrift::Integer=1,ndown::Integer=1,
+            PAcutoff=nothing,verbose::Bool=false)`
+- `process!(run::Vector{Sample},
+            internal::Tuple,
+            glass::AbstractDict;
+            nblank::Integer=2)`
+
+# Arguments
+
+- `run`: the output of `load`
+- `method`: either "U-Pb", "Lu-Hf", "Rb-Sr" or "concentrations"
+- `channels`: dictionary of the type Dict("P" => "parent", "D" => "daughter", "d" => "sister")
+              or a vector of channel names (e.g., the keys of a channels Dict)
+- `standards`: dictionary of the type Dict("prefix" => "mineral standard")
+- `glass`: dictionary of the type Dict("prefix" => "reference glass")
+- `nblank`, `ndrift`, `ndown`: The number of parameters used to fit the blanks,
+                               drift and down hole fractionation, respectively
+- `PAcutoff`: pulse-analog cutoff
+- `verbose`: if `true`, prints the optimisation results to the REPL
+- `internal`: a tuple with the name of a channel that is to be used as an internal
+              concentration standard, and its concentration in the sample.
+
+# Examples
+
+```julia
+myrun = load("data/Lu-Hf",instrument="Agilent")
+method = "Lu-Hf"
+channels = Dict("d"=>"Hf178 -> 260",
+                "D"=>"Hf176 -> 258",
+                "P"=>"Lu175 -> 175")
+standards = Dict("Hogsbo" => "hogsbo")
+glass = Dict("NIST612" => "NIST612p")
+blk, fit = process!(myrun,method,channels,standards,glass)
+```
 """
 function process!(run::Vector{Sample},
                   method::AbstractString,
@@ -19,17 +67,20 @@ function process!(run::Vector{Sample},
 end
 # concentrations:
 function process!(run::Vector{Sample},
-                  elements::AbstractDataFrame,
                   internal::Tuple,
                   glass::AbstractDict;
                   nblank::Integer=2)
     blank = fitBlanks(run;nblank=nblank)
     setGroup!(run,glass)
-    fit = fractionation(run,blank,elements,internal,glass)
+    fit = fractionation(run,blank,internal,glass)
     return blank, fit
 end
 export process!
 
+"""
+fitBlanks(run::Vector{Sample};nblank=2):
+Fit a dataframe of blank parameters to a run of multiple samples
+"""
 function fitBlanks(run::Vector{Sample};nblank=2)
     blk = pool(run;blank=true)
     channels = getChannels(run)
@@ -42,6 +93,54 @@ function fitBlanks(run::Vector{Sample};nblank=2)
 end
 export fitBlanks
 
+"""
+fractionation
+
+Fit the drift and down hole fractionation
+
+# Methods
+
+- `fractionation(run::Vector{Sample},
+                 method::AbstractString,
+                 blank::AbstractDataFrame,
+                 channels::AbstractDict,
+                 standards::Union{AbstractVector,AbstractDict},
+                 glass::Union{AbstractVector,AbstractDict};
+                 ndrift::Integer=1,
+                 ndown::Integer=0,
+                 PAcutoff=nothing,
+                 verbose::Bool=false)`
+- `fractionation(run::Vector{Sample},
+                 method::AbstractString,
+                 blank::AbstractDataFrame,
+                 channels::AbstractDict,
+                 standards::Union{AbstractVector,AbstractDict},
+                 mf::Union{AbstractFloat,Nothing};
+                 ndrift::Integer=1,
+                 ndown::Integer=0,
+                 PAcutoff=nothing,
+                 verbose::Bool=false)`
+- `fractionation(run::Vector{Sample},
+                 method::AbstractString,
+                 blank::AbstractDataFrame,
+                 channels::AbstractDict,
+                 glass::Union{AbstractVector,AbstractDict};
+                 verbose::Bool=false)`
+- `fractionation(run::Vector{Sample},
+                 blank::AbstractDataFrame,
+                 internal::Tuple,
+                 glass::Union{AbstractVector,AbstractDict})`
+- `fractionation(run::Vector{Sample},
+                 blank::AbstractDataFrame,
+                 elements::AbstractDataFrame,
+                 internal::Tuple,
+                 glass::Union{AbstractVector,AbstractDict})`
+
+# Arguments
+
+- see [`process!`](@ref).
+- `elements`: a 1-row dataframe with the elements corresponding to each channel
+"""
 # two-step isotope fractionation
 function fractionation(run::Vector{Sample},
                        method::AbstractString,
@@ -221,11 +320,18 @@ end
 # for concentration measurements:
 function fractionation(run::Vector{Sample},
                        blank::AbstractDataFrame,
-                       elements::AbstractDataFrame,
                        internal::Tuple,
                        glass::AbstractDict)
+    elements = channels2elements(run)
     return fractionation(run,blank,elements,internal,
                          collect(keys(glass)))
+end
+function fractionation(run::Vector{Sample},
+                       blank::AbstractDataFrame,
+                       internal::Tuple,
+                       glass::AbstractVector)
+    elements = channels2elements(run)
+    return fractionation(run,blank,elements,internal,glass)
 end
 function fractionation(run::Vector{Sample},
                        blank::AbstractDataFrame,
@@ -253,6 +359,20 @@ function fractionation(run::Vector{Sample},
 end
 export fractionation
 
+"""
+atomic(samp::Sample,
+       channels::AbstractDict,
+       blank::AbstractDataFrame,
+       pars::NamedTuple)
+
+# Returns
+
+- `P`, `D`, `d`: Vectors with the inferred 'atomic' parent, daughter and sister signals
+
+# Arguments
+
+See [`process!`](@ref).
+"""
 function atomic(samp::Sample,
                 channels::AbstractDict,
                 blank::AbstractDataFrame,
@@ -274,6 +394,31 @@ function atomic(samp::Sample,
 end
 export atomic
 
+"""
+averat
+
+Average the 'atomic' isotopic ratios for a sample
+
+# Methods
+
+- `averat(samp::Sample,
+          channels::AbstractDict,
+          blank::AbstractDataFrame,
+          pars::NamedTuple)`
+- `averat(run::Vector{Sample},
+          channels::AbstractDict,
+          blank::AbstractDataFrame,
+          pars::NamedTuple;
+          PAcutoff=nothing)`
+
+# Returns
+
+- a dataframe of P/D and d/D-ratios with their standard errors and error correlations
+
+# Arguments
+
+See [`process!`](@ref).
+"""
 function averat(samp::Sample,
                 channels::AbstractDict,
                 blank::AbstractDataFrame,
@@ -325,6 +470,52 @@ function averat(run::Vector{Sample},
 end
 export averat
 
+"""
+concentrations
+
+Tabulate chemical concentration data
+
+# Methods
+
+- `concentrations(samp::Sample,
+                  blank::AbstractDataFrame,
+                  pars::AbstractVector,
+                  internal::Tuple)`
+- `concentrations(samp::Sample,
+                  elements::AbstractDataFrame,
+                  blank::AbstractDataFrame,
+                  pars::AbstractVector,
+                  internal::Tuple)`
+- `concentrations(run::Vector{Sample},
+                  blank::AbstractDataFrame,
+                  pars::AbstractVector,
+                  internal::Tuple)`
+- `concentrations(run::Vector{Sample},
+                  elements::AbstractDataFrame,
+                  blank::AbstractDataFrame,
+                  pars::AbstractVector,
+                  internal::Tuple)`
+
+# Returns
+
+- a dataframe with concentration estimates (in ppm) and their standard errors
+
+# Arguments
+
+- See [`process!`](@ref).
+- `elements`: a 1-row dataframe with the elements corresponding to each channel
+
+# Examples
+```julia
+method = "concentrations"
+myrun = load("data/Lu-Hf",instrument="Agilent")
+internal = ("Al27 -> 27",1.2e5)
+glass = Dict("NIST612" => "NIST612p")
+setGroup!(myrun,glass)
+blk, fit = process!(myrun,internal,glass;nblank=2)
+conc = concentrations(myrun,blk,fit,internal)
+```
+"""
 function concentrations(samp::Sample,
                         blank::AbstractDataFrame,
                         pars::AbstractVector,

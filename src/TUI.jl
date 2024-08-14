@@ -1,3 +1,22 @@
+"""
+PT(extensions...;logbook::AbstractString="")
+
+Plasmatrace TUI
+
+# Arguments
+
+- `extensions...`: a comma separated list of Plasmatrace extensions
+- `logbook`: the file path to a Plasmatrace log
+
+# Examples
+```julia
+PT(logbook="logs/test.log")
+ctrl = getPTctrl()
+samp = ctrl["run"][1]
+p = plot(samp)
+display(p)
+```
+"""
 function PT(extensions...;logbook::AbstractString="")
     _PT["extensions"] = extensions
     TUIwelcome()
