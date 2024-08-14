@@ -5,7 +5,7 @@ instrument,a
 dir|file,d
 loadICPdir,data/apatite
 top,m
-method,1
+method,c
 internal,1
 mineral,1
 top,g
@@ -14,3 +14,6 @@ chooseGlass,2
 addGlassGroup,p
 addGlassByPrefix,GLASS
 glass,x
+top,l
+log,s
+saveTemplate,logs/concentrations.tmp

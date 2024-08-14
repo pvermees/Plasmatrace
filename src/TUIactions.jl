@@ -85,6 +85,8 @@ function TUIloadICPdir!(ctrl::AbstractDict,
     ctrl["multifile"] = true
     ctrl["ICPpath"] = response
     if ctrl["template"]
+        TUIsetGroups!(ctrl,"standards")
+        TUIsetGroups!(ctrl,"glass")
         return "x"
     else
         return "xxx"
@@ -109,6 +111,8 @@ function TUIloadLAfile!(ctrl::AbstractDict,
     ctrl["head2name"] = true
     ctrl["multifile"] = false
     if ctrl["template"]
+        ctrl["priority"]["standards"] = false
+        ctrl["priority"]["glass"] = false
         return "xx"
     else
         return "xxxx"
@@ -326,7 +330,8 @@ end
 
 function TUIgeochronPlotter(ctrl::AbstractDict,samp::Sample)
     if isnothing(ctrl["blank"]) | (samp.group=="sample")
-        p = plot(samp,ctrl["channels"];den=ctrl["den"],transformation=ctrl["transformation"])
+        p = plot(samp,ctrl["channels"];
+                 den=ctrl["den"],transformation=ctrl["transformation"])
     else
         if isnothing(ctrl["PAcutoff"])
             par = ctrl["par"]
@@ -600,12 +605,17 @@ function TUIopenTemplate!(ctrl::AbstractDict,
     ctrl["instrument"] = instrument
     ctrl["head2name"] = head2name
     ctrl["multifile"] = multifile
+    ctrl["method"] = method
     ctrl["channels"] = channels
     ctrl["options"] = options
     ctrl["PAcutoff"] = PAcutoff
+    ctrl["standards"] = standards
+    ctrl["glass"] = glass
     ctrl["transformation"] = transformation
     ctrl["internal"] = internal
     ctrl["priority"]["method"] = false
+    ctrl["priority"]["standards"] = all(isnothing.(values(standards)))
+    ctrl["priority"]["glass"] = all(isnothing.(values(glass)))
     ctrl["template"] = true
     return "xx"
 end
@@ -617,9 +627,16 @@ function TUIsaveTemplate(ctrl::AbstractDict,
         write(file,"instrument = \"" * ctrl["instrument"] * "\"\n")
         write(file,"multifile = " * string(ctrl["multifile"]) * "\n")
         write(file,"head2name = " * string(ctrl["head2name"]) * "\n")
+        write(file,"method = \"" * ctrl["method"] * "\"\n")
         write(file,"options = " * dict2string(ctrl["options"]) * "\n")
         write(file,"PAcutoff = " * PAcutoff * "\n")
         write(file,"transformation = \"" * ctrl["transformation"] * "\"\n")
+        if length(ctrl["glass"])>0
+            write(file,"glass = " * dict2string(ctrl["glass"]) * "\n")
+        end
+        if length(ctrl["standards"])>0
+            write(file,"standards = " * dict2string(ctrl["standards"]) * "\n")
+        end
         if ctrl["method"] == "concentrations"
             write(file,"channels = " * vec2string(ctrl["channels"]) * "\n")
         else
@@ -628,8 +645,8 @@ function TUIsaveTemplate(ctrl::AbstractDict,
         if isnothing(ctrl["internal"])
             write(file,"internal = nothing\n")
         else
-            write(file,"internal = (" *
-                  ctrl["internal"][1] * "," *
+            write(file,"internal = (\"" *
+                  ctrl["internal"][1] * "\"," *
                   string(ctrl["internal"][2]) * ")")
         end
     end
@@ -703,18 +720,18 @@ function TUIrefresh!(ctrl::AbstractDict)
         TUIloadLAfile!(ctrl,ctrl["LApath"])
     end
     snames = getSnames(ctrl["run"])
-    for (refmat,prefix) in ctrl["standards"]
-        if !isnothing(prefix)
-            setGroup!(ctrl["run"],prefix,refmat)
-        end
-    end
-    for (refmat,prefix) in ctrl["glass"]
-        if !isnothing(prefix)
-            setGroup!(ctrl["run"],prefix,refmat)
-        end
-    end
+    TUIsetGroups!(ctrl,"standards")
+    TUIsetGroups!(ctrl,"glass")
     TUIprocess!(ctrl)
     return nothing
+end
+
+function TUIsetGroups!(ctrl::AbstractDict,std::AbstractString)
+    for (refmat,prefix) in ctrl[std]
+        if !isnothing(prefix)
+            setGroup!(ctrl["run"],prefix,refmat)
+        end
+    end
 end
 
 function TUIclear!(ctrl::AbstractDict)
