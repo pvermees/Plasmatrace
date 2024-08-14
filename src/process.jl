@@ -85,7 +85,7 @@ function fractionation(run::Vector{Sample},
                        ndown::Integer=0,
                        PAcutoff=nothing,
                        verbose::Bool=false)
-    
+
     anchors = getAnchors(method,standards,false)
 
     if isnothing(PAcutoff)

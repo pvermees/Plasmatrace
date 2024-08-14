@@ -19,8 +19,8 @@ function TUIinit()
         "ICPpath" => "",
         "LApath" => "",
         "channels" => nothing,
-        "standards" => AbstractString[],
-        "glass" => AbstractString[],
+        "standards" => Dict{String,Union{Nothing,String}}(),
+        "glass" => Dict{String,Union{Nothing,String}}(),
         "internal" => nothing,
         "options" => Dict("blank" => 2, "drift" => 1, "down" => 1),
         "PAcutoff" => nothing,
@@ -78,7 +78,9 @@ function TUIloadICPdir!(ctrl::AbstractDict,
     ctrl["run"] = load(response;
                        instrument=ctrl["instrument"],
                        head2name=ctrl["head2name"])
-    ctrl["channels"] = getChannels(ctrl["run"])
+    if isnothing(ctrl["channels"])
+        ctrl["channels"] = getChannels(ctrl["run"])
+    end
     ctrl["priority"]["load"] = false
     ctrl["multifile"] = true
     ctrl["ICPpath"] = response
@@ -100,7 +102,9 @@ function TUIloadLAfile!(ctrl::AbstractDict,
     ctrl["LApath"] = response
     ctrl["run"] = load(ctrl["ICPpath"],ctrl["LApath"];
                        instrument=ctrl["instrument"])
-    ctrl["channels"] = getChannels(ctrl["run"]) # reset
+    if isnothing(ctrl["channels"])
+        ctrl["channels"] = getChannels(ctrl["run"]) # reset
+    end
     ctrl["priority"]["load"] = false
     ctrl["head2name"] = true
     ctrl["multifile"] = false
@@ -114,15 +118,17 @@ end
 function TUImethod!(ctrl::AbstractDict,
                     response::AbstractString)
     methods = _PT["methods"].method
-    i = parse(Int,response)
-    if i==1
+    if response=="c"
         ctrl["method"] = "concentrations"
         return "internal"
-    elseif i > length(methods)
-        return "x"
     else
-        ctrl["method"] = methods[i+1]
-        return "columns"
+        i = parse(Int,response)
+        if i > length(methods)
+            return "x"
+        else
+            ctrl["method"] = methods[i]
+            return "columns"
+        end
     end
 end
 
@@ -178,15 +184,14 @@ function TUIchooseStandard!(ctrl::AbstractDict,
     i = parse(Int,response)
     standards = collect(keys(_PT["refmat"][ctrl["method"]]))
     ctrl["cache"] = standards[i]
-    if !(standards[i] in ctrl["standards"])
-        push!(ctrl["standards"],standards[i])
-    end
+    ctrl["standards"][standards[i]] = nothing
     return "addStandardGroup"
 end
 
 function TUIaddStandardsByPrefix!(ctrl::AbstractDict,
                                   response::AbstractString)
     setGroup!(ctrl["run"],response,ctrl["cache"])
+    ctrl["standards"][ctrl["cache"]] = response
     ctrl["priority"]["standards"] = false
     return "xxx"
 end
@@ -200,8 +205,8 @@ function TUIaddStandardsByNumber!(ctrl::AbstractDict,
 end
 
 function TUIremoveAllStandards!(ctrl::AbstractDict)
+    empty!(ctrl["standards"])
     setGroup!(ctrl["run"],"sample")
-    ctrl["standards"] = AbstractString[]
     ctrl["priority"]["standards"] = true
     return "xx"
 end
@@ -211,8 +216,11 @@ function TUIremoveStandardsByNumber!(ctrl::AbstractDict,
     selection = parse.(Int,split(response,","))
     setGroup!(ctrl["run"],selection,"sample")
     groups = unique(getGroups(ctrl["run"]))
-    keep = (in).(ctrl["standards"],Ref(groups))
-    ctrl["standards"] = ctrl["standards"][keep]
+    for (k,v) in ctrl["standards"]
+        if !in(k,groups)
+            delete!(ctrl["standards"],k)
+        end
+    end
     ctrl["priority"]["standards"] = length(ctrl["standards"])<1
     return "xxx"
 end
@@ -238,15 +246,14 @@ function TUIchooseGlass!(ctrl::AbstractDict,
     i = parse(Int,response)
     glass = collect(keys(_PT["glass"]))
     ctrl["cache"] = glass[i]
-    if !(glass[i] in ctrl["glass"])
-        push!(ctrl["glass"],glass[i])
-    end
+    ctrl["glass"][glass[i]] = nothing
     return "addGlassGroup"
 end
 
 function TUIaddGlassByPrefix!(ctrl::AbstractDict,
                               response::AbstractString)
     setGroup!(ctrl["run"],response,ctrl["cache"])
+    ctrl["glass"][ctrl["cache"]] = response
     ctrl["priority"]["glass"] = false
     return "xxx"
 end
@@ -260,8 +267,8 @@ function TUIaddGlassByNumber!(ctrl::AbstractDict,
 end
 
 function TUIremoveAllGlass!(ctrl::AbstractDict)
+    empty!(ctrl["standards"])
     setGroup!(ctrl["run"],"sample")
-    ctrl["glass"] = Dict()
     ctrl["priority"]["glass"] = true
     return "xx"
 end
@@ -271,8 +278,11 @@ function TUIremoveGlassByNumber!(ctrl::AbstractDict,
     selection = parse.(Int,split(response,","))
     setGroup!(ctrl["run"],selection,"sample")
     groups = unique(getGroups(ctrl["run"]))
-    keep = (in).(ctrl["glass"],Ref(groups))
-    ctrl["glass"] = ctrl["glass"][keep]
+    for (k,v) in ctrl["glass"]
+        if !in(k,groups)
+            delete!(ctrl["glass"],k)
+        end
+    end
     ctrl["priority"]["glass"] = length(ctrl["glass"])<1
     return "xxx"
 end
@@ -304,7 +314,7 @@ function TUIplotter(ctrl::AbstractDict)
 end
 
 function TUIconcentrationPlotter(ctrl::AbstractDict,samp::Sample)
-    if (samp.group in ctrl["glass"]) & !isnothing(ctrl["blank"])
+    if (samp.group in keys(ctrl["glass"])) & !isnothing(ctrl["blank"])
         elements = channels2elements(samp)
         p = plot(samp,ctrl["blank"],ctrl["par"],elements,ctrl["internal"][1];
                  den=ctrl["den"],transformation=ctrl["transformation"])
@@ -324,8 +334,9 @@ function TUIgeochronPlotter(ctrl::AbstractDict,samp::Sample)
             analog = isAnalog(samp,ctrl["channels"],ctrl["PAcutoff"])
             par = analog ? ctrl["par"].analog : ctrl["par"].pulse
         end
-        anchors = getAnchors(ctrl["method"],ctrl["standards"],ctrl["glass"])
-        p = plot(samp,ctrl["method"],ctrl["channels"],ctrl["blank"],par,ctrl["standards"],ctrl["glass"];
+        anchors = getAnchors(ctrl["method"],standards,ctrl["glass"])
+        p = plot(samp,ctrl["method"],ctrl["channels"],ctrl["blank"],
+                 par,ctrl["standards"],ctrl["glass"];
                  den=ctrl["den"],transformation=ctrl["transformation"])
     end
     return p
@@ -593,6 +604,7 @@ function TUIopenTemplate!(ctrl::AbstractDict,
     ctrl["options"] = options
     ctrl["PAcutoff"] = PAcutoff
     ctrl["transformation"] = transformation
+    ctrl["internal"] = internal
     ctrl["priority"]["method"] = false
     ctrl["template"] = true
     return "xx"
@@ -605,14 +617,21 @@ function TUIsaveTemplate(ctrl::AbstractDict,
         write(file,"instrument = \"" * ctrl["instrument"] * "\"\n")
         write(file,"multifile = " * string(ctrl["multifile"]) * "\n")
         write(file,"head2name = " * string(ctrl["head2name"]) * "\n")
-        if ctrl["method"] == "concentrations"
-            write(file,"channels = " * dict2string(ctrl["channels"]) * "\n")
-        else
-            write(file,"channels = " * vec2string(ctrl["channels"]) * "\n")
-        end
         write(file,"options = " * dict2string(ctrl["options"]) * "\n")
         write(file,"PAcutoff = " * PAcutoff * "\n")
         write(file,"transformation = \"" * ctrl["transformation"] * "\"\n")
+        if ctrl["method"] == "concentrations"
+            write(file,"channels = " * vec2string(ctrl["channels"]) * "\n")
+        else
+            write(file,"channels = " * dict2string(ctrl["channels"]) * "\n")
+        end
+        if isnothing(ctrl["internal"])
+            write(file,"internal = nothing\n")
+        else
+            write(file,"internal = (" *
+                  ctrl["internal"][1] * "," *
+                  string(ctrl["internal"][2]) * ")")
+        end
     end
     return "xx"
 end
@@ -678,17 +697,21 @@ end
 
 function TUIrefresh!(ctrl::AbstractDict)
     if ctrl["multifile"]
+        TUIloadICPdir!(ctrl,ctrl["ICPpath"])
+    else
         TUIloadICPfile!(ctrl,ctrl["ICPpath"])
         TUIloadLAfile!(ctrl,ctrl["LApath"])
-    else
-        TUIloadICPdir!(ctrl,ctrl["ICPpath"])
     end
     snames = getSnames(ctrl["run"])
     for (refmat,prefix) in ctrl["standards"]
-        setGroup!(ctrl["run"],prefix,refmat)
+        if !isnothing(prefix)
+            setGroup!(ctrl["run"],prefix,refmat)
+        end
     end
-    for (refmat,prefix) in ctrl["glasss"]
-        setGroup!(ctrl["run"],prefix,refmat)
+    for (refmat,prefix) in ctrl["glass"]
+        if !isnothing(prefix)
+            setGroup!(ctrl["run"],prefix,refmat)
+        end
     end
     TUIprocess!(ctrl)
     return nothing

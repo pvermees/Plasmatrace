@@ -111,14 +111,6 @@ function summarize(run::Vector{Sample};
                    verbose=true,n=length(run))
     summarise(run;verbose,n)
 end
-function summarise(ctrl::AbstractDict)
-    for (k,v) in ctrl
-        println(k * ": " * string(typeof(v)))
-    end
-end
-function summarize(ctrl)
-    summarise(ctrl)
-end
 export summarise, summarize
 
 function autoWindow(samp::Sample;
@@ -403,7 +395,7 @@ function dict2string(dict::AbstractDict)
 end
 
 function vec2string(v::AbstractVector)
-    return "[\"" * join(map(string,v,"\",\"")) * "\"]"
+    return "[\"" * join(v .* "\",\"")[1:end-3] * "\"]"
 end
 
 function channels2elements(samp::Sample)
