@@ -110,8 +110,8 @@ end
 
 function averatest()
     myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
-    P, D, d = atomic(myrun[1],channels,fit,blk)
-    ratios = averat(myrun,channels,fit,blk)
+    P, D, d = atomic(myrun[1],channels,blk,fit)
+    ratios = averat(myrun,channels,blk,fit)
     println(first(ratios,5))
     return ratios
 end
@@ -142,7 +142,7 @@ function PAtest(verbose=false)
     cutoff = 1e7
     blk, fit = process!(myrun,method,channels,standards,glass;
                         PAcutoff=cutoff,nblank=2,ndrift=1,ndown=1)
-    ratios = averat(myrun,channels,fit,blk)
+    ratios = averat(myrun,channels,blk,fit)
     if verbose println(first(ratios,5)) end
     return ratios
 end
@@ -167,7 +167,7 @@ function RbSrtest()
                         ndrift=1,verbose=false)
     anchors = getAnchors(method,standards)
     p = plot(myrun[2],channels,blank,fit,anchors,transformation="log",den="Sr86 -> 102")
-    export2IsoplotR(myrun,method,channels,fit,blank,prefix="Entire",fname="Entire.json")
+    export2IsoplotR(myrun,method,channels,blank,fit,prefix="Entire",fname="Entire.json")
     @test display(p) != NaN
 end
 
@@ -181,7 +181,7 @@ function UPbtest()
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
     blank, pars = process!(myrun,"U-Pb",channels,standards,glass,
                            nblank=2,ndrift=1,ndown=1)
-    export2IsoplotR(myrun,method,channels,pars,blank,fname="UPb.json")
+    export2IsoplotR(myrun,method,channels,blank,pars,fname="UPb.json")
     p = plot(myrun[1],method,channels,blank,pars,standards,glass,transformation="log")
     @test display(p) != NaN
 end
@@ -199,7 +199,7 @@ function carbonatetest(verbose=false)
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
     blk, fit = process!(myrun,method,channels,standards,glass,
                         nblank=2,ndrift=1,ndown=1,verbose=verbose)
-    export2IsoplotR(myrun,method,channels,fit,blk,prefix="Duff",fname="Duff.json")
+    export2IsoplotR(myrun,method,channels,blk,fit,prefix="Duff",fname="Duff.json")
     p = plot(myrun[3],method,channels,blk,fit,standards,glass,
              transformation=nothing,num=["Pb207"],den="Pb206",ylim=[-0.02,0.3])
     @test display(p) != NaN
@@ -241,11 +241,11 @@ export PTree!
 end
 using .test
 function extensiontest(verbose=true)
-    PT!(test,logbook="logs/extension.log")
+    PT(test,logbook="logs/extension.log")
 end
 
 function TUItest()
-    PT!(logbook="logs/test.log")
+    PT(logbook="logs/test.log")
 end
 
 Plots.closeall()

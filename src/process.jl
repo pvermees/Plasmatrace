@@ -255,8 +255,8 @@ export fractionation
 
 function atomic(samp::Sample,
                 channels::AbstractDict,
-                pars::NamedTuple,
-                blank::AbstractDataFrame)
+                blank::AbstractDataFrame,
+                pars::NamedTuple)
     dat = windowData(samp,signal=true)
     Pm = dat[:,channels["P"]]
     Dm = dat[:,channels["D"]]
@@ -276,9 +276,9 @@ export atomic
 
 function averat(samp::Sample,
                 channels::AbstractDict,
-                pars::NamedTuple,
-                blank::AbstractDataFrame)
-    P, D, d = atomic(samp,channels,pars,blank)
+                blank::AbstractDataFrame,
+                pars::NamedTuple)
+    P, D, d = atomic(samp,channels,blank,pars)
     nr = length(P)
     muP = Statistics.mean(P)
     muD = Statistics.mean(D)
@@ -302,8 +302,8 @@ function averat(samp::Sample,
 end
 function averat(run::Vector{Sample},
                 channels::AbstractDict,
-                pars::NamedTuple,
-                blank::AbstractDataFrame;
+                blank::AbstractDataFrame,
+                pars::NamedTuple;
                 PAcutoff=nothing)
     ns = length(run)
     nul = fill(0.0,ns)
@@ -319,12 +319,19 @@ function averat(run::Vector{Sample},
         else
             samp_pars = pars.pulse
         end
-        out[i,2:end] = averat(samp,channels,samp_pars,blank)
+        out[i,2:end] = averat(samp,channels,blank,samp_pars)
     end
     return out
 end
 export averat
 
+function concentrations(samp::Sample,
+                        blank::AbstractDataFrame,
+                        pars::AbstractVector,
+                        internal::Tuple)
+    elements = channels2elements(samp)
+    return concentrations(samp,elements,blank,pars,internal)
+end
 function concentrations(samp::Sample,
                         elements::AbstractDataFrame,
                         blank::AbstractDataFrame,
@@ -347,6 +354,13 @@ function concentrations(samp::Sample,
     nms = "ppm[" .* elementnames .* "] from " .* channelnames
     rename!(out,Symbol.(nms))
     return out
+end
+function concentrations(run::Vector{Sample},
+                        blank::AbstractDataFrame,
+                        pars::AbstractVector,
+                        internal::Tuple)
+    elements = channels2elements(run)
+    return concentrations(run,elements,blank,pars,internal)
 end
 function concentrations(run::Vector{Sample},
                         elements::AbstractDataFrame,

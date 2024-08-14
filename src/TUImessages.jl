@@ -114,6 +114,17 @@ function TUIratioMessage(ctrl::AbstractDict)
     msg *= "or\n"
     msg *= "n: No denominator. Plot the raw signals\n"
     msg *= "?: Help"
+    return msg
+end
+
+function TUIexportFormatMessage(ctrl::AbstractDict)
+    msg = "c: Export to .csv\n" 
+    if ctrl["method"]!="concentrations"
+        msg *= "j: Export to .json\n"
+    end
+    msg *= "x: Exit\n"
+    msg *= "?: Help"
+    return msg
 end
 
 function TUIsetNblankMessage(ctrl::AbstractDict)

@@ -1,4 +1,4 @@
-function PT!(extensions...;logbook::AbstractString="")
+function PT(extensions...;logbook::AbstractString="")
     _PT["extensions"] = extensions
     TUIwelcome()
     if isnothing(_PT["ctrl"])
@@ -21,10 +21,7 @@ function PT!(extensions...;logbook::AbstractString="")
         end
     end
 end
-export PT!
-
-function initialise!()
-end
+export PT
 
 function dispatch!(ctrl::AbstractDict;
                    key=nothing,response=nothing,verbose=false)
@@ -583,11 +580,7 @@ function getPTree()
             action = TUIsubset!
         ),
         "format" => (
-            message =
-            "c: Export to .csv\n"*
-            "j: Export to .json\n"*
-            "x: Exit\n"*
-            "?: Help",
+            message = TUIexportFormatMessage,
             help =
             "Export to a comma-separated variable format with "*
             "samples names as row names, for futher processing "*

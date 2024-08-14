@@ -1,3 +1,13 @@
+function getPTctrl()
+    return _PT["ctrl"]
+end
+export getPTctrl
+
+function setPTctrl!(ctrl::AbstractDict)
+    _PT["ctrl"] = ctrl
+end
+export setPTctrl!
+
 function getExt(instrument)
     if instrument in ["Agilent","ThermoFisher"]
         return ".csv"
@@ -269,6 +279,7 @@ end
 export setReferenceMaterials!
 function getInternal(mineral::AbstractString,channel::AbstractString)
     element = channel2element(channel,collect(keys(_PT["nuclides"])))
-    return (channel,_PT["stoichiometry"][mineral][element[1]])
+    concentration = _PT["stoichiometry"][mineral][element[1]] * 1e5
+    return (channel,concentration)
 end
 export getInternal
