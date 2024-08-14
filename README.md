@@ -145,7 +145,12 @@ julia> export2IsoplotR(run,method,channels,blk,fit,prefix="Duff",fname="Duff.jso
 
 ## TUI + REPL
 
-You can seamlessly switch from the TUI to the REPL and back. The following example runs a previous Plasmatrace session (`logs/test.log`) and stores the TUI settings into a variable called `ctrl`. Type `summarise(ctrl)` at the REPL to view the contents of this variable. You can manipulate the contents of `ctrl` and sync it with the TUI using the `setPTctrl()` function.
+You can seamlessly switch from the TUI to the REPL and back. The
+following example runs a previous Plasmatrace session
+(`logs/test.log`) and stores the TUI settings into a variable called
+`ctrl`. Type `ctrl` at the REPL to view the contents of this
+variable. You can manipulate the contents of `ctrl` and sync it with
+the TUI using the `setPTctrl()` function.
 
 ```
 julia> PT(logbook="logs/test.log")

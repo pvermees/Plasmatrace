@@ -17,10 +17,11 @@ function TUIwelcomeMessage(ctrl::AbstractDict)
 end
 function TUIshowMethods(ctrl::AbstractDict)
     methods = _PT["methods"].method
-    msg = "1. concentrations\n"
+    msg = ""
     for i in eachindex(methods)
-        msg *= string(i+1)*": "*methods[i]*"\n"
+        msg *= string(i)*": "*methods[i]*"\n"
     end
+    msg *= "c: concentrations\n"
     msg *= "x: Exit\n"*"?: Help"
     return msg
 end

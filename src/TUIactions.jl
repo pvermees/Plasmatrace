@@ -78,7 +78,9 @@ function TUIloadICPdir!(ctrl::AbstractDict,
     ctrl["run"] = load(response;
                        instrument=ctrl["instrument"],
                        head2name=ctrl["head2name"])
-    ctrl["channels"] = getChannels(ctrl["run"])
+    if isnothing(ctrl["channels"])
+        ctrl["channels"] = getChannels(ctrl["run"])
+    end
     ctrl["priority"]["load"] = false
     ctrl["multifile"] = true
     ctrl["ICPpath"] = response
@@ -100,7 +102,9 @@ function TUIloadLAfile!(ctrl::AbstractDict,
     ctrl["LApath"] = response
     ctrl["run"] = load(ctrl["ICPpath"],ctrl["LApath"];
                        instrument=ctrl["instrument"])
-    ctrl["channels"] = getChannels(ctrl["run"]) # reset
+    if isnothing(ctrl["channels"])
+        ctrl["channels"] = getChannels(ctrl["run"]) # reset
+    end
     ctrl["priority"]["load"] = false
     ctrl["head2name"] = true
     ctrl["multifile"] = false
@@ -114,15 +118,17 @@ end
 function TUImethod!(ctrl::AbstractDict,
                     response::AbstractString)
     methods = _PT["methods"].method
-    i = parse(Int,response)
-    if i==1
+    if response=="c"
         ctrl["method"] = "concentrations"
         return "internal"
-    elseif i > length(methods)
-        return "x"
     else
-        ctrl["method"] = methods[i+1]
-        return "columns"
+        i = parse(Int,response)
+        if i > length(methods)
+            return "x"
+        else
+            ctrl["method"] = methods[i]
+            return "columns"
+        end
     end
 end
 
@@ -247,7 +253,7 @@ end
 function TUIaddGlassByPrefix!(ctrl::AbstractDict,
                               response::AbstractString)
     setGroup!(ctrl["run"],response,ctrl["cache"])
-    ctrl["standards"][ctrl["cache"]] = response
+    ctrl["glass"][ctrl["cache"]] = response
     ctrl["priority"]["glass"] = false
     return "xxx"
 end
@@ -598,7 +604,6 @@ function TUIopenTemplate!(ctrl::AbstractDict,
     ctrl["options"] = options
     ctrl["PAcutoff"] = PAcutoff
     ctrl["transformation"] = transformation
-    ctrl["channels"] = channels
     ctrl["internal"] = internal
     ctrl["priority"]["method"] = false
     ctrl["template"] = true
@@ -623,7 +628,9 @@ function TUIsaveTemplate(ctrl::AbstractDict,
         if isnothing(ctrl["internal"])
             write(file,"internal = nothing\n")
         else
-            write(file,"internal = (" * ctrl["internal"][1] * "," * string(ctrl["internal"][2]) * ")")
+            write(file,"internal = (" *
+                  ctrl["internal"][1] * "," *
+                  string(ctrl["internal"][2]) * ")")
         end
     end
     return "xx"
@@ -690,10 +697,10 @@ end
 
 function TUIrefresh!(ctrl::AbstractDict)
     if ctrl["multifile"]
+        TUIloadICPdir!(ctrl,ctrl["ICPpath"])
+    else
         TUIloadICPfile!(ctrl,ctrl["ICPpath"])
         TUIloadLAfile!(ctrl,ctrl["LApath"])
-    else
-        TUIloadICPdir!(ctrl,ctrl["ICPpath"])
     end
     snames = getSnames(ctrl["run"])
     for (refmat,prefix) in ctrl["standards"]
@@ -701,7 +708,7 @@ function TUIrefresh!(ctrl::AbstractDict)
             setGroup!(ctrl["run"],prefix,refmat)
         end
     end
-    for (refmat,prefix) in ctrl["glasss"]
+    for (refmat,prefix) in ctrl["glass"]
         if !isnothing(prefix)
             setGroup!(ctrl["run"],prefix,refmat)
         end

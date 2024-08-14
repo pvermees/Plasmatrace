@@ -111,14 +111,6 @@ function summarize(run::Vector{Sample};
                    verbose=true,n=length(run))
     summarise(run;verbose,n)
 end
-function summarise(ctrl::AbstractDict)
-    for (k,v) in ctrl
-        println(k * ": " * string(typeof(v)))
-    end
-end
-function summarize(ctrl)
-    summarise(ctrl)
-end
 export summarise, summarize
 
 function autoWindow(samp::Sample;
