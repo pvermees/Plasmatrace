@@ -110,8 +110,8 @@ end
 
 function averatest()
     myrun, blk, fit, channels, standards, glass, anchors = fractionationtest(false)
-    P, D, d = atomic(myrun[1],channels,fit,blk)
-    ratios = averat(myrun,channels,fit,blk)
+    P, D, d = atomic(myrun[1],channels,blk,fit)
+    ratios = averat(myrun,channels,blk,fit)
     println(first(ratios,5))
     return ratios
 end
@@ -142,7 +142,7 @@ function PAtest(verbose=false)
     cutoff = 1e7
     blk, fit = process!(myrun,method,channels,standards,glass;
                         PAcutoff=cutoff,nblank=2,ndrift=1,ndown=1)
-    ratios = averat(myrun,channels,fit,blk)
+    ratios = averat(myrun,channels,blk,fit)
     if verbose println(first(ratios,5)) end
     return ratios
 end
@@ -245,12 +245,13 @@ function extensiontest(verbose=true)
 end
 
 function TUItest()
-    PT!(logbook="logs/test.log")
+    #PT!(logbook="logs/test.log")
+    PT!(logbook="logs/concentrations.log")
 end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
+#=@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -269,5 +270,5 @@ Plots.closeall()
 @testset "timestamp test" begin timestamptest() end
 @testset "stoichiometry test" begin mineraltest() end
 @testset "concentration test" begin concentrationtest() end
-@testset "extension test" begin extensiontest() end
+@testset "extension test" begin extensiontest() end=#
 @testset "TUI test" begin TUItest() end

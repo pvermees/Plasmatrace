@@ -583,11 +583,7 @@ function getPTree()
             action = TUIsubset!
         ),
         "format" => (
-            message =
-            "c: Export to .csv\n"*
-            "j: Export to .json\n"*
-            "x: Exit\n"*
-            "?: Help",
+            message = TUIexportFormatMessage,
             help =
             "Export to a comma-separated variable format with "*
             "samples names as row names, for futher processing "*

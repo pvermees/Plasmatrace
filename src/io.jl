@@ -220,7 +220,7 @@ function export2IsoplotR(run::Vector{Sample},
                          blank::AbstractDataFrame;
                          PAcutoff=nothing,prefix=nothing,
                          fname::AbstractString="PT.json")
-    ratios = averat(run,channels,pars,blank;PAcutoff=PAcutoff)
+    ratios = averat(run,channels,blank,pars;PAcutoff=PAcutoff)
     if isnothing(prefix)
         export2IsoplotR(ratios,method;fname=fname)
     else

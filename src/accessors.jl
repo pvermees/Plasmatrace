@@ -269,6 +269,7 @@ end
 export setReferenceMaterials!
 function getInternal(mineral::AbstractString,channel::AbstractString)
     element = channel2element(channel,collect(keys(_PT["nuclides"])))
-    return (channel,_PT["stoichiometry"][mineral][element[1]])
+    concentration = _PT["stoichiometry"][mineral][element[1]] * 1e5
+    return (channel,concentration)
 end
 export getInternal
