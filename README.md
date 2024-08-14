@@ -16,10 +16,10 @@ import Pkg; Pkg.add(url="https://github.com/pvermees/Plasmatrace.git")
 
 There are four ways to interact with Plasmatrace:
 
-1. [TUI](#tui-text-based-user-interface): an interactive text-based user interface
-2. [TUI + GUI](#tui-+-gui-extension): a TUI augmented with graphical user interface elements
-3. [REPL](#repl-command-line-interface): the command-line interface
-4. [Hybrid](#tui-+-repl): combining the TUI, GUI and REPL
+1. [TUI](#1-tui-text-based-user-interface): an interactive text-based user interface
+2. [TUI + GUI](#2-tui-gui-extension): a TUI augmented with graphical user interface elements
+3. [REPL](#3-repl-command-line-interface): the command-line interface
+4. [Hybrid](#4-tui-repl): combining the TUI, GUI and REPL
 
 ## TUI (text-based user interface)
 
@@ -79,7 +79,7 @@ x: Exit
 v
 ```
 
-![Lu-Hf dataset](./img/plot.png)
+<img src="./img/plot.png" width="480px">
 
 ## TUI + GUI extension
 
@@ -121,15 +121,17 @@ p: Parse the data from a single file using a laser log
 d
 ```
 
-![PTgui file reader dialog](./img/dialog.png)
+<img src="./img/dialog.png" width="480px">
 
 ## REPL (command-line interface)
 
-Here is an example of a carbonate U-Pb data reduction using WC-1 for
-time-dependent elemental fractionation correction between U and Pb and
-NIST-612 for mass-dependent fractionation correction of the
-Pb-isotopes. The script exports all the aliquots of the "Duff" sample
-to a JSON file that can be opened in IsoplotR:
+Advanced users can interact with Plasmatrace via Julia's command line
+interface or REPL ("read-eval-print loop"). Here is an example of a
+carbonate U-Pb data reduction using WC-1 for time-dependent elemental
+fractionation correction between U and Pb and NIST-612 for
+mass-dependent fractionation correction of the Pb-isotopes. The script
+exports all the aliquots of the "Duff" sample to a JSON file that can
+be opened in IsoplotR:
 
 ```
 julia> method = "U-Pb"
@@ -138,7 +140,7 @@ julia> standards = Dict("WC1"=>"WC1")
 julia> glass = Dict("NIST612"=>"NIST612")
 julia> channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
 julia> blk, fit = process!(run,method,channels,standards,glass)
-julia> export2IsoplotR(run,method,channels,fit,blk,prefix="Duff",fname="Duff.json")
+julia> export2IsoplotR(run,method,channels,blk,fit,prefix="Duff",fname="Duff.json")
 ```
 
 ## TUI + REPL

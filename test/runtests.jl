@@ -167,7 +167,7 @@ function RbSrtest()
                         ndrift=1,verbose=false)
     anchors = getAnchors(method,standards)
     p = plot(myrun[2],channels,blank,fit,anchors,transformation="log",den="Sr86 -> 102")
-    export2IsoplotR(myrun,method,channels,fit,blank,prefix="Entire",fname="Entire.json")
+    export2IsoplotR(myrun,method,channels,blank,fit,prefix="Entire",fname="Entire.json")
     @test display(p) != NaN
 end
 
@@ -181,7 +181,7 @@ function UPbtest()
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
     blank, pars = process!(myrun,"U-Pb",channels,standards,glass,
                            nblank=2,ndrift=1,ndown=1)
-    export2IsoplotR(myrun,method,channels,pars,blank,fname="UPb.json")
+    export2IsoplotR(myrun,method,channels,blank,pars,fname="UPb.json")
     p = plot(myrun[1],method,channels,blank,pars,standards,glass,transformation="log")
     @test display(p) != NaN
 end
@@ -199,7 +199,7 @@ function carbonatetest(verbose=false)
     channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
     blk, fit = process!(myrun,method,channels,standards,glass,
                         nblank=2,ndrift=1,ndown=1,verbose=verbose)
-    export2IsoplotR(myrun,method,channels,fit,blk,prefix="Duff",fname="Duff.json")
+    export2IsoplotR(myrun,method,channels,blk,fit,prefix="Duff",fname="Duff.json")
     p = plot(myrun[3],method,channels,blk,fit,standards,glass,
              transformation=nothing,num=["Pb207"],den="Pb206",ylim=[-0.02,0.3])
     @test display(p) != NaN
@@ -246,12 +246,11 @@ end
 
 function TUItest()
     PT(logbook="logs/test.log")
-    #PT(logbook="logs/concentrations.log")
 end
 
 Plots.closeall()
 
-#=@testset "load" begin loadtest(true) end
+@testset "load" begin loadtest(true) end
 @testset "plot raw data" begin plottest() end
 @testset "set selection window" begin windowtest() end
 @testset "set method and blanks" begin blanktest() end
@@ -271,4 +270,4 @@ Plots.closeall()
 @testset "stoichiometry test" begin mineraltest() end
 @testset "concentration test" begin concentrationtest() end
 @testset "extension test" begin extensiontest() end
-@testset "TUI test" begin TUItest() end=#
+@testset "TUI test" begin TUItest() end

@@ -216,8 +216,8 @@ end
 function export2IsoplotR(run::Vector{Sample},
                          method::AbstractString,
                          channels::AbstractDict,
-                         pars::NamedTuple,
-                         blank::AbstractDataFrame;
+                         blank::AbstractDataFrame,
+                         pars::NamedTuple;
                          PAcutoff=nothing,prefix=nothing,
                          fname::AbstractString="PT.json")
     ratios = averat(run,channels,blank,pars;PAcutoff=PAcutoff)
