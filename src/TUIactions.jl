@@ -319,8 +319,7 @@ end
 
 function TUIconcentrationPlotter(ctrl::AbstractDict,samp::Sample)
     if (samp.group in keys(ctrl["glass"])) & !isnothing(ctrl["blank"])
-        elements = channels2elements(samp)
-        p = plot(samp,ctrl["blank"],ctrl["par"],elements,ctrl["internal"][1];
+        p = plot(samp,ctrl["blank"],ctrl["par"],ctrl["internal"][1];
                  den=ctrl["den"],transformation=ctrl["transformation"])
     else
         p = plot(samp;den=ctrl["den"],transformation=ctrl["transformation"])
@@ -518,10 +517,8 @@ function TUIprocess!(ctrl::AbstractDict)
     ctrl["blank"] = fitBlanks(ctrl["run"],nblank=ctrl["options"]["blank"])
     println("Fractionation correction...")
     if ctrl["method"] == "concentrations"
-        elements = channels2elements(ctrl["run"])
         ctrl["par"] = fractionation(ctrl["run"],
                                     ctrl["blank"],
-                                    elements,
                                     ctrl["internal"],
                                     ctrl["glass"])
     else

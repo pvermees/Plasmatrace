@@ -3,21 +3,77 @@ plot
 
 Plot selected channels for a sample or a vector of samples
 
+# Methods
+
+- `plot(samp::Sample,
+        method::AbstractString,
+        channels::Union{AbstractVector,AbstractDict},
+        blank::AbstractDataFrame,
+        pars::NamedTuple,
+        standards::Union{AbstractVector,AbstractDict},
+        glass::Union{AbstractVector,AbstractDict},
+        num=nothing,den=nothing,
+        transformation=nothing,
+        seriestype=:scatter,titlefontsize=10,
+        ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+        linecol="black",linestyle=:solid)`
+- `plot(samp::Sample,
+        channels::Union{AbstractVector,AbstractDict};
+        num=nothing,den=nothing,
+        transformation=nothing,offset=nothing,
+        seriestype=:scatter,titlefontsize=10,
+        ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)`
+- `plot(samp::Sample;
+        num=nothing,den=nothing,
+        transformation=nothing,offset=nothing,
+        seriestype=:scatter,titlefontsize=10,
+        ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)`
+- `plot(samp::Sample,
+        channels::AbstractDict,
+        blank::AbstractDataFrame,
+        pars::NamedTuple,
+        anchors::AbstractDict;
+        num=nothing,den=nothing,
+        transformation=nothing,
+        seriestype=:scatter,titlefontsize=10,
+        ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+        linecol="black",linestyle=:solid)`
+- `plot(samp::Sample,
+        blank::AbstractDataFrame,
+        pars::AbstractVector,
+        elements::AbstractDataFrame,
+        internal::AbstractString;
+        num=nothing,den=nothing,
+        transformation=nothing,
+        seriestype=:scatter,titlefontsize=10,
+        ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+        linecol="black",linestyle=:solid)`
+- `plot(samp::Sample,
+        blank::AbstractDataFrame,
+        pars::AbstractVector,
+        internal::AbstractString;
+        num=nothing,den=nothing,
+        transformation=nothing,
+        seriestype=:scatter,titlefontsize=10,
+        ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+        linecol="black",linestyle=:solid)`
+
 # Arguments
 
-- `method`: either "U-Pb", "Lu-Hf" or "Rb-Sr"
+- `method`: either "U-Pb", "Lu-Hf", "Rb-Sr" or "concentrations"
 - `channels`: dictionary of the type Dict("P" => "parent", "D" => "daughter", "d" => "sister")
               or a vector of channel names (e.g., the keys of a channels Dict)
-- `blank`: the output of fitBlanks()
+- `blank`: the output of fitBlanks()p
 - `pars`: the output of fractionation() or process!()
-- `standards` = dictionary of the type Dict("prefix" => "mineral standard")
-- `glass` = dictionary of the type Dict("prefix" => "reference glass")
-- `num` = optional vector of name of the data column to use as the numerator
-- `den` = optional name of the data column to use as the denominator
-- `transformation` = "sqrt", "log" or nothing
-- `seriestype` = :scatter or :path
-- `titlefontsize`, `ms`, `xlim`, `ylim` = see the generic Plot.plot function
+- `standards`: dictionary of the type Dict("prefix" => "mineral standard")
+- `glass`: dictionary of the type Dict("prefix" => "reference glass")
+- `num`: optional vector of name of the data column to use as the numerator
+- `den`: optional name of the data column to use as the denominator
+- `transformation`: "sqrt", "log" or nothing
+- `seriestype`: :scatter or :path
+- `titlefontsize`, `ms`, `xlim`, `ylim`: see the generic Plot.plot function
 - `anchors`: the output of getAnchors()
+- `elements`: a 1-row dataframe with the elements corresponding to each channel
 
 # Examples
 
@@ -158,6 +214,22 @@ function plot(samp::Sample,
     return p
 end
 function plot(samp::Sample,
+              blank::AbstractDataFrame,
+              pars::AbstractVector,
+              internal::AbstractString;
+              num=nothing,den=nothing,
+              transformation=nothing,
+              seriestype=:scatter,titlefontsize=10,
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+              linecol="black",linestyle=:solid)
+    elements = channels2elements(samp)
+    plot(samp,blank,pars,elements,internal;
+         num=num,den=den,transformation=transformation,
+         seriestype=seriestype,titlefontsize=titlefontsize,
+         ms=ms,ma=ma,xlim=xlim,ylim=ylim,
+         linecol=linecol,linestyle=linestyle)
+end
+function plot(samp::Sample,
               channels::AbstractVector;
               num=nothing,den=nothing,
               transformation=nothing,offset=nothing,
@@ -197,25 +269,6 @@ function plot(samp::Sample,
 end
 export plot
 
-"""
-plotFitted
-
-Add a model fit to an existing sample plot
-
-# Arguments
-
-- `p`: the output of plot()
-- `samp`: a sample
-- `pars`: the output of fractionation() or process!()
-- `blank`: the output of fitBlanks()
-- `channels`: dictionary of the type Dict("P" => "parent", "D" => "daughter", "d" => "sister")
-- `anchors`: output of getAnchors()
-- `num`: numerator channel
-- `den`: denominator channel
-- `transformation`: either nothing, "sqrt" or "log"
-- `offset`: a dictionary with the offset for each channel
-- `linecolor`, `linestyle`: see ?Plots.plot
-"""
 function plotFitted!(p,
                      samp::Sample,
                      blank::AbstractDataFrame,
