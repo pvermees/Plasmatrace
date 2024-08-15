@@ -28,6 +28,7 @@ function TUIinit()
         "par" => nothing,
         "cache" => nothing,
         "transformation" => "sqrt",
+        "log" => false
         "template" => false
     )
 end
