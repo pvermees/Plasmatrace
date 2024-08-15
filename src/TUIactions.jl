@@ -734,7 +734,6 @@ end
 
 function TUIclear!(ctrl::AbstractDict)
     default = TUIinit()
-    empty!(ctrl)
     for (k,v) in default
         ctrl[k] = v
     end
