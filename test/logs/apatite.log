@@ -1,0 +1,17 @@
+task,action
+top,c
+top,r
+instrument,a
+dir|file,d
+loadICPdir,/home/pvermees/git/Plasmatrace/test/data/apatite
+top,m
+method,c
+internal,2
+mineral,1
+top,g
+glass,a
+chooseGlass,2
+addGlassGroup,p
+addGlassByPrefix,GLASS
+glass,x
+top,p
