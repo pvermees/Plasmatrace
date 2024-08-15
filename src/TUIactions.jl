@@ -578,6 +578,7 @@ end
 function TUIimportLog!(ctrl::AbstractDict,
                        response::AbstractString)
     TUIclear!(ctrl)
+    ctrl["log"] = true
     history = CSV.read(response,DataFrame)
     for row in eachrow(history)
         try
@@ -586,6 +587,7 @@ function TUIimportLog!(ctrl::AbstractDict,
             println(e)
         end
     end
+    ctrl["log"] = false
     return nothing
 end
 
