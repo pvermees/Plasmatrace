@@ -2,7 +2,7 @@
 
 ## Julia package for LA-ICP-MS data reduction
 
-Plasmatrace is in early development and has not yet been added to the
+Plasmatrace is still in development and has not yet been added to the
 [Julia](https://julialang.org/) package repository. However, if you
 want to play around with the current functionality, then you can
 install the package from GitHub. First, make sure that you have Julia
@@ -134,13 +134,13 @@ exports all the aliquots of the "Duff" sample to a JSON file that can
 be opened in IsoplotR:
 
 ```
-julia> method = "U-Pb"
-julia> run = load("data/carbonate",instrument="Agilent")
-julia> standards = Dict("WC1"=>"WC1")
-julia> glass = Dict("NIST612"=>"NIST612")
-julia> channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
-julia> blk, fit = process!(run,method,channels,standards,glass)
-julia> export2IsoplotR(run,method,channels,blk,fit,prefix="Duff",fname="Duff.json")
+method = "U-Pb"
+run = load("data/carbonate",instrument="Agilent")
+standards = Dict("WC1"=>"WC1")
+glass = Dict("NIST612"=>"NIST612")
+channels = Dict("d"=>"Pb207","D"=>"Pb206","P"=>"U238")
+blk, fit = process!(run,method,channels,standards,glass)
+export2IsoplotR(run,method,channels,blk,fit,prefix="Duff",fname="Duff.json")
 ```
 
 ## TUI + REPL
@@ -153,7 +153,7 @@ variable. You can manipulate the contents of `ctrl` and sync it with
 the TUI using the `setPTctrl()` function.
 
 ```
-julia> PT(logbook="logs/test.log")
+ia> PT(logbook="logs/test.log")
 ...
 julia> ctrl = getPTctrl();
 julia> plot(ctrl["run"][1])

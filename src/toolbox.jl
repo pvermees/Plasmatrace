@@ -113,10 +113,9 @@ function summarize(run::Vector{Sample};
 end
 export summarise, summarize
 
-function autoWindow(samp::Sample;
+function autoWindow(t::AbstractVector,
+                    t0::AbstractFloat;
                     blank=false)
-    t0 = samp.t0
-    t = samp.dat[:,1]
     nt = length(t)
     i0 = round(Int,nt*(t0-t[1])/(t[end]-t[1]))
     if blank
@@ -124,9 +123,13 @@ function autoWindow(samp::Sample;
         to = ceil(Int,i0*9/10)
     else
         from = floor(Int,i0+(nt-i0)/10)
-        to = nt
+        to = ceil(Int,i0+(nt-i0)*9/10)
     end
     return [(from,to)]
+end
+function autoWindow(samp::Sample;
+                    blank=false)
+    return autoWindow(samp.dat[:,1],samp.t0;blank=blank)
 end
 
 function pool(run::Vector{Sample};blank=false,signal=false,group=nothing)
