@@ -638,8 +638,8 @@ function getPTree()
             "Session logs are an easy and useful way to "*
             "save intermediate results, increase throughput, "*
             "develop FAIR data processing chains, and report bugs.\n"*
-            "Methods are slimmed down session logs, which save "*
-            "default settings whilst omitting sample-specific details.",
+            "Methods are Julia scripts that save default settings "*
+            "whilst omitting sample-specific details.",
             action = Dict(
                 "i" => "importLog",
                 "e" => "exportLog",
