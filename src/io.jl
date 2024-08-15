@@ -94,11 +94,11 @@ function readFile(fname::AbstractString;
 end
 
 function df2sample(df::AbstractDataFrame,sname::AbstractString,datetime::DateTime)
+    t = df[:,1]
     i0 = geti0(df[:,2:end])
     t0 = df[i0,1]
-    nr = size(df,1)
-    bwin = [(1,ceil(Int,i0*9/10))]
-    swin = [(floor(Int,i0+(nr-i0)/10),nr)]
+    bwin = autoWindow(t,t0;blank=true)
+    swin = autoWindow(t,t0;blank=false)
     return Sample(sname,datetime,df,t0,bwin,swin,"sample")
 end
 
@@ -196,17 +196,17 @@ function parseData(data::AbstractDataFrame,
     lag = Optim.minimizer(fit)
     # 3. parse the signals into samples
     sequences = findall(!ismissing,timestamps[:,2]) # "Sequence Number"
-    LA_index = [sequences;size(timestamps,1)]
+    laser_on = findall(==("On"),timestamps[:,11]) # "Laser State"
     i1 = argmin(abs.(runtime .- lag))
     i2 = argmin(abs.(runtime .< lag + LAduration))
     for i in eachindex(sequences)
-        datetime = from = lasertime[LA_index[i]]
-        to = lasertime[LA_index[i+1]]
+        datetime = from = lasertime[laser_on[i]]
+        to = lasertime[laser_on[i]+2]
         t1 =  Millisecond(from-start).value/1000
         t2 =  Millisecond(to-start).value/1000
         first = maximum([1,floor(Int,(i2-i1)*t1/LAduration)])
         last = minimum([ceil(Int,(i2-i1)*t2/LAduration),nr])
-        sname = timestamps[LA_index[i],5] # "Comment"
+        sname = timestamps[sequences[i],5] # "Comment"
         samp = df2sample(data[first:last,:],sname,datetime)
         push!(run,samp)
     end
