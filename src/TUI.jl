@@ -28,7 +28,10 @@ function PT(extensions...;logbook::AbstractString="")
     for (i, extension) in enumerate(_PT["extensions"])
         extension.extend!(_PT)
     end
-    if logbook != ""
+    if logbook == ""
+        _PT["ctrl"]["log"] = false
+    else
+        _PT["ctrl"]["log"] = true
         TUIimportLog!(_PT["ctrl"],logbook)
     end
     while true
