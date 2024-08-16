@@ -550,7 +550,11 @@ function TUIsubset!(ctrl::AbstractDict,
     else
         ctrl["cache"] = findall(contains(response),getSnames(ctrl["run"]))
     end
-    return "format"
+    if ctrl["method"] == "concentrations"
+        return "csv"
+    else
+        return "format"
+    end
 end
 
 function TUIexport2csv(ctrl::AbstractDict,
@@ -563,7 +567,11 @@ function TUIexport2csv(ctrl::AbstractDict,
     end
     fname = splitext(response)[1]*".csv"
     CSV.write(fname,out[ctrl["cache"],:])
-    return "xxx"
+    if ctrl["method"] == "concentrations"
+        return "xx"
+    else
+        return "xxx"
+    end
 end
 
 function TUIexport2json(ctrl::AbstractDict,
