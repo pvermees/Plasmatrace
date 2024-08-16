@@ -617,13 +617,17 @@ function TUIopenTemplate!(ctrl::AbstractDict,
     ctrl["channels"] = channels
     ctrl["options"] = options
     ctrl["PAcutoff"] = PAcutoff
-    ctrl["standards"] = standards
-    ctrl["glass"] = glass
+    if @isdefined(standards)
+        ctrl["standards"] = standards
+        ctrl["priority"]["standards"] = all(isnothing.(values(standards)))
+    end
+    if @isdefined(glass)
+        ctrl["glass"] = glass
+        ctrl["priority"]["glass"] = all(isnothing.(values(glass)))
+    end
     ctrl["transformation"] = transformation
     ctrl["internal"] = internal
     ctrl["priority"]["method"] = false
-    ctrl["priority"]["standards"] = all(isnothing.(values(standards)))
-    ctrl["priority"]["glass"] = all(isnothing.(values(glass)))
     ctrl["template"] = true
     return "xx"
 end
