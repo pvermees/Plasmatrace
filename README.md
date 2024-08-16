@@ -143,18 +143,70 @@ blk, fit = process!(run,method,channels,standards,glass)
 export2IsoplotR(run,method,channels,blk,fit,prefix="Duff",fname="Duff.json")
 ```
 
+Type `?load`, `?process!`, `?export2IsoplotR` or `?PT` at the REPL to
+view the documentation.
+
 ## TUI + REPL
 
 You can seamlessly switch from the TUI to the REPL and back. The
-following example runs a previous Plasmatrace session
-(`logs/test.log`) and stores the TUI settings into a variable called
-`ctrl`. Type `ctrl` at the REPL to view the contents of this
-variable. You can manipulate the contents of `ctrl` and sync it with
-the TUI using the `setPTctrl()` function.
+following example stores the TUI settings into a variable called
+`ctrl` (type `ctrl` at the REPL to view its contents). You can
+manipulate the contents of `ctrl` and sync it with the TUI using the
+`setPTctrl()` function.
 
 ```
-ia> PT(logbook="logs/test.log")
-...
+julia> using Plasmatrace
+julia> PT()
+-------------------
+ Plasmatrace 0.6.5
+-------------------
+
+r: Read data files[*]
+m: Specify the method[*]
+t: Tabulate the samples
+s: Mark mineral standards[*]
+g: Mark reference glasses[*]
+v: View and adjust each sample
+p: Process the data[*]
+e: Export the results
+l: Logs and templates
+o: Options
+u: Update
+c: Clear
+x: Exit
+?: Help
+r
+
+a: Agilent
+t: ThermoFisher
+x: Exit
+?: Help
+a
+
+d: Read a directory of individual data files
+p: Parse the data from a single file using a laser log
+(? for help, x to exit):
+d
+
+Enter the full path of the data directory (? for help, x to exit):
+data/Lu-Hf
+
+r: Read data files
+m: Specify the method[*]
+t: Tabulate the samples
+s: Mark mineral standards[*]
+g: Mark reference glasses[*]
+v: View and adjust each sample
+p: Process the data[*]
+e: Export the results
+l: Logs and templates
+o: Options
+u: Update
+c: Clear
+x: Exit
+?: Help
+x
+
 julia> ctrl = getPTctrl();
 julia> plot(ctrl["run"][1])
 ```
