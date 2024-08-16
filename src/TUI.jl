@@ -1,5 +1,5 @@
 """
-PT(extensions...;logbook::AbstractString="")
+PT(extensions...;logbook::AbstractString="",reset=false)
 
 Plasmatrace TUI
 
@@ -7,6 +7,7 @@ Plasmatrace TUI
 
 - `extensions...`: a comma separated list of Plasmatrace extensions
 - `logbook`: the file path to a Plasmatrace log
+- `reset`: hard reset of all inherited settings
 
 # Examples
 ```julia
@@ -17,7 +18,10 @@ p = plot(samp)
 display(p)
 ```
 """
-function PT(extensions...;logbook::AbstractString="")
+function PT(extensions...;logbook::AbstractString="",reset=false)
+    if reset
+        init_PT!()
+    end
     _PT["extensions"] = extensions
     TUIwelcome()
     if isnothing(_PT["ctrl"])
