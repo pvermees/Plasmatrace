@@ -244,7 +244,7 @@ function extensiontest(verbose=true)
 end
 
 function TUItest()
-    PT(logbook="logs/test.log")
+    PT(logbook="logs/test.log",reset=true)
 end
 
 Plots.closeall()
