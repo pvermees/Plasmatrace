@@ -97,13 +97,13 @@ function setGroup!(run::Vector{Sample},refmat::AbstractString)
 end
 export setGroup!
 
-function setBwin!(run::Vector{Sample},bwin::AbstractVector)
+function setBwin!(run::Vector{Sample},bwin::AbstractVector;seconds::Bool=false)
     for i in eachindex(run)
-        setBwin!(run[i],bwin)
+        setBwin!(run[i],bwin;seconds=seconds)
     end
 end
-function setBwin!(samp::Sample,bwin::AbstractVector)
-    samp.bwin = bwin
+function setBwin!(samp::Sample,bwin::AbstractVector;seconds::Bool=false)
+    samp.bwin = seconds ? time2window(samp,bwin) : bwin
 end
 function setBwin!(run::Vector{Sample})
     for i in eachindex(run)
@@ -112,17 +112,17 @@ function setBwin!(run::Vector{Sample})
 end
 function setBwin!(samp::Sample)
     bwin = autoWindow(samp,blank=true)
-    setBwin!(samp::Sample,bwin)
+    setBwin!(samp,bwin)
 end
 export setBwin!
 
-function setSwin!(run::Vector{Sample},swin::AbstractVector)
+function setSwin!(run::Vector{Sample},swin::AbstractVector;seconds::Bool=false)
     for i in eachindex(run)
-        setSwin!(run[i],swin)
+        setSwin!(run[i],swin;seconds=seconds)
     end
 end
-function setSwin!(samp::Sample,swin::AbstractVector)
-    samp.swin = swin
+function setSwin!(samp::Sample,swin::AbstractVector;seconds::Bool=false)
+    samp.swin = seconds ? time2window(samp,swin) : swin
 end
 function setSwin!(run::Vector{Sample})
     for i in eachindex(run)
@@ -131,7 +131,7 @@ function setSwin!(run::Vector{Sample})
 end
 function setSwin!(samp::Sample)
     swin = autoWindow(samp,blank=false)
-    setSwin!(samp::Sample,swin)
+    setSwin!(samp,swin)
 end
 export setSwin!
 

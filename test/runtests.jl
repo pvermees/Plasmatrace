@@ -19,6 +19,8 @@ function windowtest()
     myrun = loadtest()
     i = 2
     setSwin!(myrun[i],[(70,90),(100,140)])
+    setBwin!(myrun[i],[(0,22)];seconds=true)
+    setSwin!(myrun[i],[(37,65)];seconds=true)
     p = plot(myrun[i],["Hf176 -> 258","Hf178 -> 260"])
     @test display(p) != NaN
 end

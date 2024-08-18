@@ -199,11 +199,23 @@ function string2windows(samp::Sample,text::AbstractString,single::Bool)
             print("Warning: end point out of bounds and truncated to ")
             print(string(maxt) * " seconds.")
         end
-        start = max(1,Int(round(nt*stime[i]/maxt)))
-        finish = min(nt,Int(round(nt*ftime[i]/maxt)))
-        windows[i] = (start,finish)
+        windows[i] = time2window(stime[i],ftime[i])
     end
     return windows
+end
+function time2window(samp::Sample,start::Number,finish::Number)
+    nt = size(samp.dat,1)
+    maxt = samp.dat[end,1]
+    from = max(1,Int(round(nt*start/maxt)))
+    to = min(nt,Int(round(nt*finish/maxt)))
+    return (from,to)
+end
+function time2window(samp::Sample,twin::AbstractVector)
+    out = Tuple[]
+    for win in twin
+        push!(out,time2window(samp,win[1],win[2]))
+    end
+    return out
 end
 
 function prefix2subset(run::Vector{Sample},
