@@ -601,8 +601,6 @@ end
 
 function TUIexportLog(ctrl::AbstractDict,
                       response::AbstractString)
-    nh = size(ctrl["history"],1)
-    deleteat!(ctrl["history"],[nh-1,nh])
     CSV.write(response,ctrl["history"])
     return "xx"
 end

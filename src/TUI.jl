@@ -97,7 +97,7 @@ function dispatch!(ctrl::AbstractDict;
     else
         push!(ctrl["chain"],final)
     end
-    toskip = [TUInext!,TUIprevious!,TUItabulate,"goto"]
+    toskip = [TUItabulate,"exportLog","saveTemplate"]
     if !(key in toskip) & !(next in toskip) & !(final in toskip)
         push!(ctrl["history"],[key,response])
     end
