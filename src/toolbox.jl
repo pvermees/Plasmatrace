@@ -199,7 +199,7 @@ function string2windows(samp::Sample,text::AbstractString,single::Bool)
             print("Warning: end point out of bounds and truncated to ")
             print(string(maxt) * " seconds.")
         end
-        windows[i] = time2window(stime[i],ftime[i])
+        windows[i] = time2window(samp,stime[i],ftime[i])
     end
     return windows
 end
