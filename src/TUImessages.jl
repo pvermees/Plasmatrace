@@ -129,19 +129,19 @@ function TUIexportFormatMessage(ctrl::AbstractDict)
 end
 
 function TUIsetNblankMessage(ctrl::AbstractDict)
-    msg = "Enter a non-negative integer (current value = "*
-    string(ctrl["options"]["blank"])*", ? for help, x to exit):"
+    msg = "Enter a non-negative integer (current value = " *
+    string(ctrl["options"]["blank"]) * ", ? for help, x to exit):"
     return msg
 end
 
 function TUIsetNdriftMessage(ctrl::AbstractDict)
-    msg = "Enter a non-negative integer (current value = "*
-    string(ctrl["options"]["drift"])*", ? for help, x to exit)",
+    msg = "Enter a non-negative integer (current value = " *
+    string(ctrl["options"]["drift"]) * ", ? for help, x to exit)"
     return msg
 end
 
 function TUIsetNdownMessage(ctrl::AbstractDict)
-    msg = "Enter a non-negative integer (current value = "*
-    string(ctrl["options"]["down"])*", ? for help, x to exit)",
+    msg = "Enter a non-negative integer (current value = " *
+    string(ctrl["options"]["down"]) * ", ? for help, x to exit)"
     return msg
 end

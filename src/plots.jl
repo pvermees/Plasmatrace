@@ -234,7 +234,8 @@ function plot(samp::Sample,
               num=nothing,den=nothing,
               transformation=nothing,offset=nothing,
               seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto)
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+              i::Union{AbstractString,Integer}="")
     xlab = names(samp.dat)[1]
     x = samp.dat[:,xlab]
     meas = samp.dat[:,channels]
@@ -250,7 +251,7 @@ function plot(samp::Sample,
                    legend=:topleft,xlimits=xlim,ylimits=ylim)
     Plots.xlabel!(xlab)
     Plots.ylabel!(ylab)
-    title = samp.sname*" ["*samp.group*"]"
+    title = string(i) * ". " * samp.sname*" ["*samp.group*"]"
     Plots.title!(title;titlefontsize=titlefontsize)
     dy = Plots.ylims(p)
     # plot t0:

@@ -251,24 +251,28 @@ end
 
 Plots.closeall()
 
-@testset "load" begin loadtest(true) end
-@testset "plot raw data" begin plottest() end
-@testset "set selection window" begin windowtest() end
-@testset "set method and blanks" begin blanktest() end
-@testset "assign standards" begin standardtest(true) end
-@testset "predict" begin predictest() end
-@testset "fit fractionation" begin fractionationtest() end
-@testset "hist" begin histest() end
-@testset "average sample ratios" begin averatest() end
-@testset "process run" begin processtest() end
-@testset "PA test" begin PAtest(true) end
-@testset "export" begin exporttest() end
-@testset "Rb-Sr" begin RbSrtest() end
-@testset "U-Pb" begin UPbtest() end
-@testset "iCap test" begin iCaptest() end
-@testset "carbonate test" begin carbonatetest() end
-@testset "timestamp test" begin timestamptest() end
-@testset "stoichiometry test" begin mineraltest() end
-@testset "concentration test" begin concentrationtest() end
-@testset "extension test" begin extensiontest() end
-@testset "TUI test" begin TUItest() end
+if true
+    @testset "load" begin loadtest(true) end
+    @testset "plot raw data" begin plottest() end
+    @testset "set selection window" begin windowtest() end
+    @testset "set method and blanks" begin blanktest() end
+    @testset "assign standards" begin standardtest(true) end
+    @testset "predict" begin predictest() end
+    @testset "fit fractionation" begin fractionationtest() end
+    @testset "hist" begin histest() end
+    @testset "average sample ratios" begin averatest() end
+    @testset "process run" begin processtest() end
+    @testset "PA test" begin PAtest(true) end
+    @testset "export" begin exporttest() end
+    @testset "Rb-Sr" begin RbSrtest() end
+    @testset "U-Pb" begin UPbtest() end
+    @testset "iCap test" begin iCaptest() end
+    @testset "carbonate test" begin carbonatetest() end
+    @testset "timestamp test" begin timestamptest() end
+    @testset "stoichiometry test" begin mineraltest() end
+    @testset "concentration test" begin concentrationtest() end
+    @testset "extension test" begin extensiontest() end
+    @testset "TUI test" begin TUItest() end
+else
+    PT()
+end
