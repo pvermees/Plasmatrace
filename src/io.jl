@@ -213,7 +213,6 @@ function parseData(data::AbstractDataFrame,
     return run
 end
 
-
 """
 export2IsoplotR
 
@@ -263,7 +262,8 @@ function export2IsoplotR(run::Vector{Sample},
                          channels::AbstractDict,
                          blank::AbstractDataFrame,
                          pars::NamedTuple;
-                         PAcutoff=nothing,prefix=nothing,
+                         PAcutoff=nothing,
+                         prefix=nothing,
                          fname::AbstractString="PT.json")
     ratios = averat(run,channels,blank,pars;PAcutoff=PAcutoff)
     if isnothing(prefix)
