@@ -321,9 +321,9 @@ end
 function TUIconcentrationPlotter(ctrl::AbstractDict,samp::Sample)
     if (samp.group in keys(ctrl["glass"])) & !isnothing(ctrl["blank"])
         p = plot(samp,ctrl["blank"],ctrl["par"],ctrl["internal"][1];
-                 den=ctrl["den"],transformation=ctrl["transformation"])
+                 den=ctrl["den"],transformation=ctrl["transformation"],i=ctrl["i"])
     else
-        p = plot(samp;den=ctrl["den"],transformation=ctrl["transformation"])
+        p = plot(samp;den=ctrl["den"],transformation=ctrl["transformation"],i=ctrl["i"])
     end
     return p
 end
@@ -331,7 +331,7 @@ end
 function TUIgeochronPlotter(ctrl::AbstractDict,samp::Sample)
     if isnothing(ctrl["blank"]) | (samp.group=="sample")
         p = plot(samp,ctrl["channels"];
-                 den=ctrl["den"],transformation=ctrl["transformation"])
+                 den=ctrl["den"],transformation=ctrl["transformation"],i=ctrl["i"])
     else
         if isnothing(ctrl["PAcutoff"])
             par = ctrl["par"]
@@ -342,7 +342,7 @@ function TUIgeochronPlotter(ctrl::AbstractDict,samp::Sample)
         anchors = getAnchors(ctrl["method"],standards,ctrl["glass"])
         p = plot(samp,ctrl["method"],ctrl["channels"],ctrl["blank"],
                  par,ctrl["standards"],ctrl["glass"];
-                 den=ctrl["den"],transformation=ctrl["transformation"])
+                 den=ctrl["den"],transformation=ctrl["transformation"],i=ctrl["i"])
     end
     return p
 end

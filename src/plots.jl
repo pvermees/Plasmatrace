@@ -74,6 +74,7 @@ Plot selected channels for a sample or a vector of samples
 - `titlefontsize`, `ms`, `xlim`, `ylim`: see the generic Plot.plot function
 - `anchors`: the output of getAnchors()
 - `elements`: a 1-row dataframe with the elements corresponding to each channel
+- `i`: (optional) sample number
 
 # Examples
 
@@ -94,14 +95,15 @@ function plot(samp::Sample,
               transformation=nothing,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,
-              linecol="black",linestyle=:solid)
+              linecol="black",linestyle=:solid,
+              i=nothing)
     Sanchors = getAnchors(method,standards,false)
     Ganchors = getAnchors(method,glass,true)
     anchors = merge(Sanchors,Ganchors)
     return plot(samp,channels,blank,pars,anchors;
                 num=num,den=den,transformation=transformation,
                 seriestype=seriestype,titlefontsize=titlefontsize,
-                ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+                ms=ms,ma=ma,xlim=xlim,ylim=ylim,i=i)
 end
 function plot(samp::Sample,
               method::AbstractString,
@@ -114,34 +116,36 @@ function plot(samp::Sample,
               transformation=nothing,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,
-              linecol="black",linestyle=:solid)
+              linecol="black",linestyle=:solid,i=nothing)
     return plot(samp,method,channels,blank,pars,
                 collect(keys(standards)),collect(keys(glass));
                 num=num,den=den,transformation=transformation,
                 seriestype=seriestype,titlefontsize=titlefontsize,
                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,
-                linecol=linecol,linestyle=linestyle)
+                linecol=linecol,linestyle=linestyle,i=i)
 end
 function plot(samp::Sample,
               channels::AbstractDict;
               num=nothing,den=nothing,
               transformation=nothing,offset=nothing,
               seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+              display=true,i=nothing)
     return plot(samp,collect(values(channels));
                 num=num,den=den,transformation=transformation,
                 offset=offset,seriestype=seriestype,titlefontsize=titlefontsize,
-                ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+                ms=ms,ma=ma,xlim=xlim,ylim=ylim,i=i)
 end
 function plot(samp::Sample;
               num=nothing,den=nothing,
               transformation=nothing,offset=nothing,
               seriestype=:scatter,titlefontsize=10,
-              ms=2,ma=0.5,xlim=:auto,ylim=:auto,display=true)
+              ms=2,ma=0.5,xlim=:auto,ylim=:auto,
+              display=true,i=nothing)
     return plot(samp,getChannels(samp);
                 num=num,den=den,transformation=transformation,
                 offset=offset,seriestype=seriestype,titlefontsize=titlefontsize,
-                ms=ms,ma=ma,xlim=xlim,ylim=ylim)
+                ms=ms,ma=ma,xlim=xlim,ylim=ylim,i=i)
 end
 function plot(samp::Sample,
               channels::AbstractDict,
@@ -152,14 +156,14 @@ function plot(samp::Sample,
               transformation=nothing,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,
-              linecol="black",linestyle=:solid)
+              linecol="black",linestyle=:solid,i=nothing)
 
     if samp.group == "sample"
 
         p = plot(samp,channels;
                  num=num,den=den,transformation=transformation,
                  seriestype=seriestype,titlefontsize=titlefontsize,
-                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display,i=i)
         
     else
 
@@ -169,7 +173,7 @@ function plot(samp::Sample,
         p = plot(samp,channels;
                  num=num,den=den,transformation=transformation,offset=offset,
                  seriestype=seriestype,titlefontsize=titlefontsize,
-                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display,i=i)
 
         plotFitted!(p,samp,blank,pars,channels,anchors;
                      num=num,den=den,transformation=transformation,
@@ -188,13 +192,13 @@ function plot(samp::Sample,
               transformation=nothing,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,
-              linecol="black",linestyle=:solid)
+              linecol="black",linestyle=:solid,i=nothing)
     if samp.group == "sample"
 
         p = plot(samp;
                  num=num,den=den,transformation=transformation,
                  seriestype=seriestype,titlefontsize=titlefontsize,
-                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display,i=i)
         
     else
 
@@ -204,7 +208,7 @@ function plot(samp::Sample,
         p = plot(samp;
                  num=num,den=den,transformation=transformation,offset=offset,
                  seriestype=seriestype,titlefontsize=titlefontsize,
-                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display)
+                 ms=ms,ma=ma,xlim=xlim,ylim=ylim,display=display,i=i)
 
         plotFitted!(p,samp,blank,pars,elements,internal;
                      num=num,den=den,transformation=transformation,
@@ -221,13 +225,13 @@ function plot(samp::Sample,
               transformation=nothing,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,
-              linecol="black",linestyle=:solid)
+              linecol="black",linestyle=:solid,i=nothing)
     elements = channels2elements(samp)
     plot(samp,blank,pars,elements,internal;
          num=num,den=den,transformation=transformation,
          seriestype=seriestype,titlefontsize=titlefontsize,
          ms=ms,ma=ma,xlim=xlim,ylim=ylim,
-         linecol=linecol,linestyle=linestyle)
+         linecol=linecol,linestyle=linestyle,i=i)
 end
 function plot(samp::Sample,
               channels::AbstractVector;
@@ -235,7 +239,7 @@ function plot(samp::Sample,
               transformation=nothing,offset=nothing,
               seriestype=:scatter,titlefontsize=10,
               ms=2,ma=0.5,xlim=:auto,ylim=:auto,
-              i::Union{AbstractString,Integer}="")
+              i::Union{Nothing,Integer}=nothing)
     xlab = names(samp.dat)[1]
     x = samp.dat[:,xlab]
     meas = samp.dat[:,channels]
@@ -251,7 +255,10 @@ function plot(samp::Sample,
                    legend=:topleft,xlimits=xlim,ylimits=ylim)
     Plots.xlabel!(xlab)
     Plots.ylabel!(ylab)
-    title = string(i) * ". " * samp.sname*" ["*samp.group*"]"
+    title = samp.sname*" ["*samp.group*"]"
+    if !isnothing(i)
+        title = string(i) * ". " * title
+    end
     Plots.title!(title;titlefontsize=titlefontsize)
     dy = Plots.ylims(p)
     # plot t0:
